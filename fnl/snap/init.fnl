@@ -362,6 +362,13 @@
 
 ;; fnlfmt: skip
 (defn run [config]
+  ;; Config validation
+  (assert (= (type config) "table") "Config must be a table")
+  (assert config.producer "Config must have a producer")
+  (assert (= (type config.producer) "function") "Producer must be a function")
+  (assert config.select "Config must have a select")
+  (assert (= (type config.select) "function") "Select must be a function")
+
   ;; Store last search
   (var last-filter nil)
 

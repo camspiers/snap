@@ -444,6 +444,11 @@ do
   do
     local v_0_0
     local function run0(config)
+      assert((type(config) == "table"), "Config must be a table")
+      assert(config.producer, "Config must have a producer")
+      assert((type(config.producer) == "function"), "Producer must be a function")
+      assert(config.select, "Config must have a select")
+      assert((type(config.select) == "function"), "Select must be a function")
       local last_filter = nil
       local last_results = {}
       local exit = false
