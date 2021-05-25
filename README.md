@@ -31,7 +31,7 @@ snap.run {
 
 `snap` uses a non-blocking design to ensure the UI is always responsive to user input.
 
-To achieve this `snap` employs coroutines, and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together
+To achieve this `snap` employs coroutines, and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together.
 
 Our example's goal is to run the `ls` command, filter the results in response to input, and print the selected value.
 
@@ -81,7 +81,7 @@ A consumers type looks like this:
 type Consumer = (producer: Producer) => Producer;
 ```
 
-A consumer is a function that takes another producer and returns a producer which progressively yields its own results.
+A consumer is a function that takes a producer and returns a producer.
 
 As our goal here is to filter, we iterate over our passed producer and only yield values that match `request.filter`.
 
@@ -126,7 +126,7 @@ From the above we have seen the following distinct concepts of `snap`:
 - Producer + consumer pattern
 - Yielding a lua `table` of strings
 - Yielding `nil` to exit
-- Using `snap.io.spawn` iterate over a processes data
+- Using `snap.io.spawn` iterate over the data of a process
 - Using `snap.yield` to run slow-mode nvim functions
 - Using `snap.consume` to consume another producer
 - Using the `request.filter` value
@@ -134,7 +134,7 @@ From the above we have seen the following distinct concepts of `snap`:
 
 ## Usage
 
-`snap` comes with inbuilt producers and consumers to enable easy usage and creation of finders.
+`snap` comes with inbuilt producers and consumers to enable easy creation of finders.
 
 ### Find Files
 
@@ -144,6 +144,7 @@ snap.run {
     require'snap.producer.ripgrep.file'.create
   ),
   select = require'snap.select.file'.select
+  multiselect = require'snap.select.file'.multiselect
 }
 ```
 
@@ -153,6 +154,7 @@ snap.run {
 snap.run {
   producer = require'snap.producer.ripgrep.vimgrep'.create,
   select = require'snap.select.vimgrep'.select
+  multiselect = require'snap.select.vimgrep'.multiselect
 }
 ```
 
@@ -184,8 +186,7 @@ snap.run {
 
 #### Meta Result
 
-Results can be decorated with additional information (see `with_meta`),
-these results are represented by the `MetaResult` type.
+Results can be decorated with additional information (see `with_meta`), these results are represented by the `MetaResult` type.
 
 ```typescript
 // A table that tostrings as result
@@ -238,7 +239,7 @@ type Consumer = (producer: Producer) => Producer;
 ```typescript
 {
   // Get the results to display
-  producer: (request: Request) => yield<Yieldable>;
+  producer: Producer;
 
   // Called on select
   select: (selection: string) => nil;
@@ -261,7 +262,7 @@ type Consumer = (producer: Producer) => Producer;
 
 #### Yielding `table<string>`
 
-For each `table<string>`  yielded (or returned as the last value of `producer`) to `snap` from `producer`, `snap` will accumulate the `string` values of the table and display them in the results buffer.
+For each `table<string>` yielded (or returned as the last value of `producer`) from a `producer`, `snap` will accumulate the values of the table and display them in the results buffer.
 
 ##### Example
 
@@ -336,7 +337,7 @@ Turns a result into a meta result.
 
 ### `snap.with_meta`
 
-Adds a meta field to a results.
+Adds a meta field to a result.
 
 ```typescript
 (result: string | MetaResult, field: string, value: any) => MetaResult
