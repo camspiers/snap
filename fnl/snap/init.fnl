@@ -21,8 +21,8 @@
 ;; Example:                                                                   ;;
 ;;                                                                            ;;
 ;; (snap.run {:prompt "Print One or Two"                                      ;;
-;;            :producer (fn [] [:One :Two])                                ;;
-;;            :select print})                                              ;;
+;;            :producer (fn [] [:One :Two])                                   ;;
+;;            :select print})                                                 ;;
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

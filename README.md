@@ -21,12 +21,9 @@ use_rocks 'fzy'
 The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
 
 ```lua
-local ripgrep = require'snap.producer.ripgrep.vimgrep'
-local vimgrep = require'snap.select.vimgrep'
-
 snap.run {
-  producer = ripgrep.create,
-  select = vimgrep
+  producer = require'snap.producer.ripgrep.vimgrep'.create,
+  select = require'snap.select.vimgrep'.select
 }
 ```
 
@@ -143,10 +140,10 @@ From the above we have seen the following distinct concepts of `snap`:
 
 ```lua
 snap.run {
-  producer = snap.consumer.fzy.create(
+  producer = require'snap.consumer.fzy'.create(
     require'snap.producer.ripgrep.file'.create
   ),
-  select = snap.select.file.select
+  select = require'snap.select.file'.select
 }
 ```
 
@@ -175,7 +172,7 @@ snap.run {
 ```lua
 snap.run {
   producer = require'snap.consumer.fzy'.create(
-    snap.producer.oldfiles.create
+    require'snap.producer.oldfiles'.create
   ),
   select = require'snap.select.file'.select
 }
@@ -316,7 +313,7 @@ This results in a single result being displayed in the result buffer, in particu
 
 #### Yielding `nil`
 
-Yielding nil signals to `snap` that there are not more results, and the coroutine is dead. `snap` will finish resuming the `coroutine` when nil is encounted.
+Yielding nil signals to `snap` that there are not more results, and the coroutine is dead. `snap` will finish processing the `coroutine` when nil is encounted.
 
 ```lua
 local function producer(message)
@@ -331,11 +328,25 @@ end
 
 ### `snap.meta_result`
 
-TODO
+Turns a result into a meta result.
+
+```typescript
+(result: string | MetaResult) => MetaResult
+```
 
 ### `snap.with_meta`
 
-TODO
+Adds a meta field to a results.
+
+```typescript
+(result: string | MetaResult, field: string, value: any) => MetaResult
+```
+
+### `snap.has_meta`
+
+```typescript
+(result: string | MetaResult, field: string) => boolean
+```
 
 ### `snap.resume`
 
@@ -343,23 +354,19 @@ Resumes a passed coroutine while handling non-fast API requests.
 
 ### `snap.yield`
 
+```
+(value: Yieldable) => any
+```
+
 Makes getting values from yield easier by skiping first coroutine.yield return value.
 
-### `snap.cache`
+### `snap.consume`
 
-Caches results. Used when results are collected by process on first open, but just processed on subsequent calls.
+```
+(producer: Producer, request: Request) => iterator<yield<Yieldable>>
+```
 
-### `snap.filter`
-
-Filters by `request.filter`.
-
-### `snap.score`
-
-TODO
-
-### `snap.filter_with_score`
-
-TODO
+Consumes a producer
 
 ### `snap.layouts.centered`
 ### `snap.layouts.bottom`
