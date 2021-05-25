@@ -1,10 +1,6 @@
 # Snap
 
-A small fast extensible finder system for neovim.
-
-- Small api
-- Async by default
-- Uses producer, consumer, filter, score, sort coroutine pattern
+A fast finder system for neovim.
 
 ## Installation
 
