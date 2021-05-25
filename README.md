@@ -96,10 +96,10 @@ local function consumer (producer)
       if type(results) == "table" then
         -- Yield the filtered table
         coroutine.yield(vim.tbl_filter(
-         function (value)
-           return string.find(value, request.filter, 0, true)
-         end,
-         results
+          function (value)
+            return string.find(value, request.filter, 0, true)
+          end,
+          results
         ))
       -- If we don't have a table we finish by yielding nil
       else
