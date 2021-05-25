@@ -21,7 +21,7 @@ use_rocks 'fzy'
 The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
 
 ```lua
-snap.run {
+require'snap'.run {
   producer = require'snap.producer.ripgrep.vimgrep'.create,
   select = require'snap.select.vimgrep'.select
 }
@@ -48,12 +48,15 @@ The producer is a function that takes a request, and yields results (see below f
 In the following `producer`, we run the `ls` command and progressively `yield` its output.
 
 ```lua
+local snap = require'snap'
+local io = require'snap.io'
 -- Runs ls and yields lua tables containing each line
+
 local function producer (request)
   -- Runs the slow-mode getcwd function
   local cwd = snap.yield(vim.fn.getcwd)
   -- Iterates ls commands output using snap.io.spawn
-  for data, err, kill in snap.io.spawn("ls", {}, cwd) do
+  for data, err, kill in io.spawn("ls", {}, cwd) do
     -- If the filter updates while the command is still running
     -- then we kill the process and yield nil
     if request.cancel then
@@ -115,7 +118,7 @@ end
 The following combines our above `consumer` and `producer`, itself creating a new producer, and passes this to `snap` to run:
 
 ```lua
-snap.run {
+require'snap'.run {
   producer = consumer(producer),
   select = print
 }
@@ -138,8 +141,10 @@ From the above we have seen the following distinct concepts of `snap`:
 
 ### Find Files
 
+Uses built in `fzy` filter + score, and `ripgrep` for file finding.
+
 ```lua
-snap.run {
+require'snap'.run {
   producer = require'snap.consumer.fzy'.create(
     require'snap.producer.ripgrep.file'.create
   ),
@@ -151,7 +156,7 @@ snap.run {
 ### Live Ripgrep
 
 ```lua
-snap.run {
+require'snap'.run {
   producer = require'snap.producer.ripgrep.vimgrep'.create,
   select = require'snap.select.vimgrep'.select
   multiselect = require'snap.select.vimgrep'.multiselect
@@ -161,7 +166,7 @@ snap.run {
 ### Find Buffers
 
 ```lua
-snap.run {
+require'snap'.run {
   producer = require'snap.consumer.fzy'.create(
     require'snap.producer.buffer'.create
   ),
@@ -172,7 +177,7 @@ snap.run {
 ### Find Old Files
 
 ```lua
-snap.run {
+require'snap'.run {
   producer = require'snap.consumer.fzy'.create(
     require'snap.producer.oldfiles'.create
   ),
