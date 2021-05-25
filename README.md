@@ -16,6 +16,20 @@ If you want to use the inbuilt support for `fzy`:
 use_rocks 'fzy'
 ```
 
+## Basic example
+
+The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
+
+```lua
+local ripgrep = require'snap.producer.ripgrep.vimgrep'
+local vimgrep = require'snap.select.vimgrep'
+
+snap.run {
+  producer = ripgrep.create,
+  select = vimgrep
+}
+```
+
 ## Concepts
 
 `snap` uses a non-blocking design to ensure the UI is always responsive to user input.
