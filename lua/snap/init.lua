@@ -353,18 +353,28 @@ local function create_loading_screen(width, height, counter)
   table.insert(loading, center_with_text_width(("\226\149\176" .. string.rep("\226\148\128", 19) .. "\226\149\175"), text_width, width))
   return loading
 end
-local function accumulate(results, partial_results)
-  if (type(partial_results) == "string") then
-    print(partial_results)
-  end
-  if (partial_results ~= nil) then
-    for _, value in ipairs(partial_results) do
-      if (tostring(value) ~= "") then
-        table.insert(results, value)
+local accumulate
+do
+  local v_0_
+  do
+    local v_0_0
+    local function accumulate0(results, partial_results)
+      if (partial_results ~= nil) then
+        for _, value in ipairs(partial_results) do
+          if (tostring(value) ~= "") then
+            table.insert(results, value)
+          end
+        end
+        return nil
       end
     end
-    return nil
+    v_0_0 = accumulate0
+    _0_0["accumulate"] = v_0_0
+    v_0_ = v_0_0
   end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["accumulate"] = v_0_
+  accumulate = v_0_
 end
 local yield
 do
@@ -406,117 +416,27 @@ do
   t_0_["resume"] = v_0_
   resume = v_0_
 end
-local cache
+local consume
 do
   local v_0_
   do
     local v_0_0
-    local function cache0(producer)
-      local cache1 = {}
-      local function _3_(request)
-        if (#cache1 == 0) then
-          local reader = coroutine.create(producer)
-          while (coroutine.status(reader) ~= "dead") do
-            local results = resume(reader, request)
-            accumulate(cache1, results)
-            coroutine.yield(results)
-          end
-          return nil
-        else
-          return cache1
+    local function consume0(producer, request)
+      local reader = coroutine.create(producer)
+      local function _3_()
+        if (coroutine.status(reader) ~= "dead") then
+          return resume(reader, request)
         end
       end
       return _3_
     end
-    v_0_0 = cache0
-    _0_0["cache"] = v_0_0
+    v_0_0 = consume0
+    _0_0["consume"] = v_0_0
     v_0_ = v_0_0
   end
   local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["cache"] = v_0_
-  cache = v_0_
-end
-local filter
-do
-  local v_0_
-  do
-    local v_0_0
-    local function filter0(producer)
-      local function _3_(request)
-        local function filter1(results)
-          local function _4_(_241)
-            return fzy.has_match(request.filter, _241)
-          end
-          return vim.tbl_filter(_4_, results)
-        end
-        local reader = coroutine.create(producer)
-        while (coroutine.status(reader) ~= "dead") do
-          local results = resume(reader, request)
-          local function _4_()
-            if (results == nil) then
-              return nil
-            else
-              return filter1(results)
-            end
-          end
-          coroutine.yield(_4_())
-        end
-        return nil
-      end
-      return _3_
-    end
-    v_0_0 = filter0
-    _0_0["filter"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["filter"] = v_0_
-  filter = v_0_
-end
-local score
-do
-  local v_0_
-  do
-    local v_0_0
-    local function score0(producer)
-      local function _3_(request)
-        local reader = coroutine.create(producer)
-        while (coroutine.status(reader) ~= "dead") do
-          local results = resume(reader, request)
-          if (results ~= nil) then
-            local function _4_(_241)
-              return with_meta(_241, "score", fzy.score(request.filter, tostring(_241)))
-            end
-            coroutine.yield(vim.tbl_map(_4_, results))
-          end
-        end
-        return nil
-      end
-      return _3_
-    end
-    v_0_0 = score0
-    _0_0["score"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["score"] = v_0_
-  score = v_0_
-end
-local filter_with_score
-do
-  local v_0_
-  do
-    local v_0_0
-    local function filter_with_score0(producer)
-      return score(filter(cache(producer)))
-    end
-    v_0_0 = filter_with_score0
-    _0_0["filter_with_score"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["filter_with_score"] = v_0_
-  filter_with_score = v_0_
+  t_0_["consume"] = v_0_
+  consume = v_0_
 end
 local run
 do
@@ -570,7 +490,7 @@ do
             local partial_results = {unpack(results, 1, (view.height + get_cursor_row()))}
             set_lines(0, -1, vim.tbl_map(tostring, partial_results))
             for row, line in pairs(partial_results) do
-              if selected[line] then
+              if selected[tostring(line)] then
                 add_results_highlight(row)
               end
             end
@@ -578,20 +498,20 @@ do
           end
         end
       end
-      local function on_update_unwraped(filter0, height)
+      local function on_update_unwraped(filter, height)
         local function should_cancel()
-          return (exit or (filter0 ~= last_filter))
+          return (exit or (filter ~= last_filter))
         end
-        if (filter0 == last_filter) then
+        if (filter == last_filter) then
           local check = vim.loop.new_check()
-          local reader = coroutine.create(config.get_results)
+          local reader = coroutine.create(config.producer)
           local has_rendered = false
           local pending_blocking_value = false
           local blocking_value = nil
           local loading_count = 1
           local last_time = vim.loop.now()
           local results = {}
-          local request = {cancel = should_cancel(), filter = filter0, height = height}
+          local request = {cancel = should_cancel(), filter = filter, height = height}
           local function schedule_write(results0)
             has_rendered = true
             local function _3_(...)
@@ -657,10 +577,10 @@ do
           return check:start(checker)
         end
       end
-      local function on_update(filter0)
-        last_filter = filter0
+      local function on_update(filter)
+        last_filter = filter
         local function _3_(...)
-          return on_update_unwraped(filter0, view.height, ...)
+          return on_update_unwraped(filter, view.height, ...)
         end
         return vim.schedule(_3_)
       end
@@ -670,16 +590,16 @@ do
           local row = get_cursor_row()
           local selection = get_cursor_line(row)
           if (selection ~= "") then
-            return config.on_select(selection, original_winnr)
+            return config.select(selection, original_winnr)
           end
         else
-          if config.on_multiselect then
-            return config.on_multiselect(selected_values, original_winnr)
+          if config.multiselect then
+            return config.multiselect(selected_values, original_winnr)
           end
         end
       end
       local function on_select_all_toggle()
-        if config.on_multiselect then
+        if config.multiselect then
           for _, value in ipairs(last_results) do
             if (selected[value] == nil) then
               selected[value] = value
@@ -691,16 +611,16 @@ do
         end
       end
       local function on_select_toggle()
-        if config.on_multiselect then
+        if config.multiselect then
           local row = get_cursor_row()
           local selection = get_cursor_line(row)
           if (selection ~= "") then
-            if (selected[selection] == nil) then
-              selected[selection] = selection
-              return add_results_highlight(row)
-            else
+            if selected[selection] then
               selected[selection] = nil
-              return vim.api.nvim_buf_clear_namespace(view.bufnr, namespace, (row - 1), row)
+              return nil
+            else
+              selected[selection] = selection
+              return nil
             end
           end
         end

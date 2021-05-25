@@ -21,8 +21,8 @@
 ;; Example:                                                                   ;;
 ;;                                                                            ;;
 ;; (snap.run {:prompt "Print One or Two"                                      ;;
-;;            :get_results (fn [] [:One :Two])                                ;;
-;;            :on_select print})                                              ;;
+;;            :producer (fn [] [:One :Two])                                ;;
+;;            :select print})                                              ;;
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -250,7 +250,7 @@
       (config.on-select-all-toggle))
 
     (local on_lines (fn []
-        (config.on-update (get-filter))))
+      (config.on-update (get-filter))))
 
     (fn on_detach [] 
       (fns.clean bufnr))
@@ -301,9 +301,9 @@
   loading)
 
 ;; Accumulates non empty results
-(fn accumulate [results partial-results]
-  (when (= (type partial-results) :string)
-    (print partial-results))
+
+;; fnlfmt: skip
+(defn accumulate [results partial-results]
   (when (not= partial-results nil)
     (each [_ value (ipairs partial-results)]
       (when (not= (tostring value) "")
@@ -329,56 +329,21 @@
       result)))
 
 ;; fnlfmt: skip
-(defn cache [producer]
-  "Provides a method to avoid running passed producer multiple times"
-  (var cache [])
-  (fn [request]
-    (if (= (length cache) 0)
-      (let [reader (coroutine.create producer)]
-        (while (not= (coroutine.status reader) :dead)
-          (local results (resume reader request))
-          (accumulate cache results)
-          (coroutine.yield results)))
-      cache)))
-
-;; fnlfmt: skip
-(defn filter [producer]
-  "Filters each result from the producer using request.filter"
-  (fn [request]
-    (fn filter [results]
-      (vim.tbl_filter #(fzy.has_match request.filter $1) results))
-
-    (let [reader (coroutine.create producer)]
-      (while (not= (coroutine.status reader) :dead)
-        (local (results) (resume reader request))
-        (coroutine.yield (if (= results nil) nil (filter results)))))))
-
-;; fnlfmt: skip
-(defn score [producer]
-  "Scores the result set"
-  (fn [request]
-    (local reader (coroutine.create producer))
-    (while (not= (coroutine.status reader) :dead)
-      (local results (resume reader request))
-      (when (not= results nil)
-        (coroutine.yield (vim.tbl_map #(with_meta $1 :score
-                                               (fzy.score request.filter
-                                                          (tostring $1)))
-                                   results))))))
-
-;; fnlfmt: skip
-(defn filter_with_score [producer]
-  "Combines the cache + filter + sort pattern for common uses"
-  (score (filter (cache producer))))
+(defn consume [producer request]
+  "Returns an iterator that consumes a producer"
+  (let [reader (coroutine.create producer)]
+    (fn []
+      (when (not= (coroutine.status reader) :dead)
+        (values (resume reader request))))))
 
 ;; Run docs:
 ;;
 ;; @config: {
 ;;   "Get the results to display"
-;;   :get_results () => itable<string>
+;;   :producer () => itable<string>
 ;;
 ;;   "Called when value is selected"
-;;   :on_select () => nil
+;;   :select () => nil
 ;;
 ;;   "The prompt displayed to the user"
 ;;   :prompt string
@@ -392,7 +357,7 @@
 ;;   }
 ;;
 ;;   "An optional function that enables multiselect executes on multiselect"
-;;   :?on_multiselect (selections) => nil
+;;   :?multiselect (selections) => nil
 ;; }
 
 ;; fnlfmt: skip
@@ -404,7 +369,7 @@
   (var last-results [])
 
   ;; Exit flag tracks whether buffers have detatched
-  ;; Used to send cancel request to get_results coroutines
+  ;; Used to send cancel request to producer coroutines
   (var exit false)
 
   ;; Store buffers for exiting
@@ -419,7 +384,7 @@
   ;; Creates a namespace for highlighting
   (local namespace (vim.api.nvim_create_namespace :Snap))
 
-  ;; Stores the original window to so we can pass it back to the on_select function
+  ;; Stores the original window to so we can pass it back to the select function
   (local original-winnr (vim.api.nvim_get_current_win))
 
   ;; Configures a default or custom prompt
@@ -483,7 +448,7 @@
 
             ;; Update highlights
             (each [row line (pairs partial-results)]
-              (when (. selected line) (add-results-highlight row))))))))
+              (when (. selected (tostring line)) (add-results-highlight row))))))))
 
   ;; This is the non-scheduled version of on-update
   (fn on-update-unwraped [filter height]
@@ -494,7 +459,7 @@
     ;; Only run when the filter hasn't changed from the unscheduled set
     (when (= filter last-filter)
       (let [check (vim.loop.new_check)
-            reader (coroutine.create config.get_results)]
+            reader (coroutine.create config.producer)]
         ;; Tracks if any results have rendered
         (var has-rendered false)
 
@@ -608,12 +573,12 @@
     (if (= (length selected-values) 0)
       (let [row (get-cursor-row) selection (get-cursor-line row)]
         (when (not= selection "")
-          (config.on_select selection original-winnr)))
-      (when config.on_multiselect (config.on_multiselect selected-values original-winnr))))
+          (config.select selection original-winnr)))
+      (when config.multiselect (config.multiselect selected-values original-winnr))))
 
   ;; Handles select all in the multiselect case
   (fn on-select-all-toggle []
-    (when config.on_multiselect
+    (when config.multiselect
       (each [_ value (ipairs last-results)]
         (if (= (. selected value) nil)
           (tset selected value value)
@@ -622,20 +587,18 @@
 
   ;; Handles select in the multiselect case
   (fn on-select-toggle []
-    (when config.on_multiselect
-      (let [row (get-cursor-row) selection (get-cursor-line row)]
+    (when config.multiselect
+      (let [row (get-cursor-row)
+            selection (get-cursor-line row)]
         (when (not= selection "")
-          (if (= (. selected selection) nil)
-            (do 
-              (tset selected selection selection)
-              (add-results-highlight row))
-            (do
-              (tset selected selection nil)
-              (vim.api.nvim_buf_clear_namespace view.bufnr namespace (- row 1) row)))))))
+          (if (. selected selection)
+            (tset selected selection nil)
+            (tset selected selection selection))))))
 
   ;; On key helper
   (fn on-key-direction [get-next-index]
-    (let [row (get-cursor-row) index (get-next-index row)]
+    (let [row (get-cursor-row)
+          index (get-next-index row)]
       (vim.api.nvim_win_set_cursor view.winnr
         [(math.max 1 (math.min (vim.api.nvim_buf_line_count view.bufnr) index)) 0])
       (write-results last-results)))

@@ -20,45 +20,31 @@ end
 local function _1_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _1_()
-    return {require("snap")}
+    return {require("snap.select.file"), require("snap.consumer.fzy"), require("snap.producer.oldfile"), require("snap")}
   end
   ok_3f_0_, val_0_ = pcall(_1_)
   if ok_3f_0_ then
-    _0_0["aniseed/local-fns"] = {require = {snap = "snap"}}
+    _0_0["aniseed/local-fns"] = {require = {file = "snap.select.file", fzy = "snap.consumer.fzy", oldfile = "snap.producer.oldfile", snap = "snap"}}
     return val_0_
   else
     return print(val_0_)
   end
 end
 local _local_0_ = _1_(...)
-local snap = _local_0_[1]
+local file = _local_0_[1]
+local fzy = _local_0_[2]
+local oldfile = _local_0_[3]
+local snap = _local_0_[4]
 local _2amodule_2a = _0_0
 local _2amodule_name_2a = "snap.oldfiles"
 do local _ = ({nil, _0_0, {{}, nil, nil, nil}})[2] end
-local function on_select(file, winnr)
-  local buffer = vim.fn.bufnr(file, true)
-  vim.api.nvim_buf_set_option(buffer, "buflisted", true)
-  if (winnr ~= false) then
-    return vim.api.nvim_win_set_buf(winnr, buffer)
-  end
-end
-local function get_slow_data()
-  local function _2_(_241)
-    return (vim.fn.empty(vim.fn.glob(_241)) == 0)
-  end
-  return vim.tbl_filter(_2_, vim.v.oldfiles)
-end
-local function get_results()
-  local _2_0 = snap.yield(get_slow_data)
-  return _2_0
-end
 local run
 do
   local v_0_
   do
     local v_0_0
     local function run0()
-      return snap.run({get_results = snap.filter_with_score(get_results), on_select = on_select, prompt = "Old files"})
+      return snap.run({producer = fzy.create(oldfile.create), prompt = "Old files", select = file.select})
     end
     v_0_0 = run0
     _0_0["run"] = v_0_0
