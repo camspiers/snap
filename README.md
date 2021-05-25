@@ -34,7 +34,7 @@ snap.run {
 
 `snap` uses a non-blocking design to ensure the UI is always responsive to user input.
 
-To achieve this `snap` uses lua `coroutine`'s and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together
+To achieve this `snap` employs coroutines, and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together
 
 Our example's goal is to run the `ls` command, filter the results in response to input, and print the selected value.
 
@@ -84,7 +84,9 @@ A consumers type looks like this:
 type Consumer = (producer: Producer) => Producer;
 ```
 
-A consumer is a function that takes another producer and returns a producer which consumes the passed producers results and progressively yields its own in response. As our goal here is to filter, we iterate over our passed producer and only yield values that match `request.filter`.
+A consumer is a function that takes another producer and returns a producer which progressively yields its own results.
+
+As our goal here is to filter, we iterate over our passed producer and only yield values that match `request.filter`.
 
 ```lua
 -- Takes in a producer and returns a producer
@@ -142,7 +144,7 @@ From the above we have seen the following distinct concepts of `snap`:
 ```lua
 snap.run {
   producer = snap.consumer.fzy.create(
-    snap.producer.ripgrep.file.create
+    require'snap.producer.ripgrep.file'.create
   ),
   select = snap.select.file.select
 }
@@ -152,8 +154,8 @@ snap.run {
 
 ```lua
 snap.run {
-  producer = snap.producer.ripgrep.vimgrep.create,
-  select = snap.select.vimgrep
+  producer = require'snap.producer.ripgrep.vimgrep'.create,
+  select = require'snap.select.vimgrep'.select
 }
 ```
 
@@ -161,10 +163,10 @@ snap.run {
 
 ```lua
 snap.run {
-  producer = snap.consumer.fzy.create(
-    snap.producer.buffer.create
+  producer = require'snap.consumer.fzy'.create(
+    require'snap.producer.buffer'.create
   ),
-  select = snap.select.file.select
+  select = require'snap.select.file'.select
 }
 ```
 
@@ -172,10 +174,10 @@ snap.run {
 
 ```lua
 snap.run {
-  producer = snap.consumer.fzy.create(
+  producer = require'snap.consumer.fzy'.create(
     snap.producer.oldfiles.create
   ),
-  select = snap.select.file.select
+  select = require'snap.select.file'.select
 }
 ```
 
@@ -195,8 +197,8 @@ type MetaResult = {
   // The result string value
   result: string;
 
-  // A metatable __call implementation
-  __call: (result: MetaResult) => string;
+  // A metatable __tostring implementation
+  __tostring: (result: MetaResult) => string;
 
   // More optional properties, e.g. score
   ...
