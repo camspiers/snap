@@ -22,9 +22,9 @@ use_rocks 'fzy'
 
 ## Concepts
 
-The design of `snap` focusses on performance, it achieves this by utilizing a non-blocking designed to ensure the UI is always responsive to user input.
+`snap` uses a non-blocking design to ensure the UI is always responsive to user input.
 
-To achieve this end `snap` uses lua `coroutine`'s and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together
+To achieve this `snap` uses lua `coroutine`'s and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together
 
 Our example's goal is to run the `ls` command, filter the results in response to input, and print the selected value.
 
@@ -119,6 +119,7 @@ From the above we have seen the following distinct concepts of `snap`:
 - Yielding `nil` to exit
 - Using `snap.io.spawn` iterate over a processes data
 - Using `snap.yield` to run slow-mode nvim functions
+- Using `snap.consume` to consume another producer
 - Using the `request.filter` value
 - Using the `request.cancel` signal to kill processes
 
@@ -131,7 +132,7 @@ From the above we have seen the following distinct concepts of `snap`:
 ```lua
 snap.run {
   producer = snap.consumer.fzy.create(
-    snap.producer.ripgrep.file
+    snap.producer.ripgrep.file.create
   ),
   select = snap.select.file.select
 }
@@ -141,7 +142,7 @@ snap.run {
 
 ```lua
 snap.run {
-  producer = snap.producer.ripgrep.vimgrep,
+  producer = snap.producer.ripgrep.vimgrep.create,
   select = snap.select.vimgrep
 }
 ```
@@ -151,7 +152,7 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.consumer.fzy.create(
-    snap.producer.buffer
+    snap.producer.buffer.create
   ),
   select = snap.select.file.select
 }
@@ -162,7 +163,7 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.consumer.fzy.create(
-    snap.producer.oldfiles
+    snap.producer.oldfiles.create
   ),
   select = snap.select.file.select
 }
