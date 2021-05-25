@@ -269,6 +269,7 @@ For each `table<string>` yielded (or returned as the last value of `producer`) f
 ```lua
 local function producer(message)
   coroutine.yield({"Result 1", "Result 1"})
+  -- the nvim UI can respond to input between these yields
   coroutine.yield({"Result 3", "Result 4"})
 end
 ```
@@ -304,13 +305,10 @@ Given that `producer` is by design run when `fast-mode` is true. One needs an ab
 ```lua
 local function producer(message)
   -- Yield a function to get its result
-  local cwd = snap.yield(vim.fn.cwd)
-  -- Now we have the cwd we can yield itable<string>
-  coroutine.yield({cwd})
+  local cwd = snap.yield(vim.fn.getcwd)
+  -- Now we have the cwd we can do something with it
 end
 ```
-
-This results in a single result being displayed in the result buffer, in particular the `cwd`.
 
 #### Yielding `nil`
 
@@ -363,11 +361,11 @@ Makes getting values from yield easier by skiping first coroutine.yield return v
 
 ### `snap.consume`
 
-```
-(producer: Producer, request: Request) => iterator<yield<Yieldable>>
-```
+Consumes a producer providing an iterator of its yielded results
 
-Consumes a producer
+```
+(producer: Producer, request: Request) => iterator<Yieldable>
+```
 
 ### `snap.layouts.centered`
 ### `snap.layouts.bottom`
