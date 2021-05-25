@@ -20,18 +20,17 @@ end
 local function _1_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _1_()
-    return {require("fzy")}
+    return {}
   end
   ok_3f_0_, val_0_ = pcall(_1_)
   if ok_3f_0_ then
-    _0_0["aniseed/local-fns"] = {require = {fzy = "fzy"}}
+    _0_0["aniseed/local-fns"] = {}
     return val_0_
   else
     return print(val_0_)
   end
 end
 local _local_0_ = _1_(...)
-local fzy = _local_0_[1]
 local _2amodule_2a = _0_0
 local _2amodule_name_2a = "snap"
 do local _ = ({nil, _0_0, {{}, nil, nil, nil}})[2] end
@@ -449,6 +448,15 @@ do
       assert((type(config.producer) == "function"), "Producer must be a function")
       assert(config.select, "Config must have a select")
       assert((type(config.select) == "function"), "Select must be a function")
+      if config.multiselect then
+        assert((type(config.multiselect) == "function"), "Multiselect must be a function")
+      end
+      if config.prompt then
+        assert((type(config.prompt) == "string"), "Prompt must be a string")
+      end
+      if config.layout then
+        assert((type(config.layout) == "function"), "Layout must be a function")
+      end
       local last_filter = nil
       local last_results = {}
       local exit = false
@@ -519,19 +527,19 @@ do
           local request = {cancel = should_cancel(), filter = filter, height = height}
           local function schedule_write(results0)
             has_rendered = true
-            local function _3_(...)
+            local function _6_(...)
               return write_results(results0, ...)
             end
-            return vim.schedule(_3_)
+            return vim.schedule(_6_)
           end
           local function _end()
             check:stop()
             if not request.cancel then
               if has_meta(tbl_first(results), "score") then
-                local function _3_(_241, _242)
+                local function _6_(_241, _242)
                   return (_241.score > _242.score)
                 end
-                partial_quicksort(results, 1, #results, view.height, _3_)
+                partial_quicksort(results, 1, #results, view.height, _6_)
               end
               last_results = results
               return schedule_write(results)
@@ -539,12 +547,12 @@ do
           end
           local function schedule_blocking_value(fnc)
             pending_blocking_value = true
-            local function _3_()
+            local function _6_()
               blocking_value = fnc()
               pending_blocking_value = false
               return nil
             end
-            return vim.schedule(_3_)
+            return vim.schedule(_6_)
           end
           local function checker()
             if pending_blocking_value then
@@ -553,15 +561,15 @@ do
             request["cancel"] = should_cancel()
             if (coroutine.status(reader) ~= "dead") then
               local _, value = coroutine.resume(reader, request, blocking_value)
-              local _4_0 = type(value)
-              if (_4_0 == "function") then
+              local _7_0 = type(value)
+              if (_7_0 == "function") then
                 schedule_blocking_value(value)
-              elseif (_4_0 == "table") then
+              elseif (_7_0 == "table") then
                 accumulate(results, value)
                 if ((#results >= view.height) and not has_meta(tbl_first(results), "score")) then
                   schedule_write(results)
                 end
-              elseif (_4_0 == "nil") then
+              elseif (_7_0 == "nil") then
                 _end()
               end
             else
@@ -570,13 +578,13 @@ do
             if (not has_rendered and ((vim.loop.now() - last_time) > 500)) then
               last_time = vim.loop.now()
               loading_count = (loading_count + 1)
-              local function _5_()
+              local function _8_()
                 if not request.cancel then
                   local loading = create_loading_screen(view.width, view.height, loading_count)
                   return set_lines(0, -1, loading)
                 end
               end
-              return vim.schedule(_5_)
+              return vim.schedule(_8_)
             end
           end
           return check:start(checker)
@@ -584,10 +592,10 @@ do
       end
       local function on_update(filter)
         last_filter = filter
-        local function _3_(...)
+        local function _6_(...)
           return on_update_unwraped(filter, view.height, ...)
         end
-        return vim.schedule(_3_)
+        return vim.schedule(_6_)
       end
       local function on_enter()
         local selected_values = vim.tbl_values(selected)
@@ -637,28 +645,28 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _3_(_241)
+        local function _6_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_3_)
+        return on_key_direction(_6_)
       end
       local function on_down()
-        local function _3_(_241)
+        local function _6_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_3_)
+        return on_key_direction(_6_)
       end
       local function on_pageup()
-        local function _3_(_241)
+        local function _6_(_241)
           return (_241 - view.height)
         end
-        return on_key_direction(_3_)
+        return on_key_direction(_6_)
       end
       local function on_pagedown()
-        local function _3_(_241)
+        local function _6_(_241)
           return (_241 + view.height)
         end
-        return on_key_direction(_3_)
+        return on_key_direction(_6_)
       end
       local input_view_info = create_input_view({["initial-filter"] = initial_filter, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, prompt = prompt})
       return table.insert(buffers, input_view_info.bufnr)

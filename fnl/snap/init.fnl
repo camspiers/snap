@@ -26,7 +26,7 @@
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(module snap {require {fzy fzy}})
+(module snap)
 
 ;; Basic helper to get the first value
 (fn tbl-first [tbl]
@@ -340,10 +340,10 @@
 ;;
 ;; @config: {
 ;;   "Get the results to display"
-;;   :producer () => itable<string>
+;;   :producer (request: Request) => yield<Yieldable>
 ;;
 ;;   "Called when value is selected"
-;;   :select () => nil
+;;   :select () => void
 ;;
 ;;   "The prompt displayed to the user"
 ;;   :prompt string
@@ -357,17 +357,27 @@
 ;;   }
 ;;
 ;;   "An optional function that enables multiselect executes on multiselect"
-;;   :?multiselect (selections) => nil
+;;   :?multiselect (selections) => void
 ;; }
 
 ;; fnlfmt: skip
 (defn run [config]
   ;; Config validation
+
+  ;; Required values
   (assert (= (type config) "table") "Config must be a table")
   (assert config.producer "Config must have a producer")
   (assert (= (type config.producer) "function") "Producer must be a function")
   (assert config.select "Config must have a select")
   (assert (= (type config.select) "function") "Select must be a function")
+
+  ;; Optional values
+  (when config.multiselect
+    (assert (= (type config.multiselect) "function") "Multiselect must be a function"))
+  (when config.prompt
+    (assert (= (type config.prompt) "string") "Prompt must be a string"))
+  (when config.layout
+    (assert (= (type config.layout) "function") "Layout must be a function"))
 
   ;; Store last search
   (var last-filter nil)
