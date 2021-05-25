@@ -1,4 +1,2 @@
-(module snap.producer.ripgrep.file {require {general snap.producer.ripgrep.general}})
-
-(defn create [request]
-  (general.create [:--files :--no-ignore :--hidden] request))
+(let [general (require :snap.producer.ripgrep.general)]
+  (fn [request] (general [:--files :--no-ignore :--hidden] request)))

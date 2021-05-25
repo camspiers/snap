@@ -22,8 +22,9 @@ The following is a basic example to give a taste of the API. It creates a highly
 
 ```lua
 require'snap'.run {
-  producer = require'snap.producer.ripgrep.vimgrep'.create,
+  producer = require'snap.producer.ripgrep.vimgrep',
   select = require'snap.select.vimgrep'.select
+  multiselect = require'snap.select.vimgrep'.multiselect
 }
 ```
 
@@ -31,7 +32,7 @@ require'snap'.run {
 
 `snap` uses a non-blocking design to ensure the UI is always responsive to user input.
 
-To achieve this `snap` employs coroutines, and while that might be a little daunting, the following walk through of the primary concepts of `snap` is designed to help put all the concepts together.
+To achieve this it employs coroutines, and while that might be a little daunting, the following walk-through illustrates the primary concepts.
 
 Our example's goal is to run the `ls` command, filter the results in response to input, and print the selected value.
 
@@ -43,15 +44,15 @@ A producers API looks like this:
 type Producer = (request: Request) => yield<Yieldable>;
 ```
 
-The producer is a function that takes a request, and yields results (see below for the range of `Yieldable` types).
+The producer is a function that takes a request and yields results (see below for the range of `Yieldable` types).
 
 In the following `producer`, we run the `ls` command and progressively `yield` its output.
 
 ```lua
 local snap = require'snap'
 local io = require'snap.io'
--- Runs ls and yields lua tables containing each line
 
+-- Runs ls and yields lua tables containing each line
 local function producer (request)
   -- Runs the slow-mode getcwd function
   local cwd = snap.yield(vim.fn.getcwd)
@@ -145,9 +146,7 @@ Uses built in `fzy` filter + score, and `ripgrep` for file finding.
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'.create(
-    require'snap.producer.ripgrep.file'.create
-  ),
+  producer = require'snap.consumer.fzy'(require'snap.producer.ripgrep.file'),
   select = require'snap.select.file'.select
   multiselect = require'snap.select.file'.multiselect
 }
@@ -157,7 +156,7 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.producer.ripgrep.vimgrep'.create,
+  producer = require'snap.producer.ripgrep.vimgrep',
   select = require'snap.select.vimgrep'.select
   multiselect = require'snap.select.vimgrep'.multiselect
 }
@@ -167,9 +166,7 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'.create(
-    require'snap.producer.buffer'.create
-  ),
+  producer = require'snap.consumer.fzy'(require'snap.producer.buffer'),
   select = require'snap.select.file'.select
 }
 ```
@@ -178,9 +175,7 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'.create(
-    require'snap.producer.oldfiles'.create
-  ),
+  producer = require'snap.consumer.fzy'(require'snap.producer.oldfiles'),
   select = require'snap.select.file'.select
 }
 ```

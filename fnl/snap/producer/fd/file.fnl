@@ -1,4 +1,2 @@
-(module snap.producer.fd.file {require {general snap.producer.fd.general}})
-
-(defn create [request]
-  (general.create [:-HI] request))
+(let [general (require :snap.producer.fd.general)]
+  (fn [request] (general [:-H :-I] request)))

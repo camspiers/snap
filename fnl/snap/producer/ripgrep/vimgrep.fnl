@@ -1,4 +1,2 @@
-(module snap.producer.ripgrep.vimgrep {require {general snap.producer.ripgrep.general}})
-
-(defn create [request]
-  (general.create [:--vimgrep :--hidden request.filter] request))
+(let [general (require :snap.producer.ripgrep.general)]
+  (fn [request] (general [:--vimgrep :--hidden request.filter] request)))
