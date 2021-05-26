@@ -310,7 +310,7 @@
         (table.insert results value)))))
 
 ;; fnlfmt: skip
-(defn yield [value]
+(defn sync [value]
   "Basic wrapper around coroutine.yield that returns first result"
   (let [(_ result) (coroutine.yield value)]
     result))
@@ -324,7 +324,7 @@
       request.cancel nil
       ;; When we have a function, we want to yield it
       ;; get the value then continue
-      (= (type result) :function) (resume thread request (yield result))
+      (= (type result) :function) (resume thread request (sync result))
       ;; If we aren't canceling then return result
       result)))
 

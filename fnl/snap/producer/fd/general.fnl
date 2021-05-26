@@ -1,7 +1,7 @@
 (let [snap (require :snap)
       io (require :snap.io)]
   (fn [args request]
-    (local cwd (snap.yield vim.fn.getcwd))
+    (local cwd (snap.sync vim.fn.getcwd))
     (each [data err kill (io.spawn :fd args cwd)]
       (if request.cancel (do
                            (kill)

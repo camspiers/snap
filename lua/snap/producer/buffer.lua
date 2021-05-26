@@ -10,6 +10,6 @@ local function get_buffers()
 end
 local snap = require("snap")
 local function _1_()
-  return snap.yield(get_buffers)
+  return snap.sync(get_buffers)
 end
 return _1_

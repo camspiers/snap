@@ -55,7 +55,7 @@ local io = require'snap.io'
 -- Runs ls and yields lua tables containing each line
 local function producer (request)
   -- Runs the slow-mode getcwd function
-  local cwd = snap.yield(vim.fn.getcwd)
+  local cwd = snap.sync(vim.fn.getcwd)
   -- Iterates ls commands output using snap.io.spawn
   for data, err, kill in io.spawn("ls", {}, cwd) do
     -- If the filter updates while the command is still running
@@ -131,7 +131,7 @@ From the above we have seen the following distinct concepts of `snap`:
 - Yielding a lua `table` of strings
 - Yielding `nil` to exit
 - Using `snap.io.spawn` iterate over the data of a process
-- Using `snap.yield` to run slow-mode nvim functions
+- Using `snap.sync` to run slow-mode nvim functions
 - Using `snap.consume` to consume another producer
 - Using the `request.filter` value
 - Using the `request.cancel` signal to kill processes
@@ -305,7 +305,7 @@ Given that `producer` is by design run when `fast-mode` is true. One needs an ab
 ```lua
 local function producer(message)
   -- Yield a function to get its result
-  local cwd = snap.yield(vim.fn.getcwd)
+  local cwd = snap.sync(vim.fn.getcwd)
   -- Now we have the cwd we can do something with it
 end
 ```
@@ -355,7 +355,7 @@ Resumes a passed coroutine while handling non-fast API requests.
 
 TODO
 
-### `snap.yield`
+### `snap.sync`
 
 Makes getting values from yield easier by skiping first coroutine.yield return value.
 

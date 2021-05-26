@@ -375,22 +375,22 @@ do
   t_0_["accumulate"] = v_0_
   accumulate = v_0_
 end
-local yield
+local sync
 do
   local v_0_
   do
     local v_0_0
-    local function yield0(value)
+    local function sync0(value)
       local _, result = coroutine.yield(value)
       return result
     end
-    v_0_0 = yield0
-    _0_0["yield"] = v_0_0
+    v_0_0 = sync0
+    _0_0["sync"] = v_0_0
     v_0_ = v_0_0
   end
   local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["yield"] = v_0_
-  yield = v_0_
+  t_0_["sync"] = v_0_
+  sync = v_0_
 end
 local resume
 do
@@ -402,7 +402,7 @@ do
       if request.cancel then
         return nil
       elseif (type(result) == "function") then
-        return resume0(thread, request, yield(result))
+        return resume0(thread, request, sync(result))
       else
         return result
       end

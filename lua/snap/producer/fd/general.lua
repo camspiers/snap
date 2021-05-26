@@ -2,7 +2,7 @@ local _2afile_2a = "fnl/snap/producer/fd/general.fnl"
 local snap = require("snap")
 local io = require("snap.io")
 local function _1_(args, request)
-  local cwd = snap.yield(vim.fn.getcwd)
+  local cwd = snap.sync(vim.fn.getcwd)
   for data, err, kill in io.spawn("fd", args, cwd) do
     if request.cancel then
       kill()

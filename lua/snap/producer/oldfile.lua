@@ -7,6 +7,6 @@ local function get_oldfiles()
 end
 local snap = require("snap")
 local function _1_()
-  return snap.yield(get_oldfiles)
+  return snap.sync(get_oldfiles)
 end
 return _1_
