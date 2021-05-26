@@ -39,6 +39,132 @@ local function tbl_first(tbl)
     return tbl[1]
   end
 end
+local function partition(tbl, p, r, comp)
+  local x = tbl[r]
+  local i = (p - 1)
+  for j = p, (r - 1), 1 do
+    if comp(tbl[j], x) then
+      i = (i + 1)
+      local temp = tbl[i]
+      tbl[i] = tbl[j]
+      tbl[j] = temp
+    end
+  end
+  local temp = tbl[(i + 1)]
+  tbl[(i + 1)] = tbl[r]
+  tbl[r] = temp
+  return (i + 1)
+end
+local function partial_quicksort(tbl, p, r, m, comp)
+  if (p < r) then
+    local q = partition(tbl, p, r, comp)
+    partial_quicksort(tbl, p, (q - 1), m, comp)
+    if (p < (m - 1)) then
+      return partial_quicksort(tbl, (q + 1), r, m, comp)
+    end
+  end
+end
+local get
+do
+  local v_0_
+  do
+    local v_0_0
+    local function get0(mod)
+      return require(string.format("snap.%s", mod))
+    end
+    v_0_0 = get0
+    _0_0["get"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["get"] = v_0_
+  get = v_0_
+end
+local accumulate
+do
+  local v_0_
+  do
+    local v_0_0
+    local function accumulate0(results, partial_results)
+      if (partial_results ~= nil) then
+        for _, value in ipairs(partial_results) do
+          if (tostring(value) ~= "") then
+            table.insert(results, value)
+          end
+        end
+        return nil
+      end
+    end
+    v_0_0 = accumulate0
+    _0_0["accumulate"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["accumulate"] = v_0_
+  accumulate = v_0_
+end
+local sync
+do
+  local v_0_
+  do
+    local v_0_0
+    local function sync0(value)
+      local _, result = coroutine.yield(value)
+      return result
+    end
+    v_0_0 = sync0
+    _0_0["sync"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["sync"] = v_0_
+  sync = v_0_
+end
+local resume
+do
+  local v_0_
+  do
+    local v_0_0
+    local function resume0(thread, request, value)
+      local _, result = coroutine.resume(thread, request, value)
+      if request.cancel then
+        return nil
+      elseif (type(result) == "function") then
+        return resume0(thread, request, sync(result))
+      else
+        return result
+      end
+    end
+    v_0_0 = resume0
+    _0_0["resume"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["resume"] = v_0_
+  resume = v_0_
+end
+local consume
+do
+  local v_0_
+  do
+    local v_0_0
+    local function consume0(producer, request)
+      local reader = coroutine.create(producer)
+      local function _2_()
+        if (coroutine.status(reader) ~= "dead") then
+          return resume(reader, request)
+        end
+      end
+      return _2_
+    end
+    v_0_0 = consume0
+    _0_0["consume"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["consume"] = v_0_
+  consume = v_0_
+end
 local meta_tbl
 do
   local v_0_
@@ -112,31 +238,6 @@ do
   local t_0_ = (_0_0)["aniseed/locals"]
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
-end
-local function partition(tbl, p, r, comp)
-  local x = tbl[r]
-  local i = (p - 1)
-  for j = p, (r - 1), 1 do
-    if comp(tbl[j], x) then
-      i = (i + 1)
-      local temp = tbl[i]
-      tbl[i] = tbl[j]
-      tbl[j] = temp
-    end
-  end
-  local temp = tbl[(i + 1)]
-  tbl[(i + 1)] = tbl[r]
-  tbl[r] = temp
-  return (i + 1)
-end
-local function partial_quicksort(tbl, p, r, m, comp)
-  if (p < r) then
-    local q = partition(tbl, p, r, comp)
-    partial_quicksort(tbl, p, (q - 1), m, comp)
-    if (p < (m - 1)) then
-      return partial_quicksort(tbl, (q + 1), r, m, comp)
-    end
-  end
 end
 local register
 do
@@ -310,91 +411,6 @@ local function create_loading_screen(width, height, counter)
   table.insert(loading, center(loading_with_dots, width))
   table.insert(loading, center_with_text_width(("\226\149\176" .. string.rep("\226\148\128", 19) .. "\226\149\175"), text_width, width))
   return loading
-end
-local accumulate
-do
-  local v_0_
-  do
-    local v_0_0
-    local function accumulate0(results, partial_results)
-      if (partial_results ~= nil) then
-        for _, value in ipairs(partial_results) do
-          if (tostring(value) ~= "") then
-            table.insert(results, value)
-          end
-        end
-        return nil
-      end
-    end
-    v_0_0 = accumulate0
-    _0_0["accumulate"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["accumulate"] = v_0_
-  accumulate = v_0_
-end
-local sync
-do
-  local v_0_
-  do
-    local v_0_0
-    local function sync0(value)
-      local _, result = coroutine.yield(value)
-      return result
-    end
-    v_0_0 = sync0
-    _0_0["sync"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["sync"] = v_0_
-  sync = v_0_
-end
-local resume
-do
-  local v_0_
-  do
-    local v_0_0
-    local function resume0(thread, request, value)
-      local _, result = coroutine.resume(thread, request, value)
-      if request.cancel then
-        return nil
-      elseif (type(result) == "function") then
-        return resume0(thread, request, sync(result))
-      else
-        return result
-      end
-    end
-    v_0_0 = resume0
-    _0_0["resume"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["resume"] = v_0_
-  resume = v_0_
-end
-local consume
-do
-  local v_0_
-  do
-    local v_0_0
-    local function consume0(producer, request)
-      local reader = coroutine.create(producer)
-      local function _3_()
-        if (coroutine.status(reader) ~= "dead") then
-          return resume(reader, request)
-        end
-      end
-      return _3_
-    end
-    v_0_0 = consume0
-    _0_0["consume"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["consume"] = v_0_
-  consume = v_0_
 end
 local run
 do

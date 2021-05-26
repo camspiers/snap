@@ -22,9 +22,9 @@ The following is a basic example to give a taste of the API. It creates a highly
 
 ```lua
 require'snap'.run {
-  producer = require'snap.producer.ripgrep.vimgrep',
-  select = require'snap.select.vimgrep'.select
-  multiselect = require'snap.select.vimgrep'.multiselect
+  producer = snap.get'producer.ripgrep.vimgrep',
+  select = snap.get'select.vimgrep'.select
+  multiselect = snap.get'select.vimgrep'.multiselect
 }
 ```
 
@@ -50,7 +50,7 @@ In the following `producer`, we run the `ls` command and progressively `yield` i
 
 ```lua
 local snap = require'snap'
-local io = require'snap.io'
+local io = snap.get'io'
 
 -- Runs ls and yields lua tables containing each line
 local function producer (request)
@@ -146,9 +146,9 @@ Uses built in `fzy` filter + score, and `ripgrep` for file finding.
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'(require'snap.producer.ripgrep.file'),
-  select = require'snap.select.file'.select
-  multiselect = require'snap.select.file'.multiselect
+  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select
+  multiselect = snap.get'select.file'.multiselect
 }
 ```
 
@@ -156,9 +156,9 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.producer.ripgrep.vimgrep',
-  select = require'snap.select.vimgrep'.select
-  multiselect = require'snap.select.vimgrep'.multiselect
+  producer = snap.get'producer.ripgrep.vimgrep',
+  select = snap.get'select.vimgrep'.select
+  multiselect = snap.get'select.vimgrep'.multiselect
 }
 ```
 
@@ -166,8 +166,8 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'(require'snap.producer.vim.buffer'),
-  select = require'snap.select.file'.select
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
+  select = snap.get'select.file'.select
 }
 ```
 
@@ -175,8 +175,8 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'(require'snap.producer.vim.oldfiles'),
-  select = require'snap.select.file'.select
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
+  select = snap.get'select.file'.select
 }
 ```
 
@@ -327,9 +327,9 @@ You can register your mappings in the following way:
 local snap = require'snap'
 snap.register.map({"n"}, {"<Leader>f"}, function ()
   snap.run {
-    producer = require'snap.consumer.fzy'(require'snap.producer.ripgrep.file'),
-    select = require'snap.select.file'.select,
-    multiselect = require'snap.select.file'.multiselect
+    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+    select = snap.get'select.file'.select,
+    multiselect = snap.get'select.file'.multiselect
   }
 end)
 ```

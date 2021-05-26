@@ -28,10 +28,81 @@
 
 (module snap)
 
+;; Local helpers
+
 ;; Basic helper to get the first value
 (fn tbl-first [tbl]
   (when tbl
     (. tbl 1)))
+
+;; Partition for quick sort
+(fn partition [tbl p r comp]
+  (let [x (. tbl r)]
+    (var i (- p 1))
+    (for [j p (- r 1) 1]
+      (when (comp (. tbl j) x)
+        (set i (+ i 1))
+        (local temp (. tbl i))
+        (tset tbl i (. tbl j))
+        (tset tbl j temp)))
+    (local temp (. tbl (+ i 1)))
+    (tset tbl (+ i 1) (. tbl r))
+    (tset tbl r temp)
+    (+ i 1)))
+
+;; Implementation of partial quicksort
+;; For large amounts of results we can skip sorting the entire table
+
+;; fnlfmt: skip
+(fn partial-quicksort [tbl p r m comp]
+  (when (< p r)
+    (let [q (partition tbl p r comp)]
+      (partial-quicksort tbl p (- q 1) m comp)
+      (when (< p (- m 1))
+        (partial-quicksort tbl (+ q 1) r m comp)))))
+
+;; Public API
+
+;; Provides easy access to submodules
+(defn get [mod]
+  (require (string.format "snap.%s" mod)))
+
+;; Accumulates non empty results
+
+;; fnlfmt: skip
+(defn accumulate [results partial-results]
+  (when (not= partial-results nil)
+    (each [_ value (ipairs partial-results)]
+      (when (not= (tostring value) "")
+        (table.insert results value)))))
+
+;; fnlfmt: skip
+(defn sync [value]
+  "Basic wrapper around coroutine.yield that returns first result"
+  (let [(_ result) (coroutine.yield value)]
+    result))
+
+;; fnlfmt: skip
+(defn resume [thread request value]
+  "Transfers sync values allowing the yielding of functions with non fast-api access"
+  (let [(_ result) (coroutine.resume thread request value)]
+    (if
+      ;; If we are cancelling then return nil
+      request.cancel nil
+      ;; When we have a function, we want to yield it
+      ;; get the value then continue
+      (= (type result) :function) (resume thread request (sync result))
+      ;; If we aren't canceling then return result
+      result)))
+
+;; fnlfmt: skip
+(defn consume [producer request]
+  "Returns an iterator that consumes a producer"
+  (let [reader (coroutine.create producer)]
+    (fn []
+      (when (not= (coroutine.status reader) :dead)
+        (values (resume reader request))))))
+
 
 ;; Metatable for a result, allows the representation of results as both strings
 ;; and tables with extra data
@@ -62,32 +133,6 @@
 ;; fnlfmt: skip
 (defn has_meta [result field]
   (and (= (getmetatable result) meta-tbl) (not= (. result field) nil)))
-
-;; Partition for quick sort
-(fn partition [tbl p r comp]
-  (let [x (. tbl r)]
-    (var i (- p 1))
-    (for [j p (- r 1) 1]
-      (when (comp (. tbl j) x)
-        (set i (+ i 1))
-        (local temp (. tbl i))
-        (tset tbl i (. tbl j))
-        (tset tbl j temp)))
-    (local temp (. tbl (+ i 1)))
-    (tset tbl (+ i 1) (. tbl r))
-    (tset tbl r temp)
-    (+ i 1)))
-
-;; Implementation of partial quicksort
-;; For large amounts of results we can skip sorting the entire table
-
-;; fnlfmt: skip
-(fn partial-quicksort [tbl p r m comp]
-  (when (< p r)
-    (let [q (partition tbl p r comp)]
-      (partial-quicksort tbl p (- q 1) m comp)
-      (when (< p (- m 1))
-        (partial-quicksort tbl (+ q 1) r m comp)))))
 
 ;; Stores mappings for buffers and global user mappings
 (def register {})
@@ -130,6 +175,8 @@
     (each [_ key (ipairs keys)]
       (each [_ mode (ipairs modes)]
         (vim.api.nvim_set_keymap mode key rhs (or opts {}))))))
+
+;; View Helpers
 
 ;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [layout]
@@ -260,42 +307,6 @@
   (table.insert loading
     (center-with-text-width (.. "╰" (string.rep "─" 19) "╯") text-width width))
   loading)
-
-;; Accumulates non empty results
-
-;; fnlfmt: skip
-(defn accumulate [results partial-results]
-  (when (not= partial-results nil)
-    (each [_ value (ipairs partial-results)]
-      (when (not= (tostring value) "")
-        (table.insert results value)))))
-
-;; fnlfmt: skip
-(defn sync [value]
-  "Basic wrapper around coroutine.yield that returns first result"
-  (let [(_ result) (coroutine.yield value)]
-    result))
-
-;; fnlfmt: skip
-(defn resume [thread request value]
-  "Transfers sync values allowing the yielding of functions with non fast-api access"
-  (let [(_ result) (coroutine.resume thread request value)]
-    (if
-      ;; If we are cancelling then return nil
-      request.cancel nil
-      ;; When we have a function, we want to yield it
-      ;; get the value then continue
-      (= (type result) :function) (resume thread request (sync result))
-      ;; If we aren't canceling then return result
-      result)))
-
-;; fnlfmt: skip
-(defn consume [producer request]
-  "Returns an iterator that consumes a producer"
-  (let [reader (coroutine.create producer)]
-    (fn []
-      (when (not= (coroutine.status reader) :dead)
-        (values (resume reader request))))))
 
 ;; Run docs:
 ;;
