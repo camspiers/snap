@@ -521,7 +521,7 @@ do
           local has_rendered = false
           local pending_blocking_value = false
           local blocking_value = nil
-          local loading_count = 1
+          local loading_count = 0
           local last_time = vim.loop.now()
           local results = {}
           local request = {cancel = should_cancel(), filter = filter, height = height}
@@ -554,10 +554,21 @@ do
             end
             return vim.schedule(_6_)
           end
+          local function render_loading_screen()
+            loading_count = (loading_count + 1)
+            local function _6_()
+              if not request.cancel then
+                local loading = create_loading_screen(view.width, view.height, loading_count)
+                return set_lines(0, -1, loading)
+              end
+            end
+            return vim.schedule(_6_)
+          end
           local function checker()
             if pending_blocking_value then
               return nil
             end
+            local current_time = vim.loop.now()
             request["cancel"] = should_cancel()
             if (coroutine.status(reader) ~= "dead") then
               local _, value = coroutine.resume(reader, request, blocking_value)
@@ -575,16 +586,12 @@ do
             else
               _end()
             end
-            if (not has_rendered and ((vim.loop.now() - last_time) > 500)) then
-              last_time = vim.loop.now()
-              loading_count = (loading_count + 1)
-              local function _8_()
-                if not request.cancel then
-                  local loading = create_loading_screen(view.width, view.height, loading_count)
-                  return set_lines(0, -1, loading)
-                end
-              end
-              return vim.schedule(_8_)
+            if (not has_rendered and (loading_count == 0) and (#results > 0)) then
+              render_loading_screen()
+            end
+            if (not has_rendered and ((current_time - last_time) > 500)) then
+              last_time = current_time
+              return render_loading_screen()
             end
           end
           return check:start(checker)

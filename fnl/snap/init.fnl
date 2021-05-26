@@ -487,7 +487,7 @@
         (var blocking-value nil)
 
         ;; Store the number of times the loading screen has displayed
-        (var loading-count 1)
+        (var loading-count 0)
 
         ;; Store the last time the loap has run
         (var last-time (vim.loop.now))
@@ -533,11 +533,21 @@
             (set blocking-value (fnc))
             (set pending-blocking-value false))))
 
+        (fn render-loading-screen []
+          (set loading-count (+ loading-count 1))
+          (vim.schedule (fn []
+            (when (not request.cancel)
+              (local loading (create-loading-screen view.width view.height loading-count))
+              (set-lines 0 -1 loading)))))
+
         ;; This checker runs on every loop of the event loop
         ;; It checks if the coroutine is not dead and has more values
         (fn checker []
           (when pending-blocking-value
             (lua "return nil"))
+
+          ;; Store the current time
+          (local current-time (vim.loop.now))
 
           ;; Update the cancel flag
           (tset request :cancel (should-cancel))
@@ -564,14 +574,22 @@
             ;; When the coroutine is dead then stop the checker and write
             (end))
 
-          ;; Render a basic loading screen
-          (when (and (not has-rendered) (> (- (vim.loop.now) last-time) 500))
-            (set last-time (vim.loop.now))
-            (set loading-count (+ loading-count 1))
-            (vim.schedule (fn []
-              (when (not request.cancel)
-                (local loading (create-loading-screen view.width view.height loading-count))
-                (set-lines 0 -1 loading))))))
+          ;; Render first loading screen if no render has occured, we have results
+          ;; and no time based loading screen has rendered
+          (when
+            (and
+              (not has-rendered)
+              (= loading-count 0)
+              (> (length results) 0))
+            (render-loading-screen))
+
+          ;; Render a basic loading screen based on time
+          (when
+            (and
+              (not has-rendered)
+              (> (- current-time last-time) 500))
+            (set last-time current-time)
+            (render-loading-screen)))
 
         ;; Start the checker after each IO poll
         (check:start checker))))
