@@ -343,6 +343,8 @@ Adds a meta field to a result.
 
 ### `snap.has_meta`
 
+Checks if a result has a meta field.
+
 ```typescript
 (result: string | MetaResult, field: string) => boolean
 ```
@@ -351,13 +353,15 @@ Adds a meta field to a result.
 
 Resumes a passed coroutine while handling non-fast API requests.
 
+TODO
+
 ### `snap.yield`
+
+Makes getting values from yield easier by skiping first coroutine.yield return value.
 
 ```
 (value: Yieldable) => any
 ```
-
-Makes getting values from yield easier by skiping first coroutine.yield return value.
 
 ### `snap.consume`
 
