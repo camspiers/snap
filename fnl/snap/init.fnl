@@ -512,9 +512,9 @@
             (let [(_ value) (coroutine.resume reader request blocking-value)]
               (match (type value)
                 ;; We have a function so schedule it to be computed
-                "function" (schedule-blocking-value value)
+                :function (schedule-blocking-value value)
                 ;; Store the values, there are more to come
-                "table" (do
+                :table (do
                   (accumulate results value)
                   ;; This is an optimization to begin writing unscored results
                   ;; as early as we can
@@ -531,6 +531,7 @@
             (and
               (not has-rendered)
               (= loading-count 0)
+              (= (type results) :table)
               (> (length results) 0))
             (render-loading-screen))
 

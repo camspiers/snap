@@ -534,7 +534,7 @@ do
             else
               _end()
             end
-            if (not has_rendered and (loading_count == 0) and (#results > 0)) then
+            if (not has_rendered and (loading_count == 0) and (type(results) == "table") and (#results > 0)) then
               render_loading_screen()
             end
             if (not has_rendered and ((current_time - last_time) > 500)) then
