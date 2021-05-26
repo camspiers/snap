@@ -328,7 +328,7 @@ local snap = require'snap'
 snap.register.map({"n"}, {"<Leader>f"}, function ()
   snap.run {
     producer = require'snap.consumer.fzy'(require'snap.producer.ripgrep.file'),
-    select = require'snap.select.file'.select
+    select = require'snap.select.file'.select,
     multiselect = require'snap.select.file'.multiselect
   }
 end)
