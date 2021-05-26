@@ -501,7 +501,7 @@
           ;; Store the current time
           (local current-time (vim.loop.now))
 
-          ;; Update the cancel flag
+          ;; Update the cancel flag preserving an cancel set by a consumer
           (tset request :cancel (or request.cancel (should-cancel)))
 
           ;; When the coroutine is not dead, process its results
@@ -517,10 +517,12 @@
                   ;; This is an optimization to begin writing unscored results
                   ;; as early as we can
                   (when (and
+                          (= (length last-results) 0)
                           (>= (length results) height)
                           (not (has_meta (tbl-first results) :score)))
                     ;; Set the results to enable cursor
                     (set last-results results)
+                    ;; Early write
                     (schedule-write results)))))
             ;; When the coroutine is dead then stop the checker and write
             (end))

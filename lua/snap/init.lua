@@ -525,7 +525,7 @@ do
                 schedule_blocking_value(value)
               elseif (_7_0 == "table") then
                 accumulate(results, value)
-                if ((#results >= height) and not has_meta(tbl_first(results), "score")) then
+                if ((#last_results == 0) and (#results >= height) and not has_meta(tbl_first(results), "score")) then
                   last_results = results
                   schedule_write(results)
                 end
