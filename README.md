@@ -182,9 +182,7 @@ require'snap'.run {
 
 ## API
 
-### Types
-
-#### Meta Result
+### Meta Result
 
 Results can be decorated with additional information (see `with_meta`), these results are represented by the `MetaResult` type.
 
@@ -203,7 +201,7 @@ type MetaResult = {
 };
 ```
 
-#### Yieldable
+### Yieldable
 
 Coroutines in `snap` can yield 4 different types, each with a distinct meaning outlined below.
 
@@ -211,7 +209,7 @@ Coroutines in `snap` can yield 4 different types, each with a distinct meaning o
 type Yieldable = table<string> | table<MetaResult> | function | nil;
 ```
 
-##### Yielding `table<string>`
+#### Yielding `table<string>`
 
 For each `table<string>` yielded (or returned as the last value of `producer`) from a `producer`, `snap` will accumulate the values of the table and display them in the results buffer.
 
@@ -227,7 +225,7 @@ This `producer` function results in a table of 4 values displayed, but given the
 
 One can see how this functionality allows for results of spawned processes to progressively yield thier results while avoiding blocking user input, and enabling the cancelation of said spawned processes.
 
-##### Yielding `table<MetaResult>`
+#### Yielding `table<MetaResult>`
 
 Results at times need to be decorated with additional information, e.g. a sort score.
 
@@ -245,7 +243,7 @@ local function producer(message)
 end
 ```
 
-##### Yielding `function`
+#### Yielding `function`
 
 Given that `producer` is by design run when `fast-mode` is true. One needs an ability to at times get the result of a blocking `nvim` function, such as many of `nvim` basic functions, e.g. `vim.fn.getcwd`. As such `snap` provides the ability to `yield` a function, have its execution run with `vim.schedule` and its resulting value returned.
 
@@ -257,7 +255,7 @@ local function producer(message)
 end
 ```
 
-##### Yielding `nil`
+#### Yielding `nil`
 
 Yielding nil signals to `snap` that there are not more results, and the coroutine is dead. `snap` will finish processing the `coroutine` when nil is encounted.
 
@@ -270,7 +268,7 @@ local function producer(message)
 end
 ```
 
-#### Request
+### Request
 
 This is the request that is passed to a `producer`.
 
@@ -281,19 +279,19 @@ type Request = {
 };
 ```
 
-#### Producer
+### Producer
 
 ```typescript
 type Producer = (request: Request) => yield<Yieldable>;
 ```
 
-#### Consumer
+### Consumer
 
 ```typescript
 type Consumer = (producer: Producer) => Producer;
 ```
 
-#### `snap.run`
+### `snap.run`
 
 ```typescript
 {
