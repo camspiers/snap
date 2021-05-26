@@ -621,10 +621,11 @@ do
       local function on_select_all_toggle()
         if config.multiselect then
           for _, value in ipairs(last_results) do
-            if (selected[value] == nil) then
-              selected[value] = value
+            local value0 = tostring(value)
+            if (selected[value0] == nil) then
+              selected[value0] = value0
             else
-              selected[value] = nil
+              selected[value0] = nil
             end
           end
           return write_results(last_results)

@@ -615,9 +615,10 @@
   (fn on-select-all-toggle []
     (when config.multiselect
       (each [_ value (ipairs last-results)]
-        (if (= (. selected value) nil)
-          (tset selected value value)
-          (tset selected value nil)))
+        (let [value (tostring value)]
+          (if (= (. selected value) nil)
+            (tset selected value value)
+            (tset selected value nil))))
       (write-results last-results)))
 
   ;; Handles select in the multiselect case
