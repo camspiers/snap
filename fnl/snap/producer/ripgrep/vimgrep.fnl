@@ -1,2 +1,5 @@
-(let [general (require :snap.producer.ripgrep.general)]
-  (fn [request] (general [:--vimgrep :--hidden request.filter] request)))
+(let [snap (require :snap)
+      general (require :snap.producer.ripgrep.general)]
+  (fn [request]
+    (let [cwd (snap.sync vim.fn.getcwd)]
+      (general [:--vimgrep :--hidden request.filter] cwd request))))
