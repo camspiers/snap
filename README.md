@@ -371,7 +371,42 @@ Consumes a producer providing an iterator of its yielded results
 (producer: Producer, request: Request) => iterator<Yieldable>
 ```
 
+### Layouts
+
 ### `snap.layouts.centered`
 ### `snap.layouts.bottom`
 ### `snap.layouts.top`
+
+### Producers
+
+#### `snap.producer.buffer`
+
+#### `snap.producer.oldfiles`
+
+#### `snap.producer.ripgrep.file`
+
+#### `snap.producer.ripgrep.vimgrep`
+
+#### `snap.producer.fd.file`
+
+#### `snap.producer.fd.directory`
+
+### Consumers
+
+#### `snap.consumer.cache`
+
+#### `snap.consumer.fzy`
+
+#### `snap.consumer.fzy.filter`
+
+#### `snap.consumer.fzy.score`
+
+### Selectors
+
+#### `snap.select.file`
+
+#### `snap.select.vimgrep`
+
+#### `snap.select.cwd`
+
 
