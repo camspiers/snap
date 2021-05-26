@@ -166,7 +166,7 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'(require'snap.producer.buffer'),
+  producer = require'snap.consumer.fzy'(require'snap.producer.vim.buffer'),
   select = require'snap.select.file'.select
 }
 ```
@@ -175,7 +175,7 @@ require'snap'.run {
 
 ```lua
 require'snap'.run {
-  producer = require'snap.consumer.fzy'(require'snap.producer.oldfiles'),
+  producer = require'snap.consumer.fzy'(require'snap.producer.vim.oldfiles'),
   select = require'snap.select.file'.select
 }
 ```
@@ -371,7 +371,7 @@ TODO
 Yield a slow-mode function and get it's result.
 
 ```
-(value: () => T) => T
+(fnc: () => T) => T
 ```
 
 ### `snap.consume`
@@ -390,9 +390,9 @@ Consumes a producer providing an iterator of its yielded results
 
 ### Producers
 
-#### `snap.producer.buffer`
+#### `snap.producer.vim.buffer`
 
-#### `snap.producer.oldfiles`
+#### `snap.producer.vim.oldfiles`
 
 #### `snap.producer.ripgrep.file`
 

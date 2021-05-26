@@ -6,4 +6,6 @@
                                (vim.api.nvim_list_bufs))))
 
 (let [snap (require :snap)]
-  (fn [] (snap.sync get-buffers)))
+  (fn []
+    (snap.sync get-buffers)))
+

@@ -1,4 +1,4 @@
-local _2afile_2a = "fnl/snap/producer/oldfile.fnl"
+local _2afile_2a = "fnl/snap/producer/vim/oldfile.fnl"
 local function get_oldfiles()
   local function _1_(_241)
     return (vim.fn.empty(vim.fn.glob(_241)) == 0)

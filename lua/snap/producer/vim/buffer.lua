@@ -1,4 +1,4 @@
-local _2afile_2a = "fnl/snap/producer/buffer.fnl"
+local _2afile_2a = "fnl/snap/producer/vim/buffer.fnl"
 local function get_buffers()
   local function _1_(_241)
     return vim.fn.bufname(_241)
