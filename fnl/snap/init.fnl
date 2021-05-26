@@ -89,59 +89,6 @@
       (when (< p (- m 1))
         (partial-quicksort tbl (+ q 1) r m comp)))))
 
-;; Global accessible layouts
-;; Currently layouts always have the input placed below and therefore room
-;; must be left available for it to fit
-(def layouts {})
-
-;; Helper to get lines
-(fn layouts.lines []
-  (vim.api.nvim_get_option :lines))
-
-;; Helper to get columns
-(fn layouts.columns []
-  (vim.api.nvim_get_option :columns))
-
-;; The middle for the height or width requested (from top or left)
-(fn layouts.middle [total size]
-  (math.floor (/ (- total size) 2)))
-
-(fn layouts.from-bottom [size offset]
-  (- (layouts.lines) size offset))
-
-(fn layouts.size [%width %height]
-  {:width (math.floor (* (layouts.columns) %width))
-   :height (math.floor (* (layouts.lines) %height))})
-
-(fn layouts.%centered [%width %height]
-  (let [{: width : height} (layouts.size %width %height)]
-    {: width
-     : height
-     :row (layouts.middle (layouts.lines) height)
-     :col (layouts.middle (layouts.columns) width)}))
-
-(fn layouts.%bottom [%width %height]
-  (let [{: width : height} (layouts.size %width %height)]
-    {: width
-     : height
-     :row (layouts.from-bottom height 8)
-     :col (layouts.middle (layouts.columns) width)}))
-
-(fn layouts.%top [%width %height]
-  (let [{: width : height} (layouts.size %width %height)]
-    {: width : height :row 5 :col (layouts.middle (layouts.columns) width)}))
-
-;; Primary available layouts: centered, bottom, top
-
-(fn layouts.centered []
-  (layouts.%centered 0.8 0.5))
-
-(fn layouts.bottom []
-  (layouts.%bottom 0.8 0.5))
-
-(fn layouts.top []
-  (layouts.%top 0.8 0.5))
-
 ;; Stores mappings for buffers
 (def fns {})
 
@@ -393,7 +340,7 @@
   (local buffers [])
 
   ;; Default to the bottom layout
-  (local layout (or config.layout layouts.bottom))
+  (local layout (or config.layout (. (require :snap.layout) :bottom)))
 
   ;; Store the initial filter
   (local initial-filter (or config.initial-filter ""))
@@ -409,6 +356,9 @@
 
   ;; Stores the selected items, used for multiselect
   (local selected {})
+
+  ;; Store the cursor row
+  (var cursor-row 1)
 
   ;; Handles exiting
   (fn on-exit []
@@ -440,12 +390,9 @@
   (fn set-lines [start end lines]
     (vim.api.nvim_buf_set_lines view.bufnr start end false lines))
 
-  ;; Helper function for getting the cursor position
-  (fn get-cursor-row [] (let [[row _] (vim.api.nvim_win_get_cursor view.winnr)] row))
-
   ;; Helper function for getting the line under the cursor
-  (fn get-cursor-line [row]
-    (tbl-first (vim.api.nvim_buf_get_lines view.bufnr (- row 1) row false)))
+  (fn get-selection []
+    (tostring (. last-results cursor-row)))
 
   ;; Only write what results are needed
   (fn write-results [results]
@@ -455,20 +402,21 @@
           ;; If there are no results then clear
           (set-lines 0 -1 [])
           ;; Otherwise render partial results
-          (do
-            ;; Don't render more than we need to
-            ;; this is getting only the height plus the cursor
-            (local partial-results [(unpack results 1 (+ view.height (get-cursor-row)))])
-
+          ;; Don't render more than we need to
+          ;; this is getting only the height plus the cursor
+          (let [max (+ view.height cursor-row)
+                partial-results []]
+            (each [_ result (ipairs results)
+                   :until (= max (length partial-results))]
+              (table.insert partial-results (tostring result)))
             ;; Set the lines, but make sure tables are converted to strings
-            (set-lines 0 -1 (vim.tbl_map tostring partial-results))
-
+            (set-lines 0 -1 partial-results)
             ;; Update highlights
-            (each [row line (pairs partial-results)]
-              (when (. selected (tostring line)) (add-results-highlight row))))))))
+            (each [row result (pairs partial-results)]
+              (when (. selected result) (add-results-highlight row))))))))
 
   ;; This is the non-scheduled version of on-update
-  (fn on-update-unwraped [filter height]
+  (fn on-update-unwraped [filter width height]
     ;; Helper to determine if we should cancel, sent to coroutine
     ;; where it has the responsibility to kill running processes etc
     (fn should-cancel [] (or exit (not= filter last-filter)))
@@ -519,7 +467,7 @@
                 results
                 1
                 (length results)
-                view.height
+                (+ height cursor-row)
                 #(> $1.score $2.score)))
             ;; Store the last written results
             (set last-results results)
@@ -537,7 +485,7 @@
           (set loading-count (+ loading-count 1))
           (vim.schedule (fn []
             (when (not request.cancel)
-              (local loading (create-loading-screen view.width view.height loading-count))
+              (local loading (create-loading-screen width height loading-count))
               (set-lines 0 -1 loading)))))
 
         ;; This checker runs on every loop of the event loop
@@ -565,12 +513,9 @@
                   ;; This is an optimization to begin writing unscored results
                   ;; as early as we can
                   (when (and
-                          (>= (length results) view.height)
+                          (>= (length results) height)
                           (not (has_meta (tbl-first results) :score)))
-                    (schedule-write results)))
-                ;; When there is nil the coroutine has reached its last value
-                ;; The coroutine is dead so stop the checker and schedule a write
-                "nil" (end)))
+                    (schedule-write results)))))
             ;; When the coroutine is dead then stop the checker and write
             (end))
 
@@ -600,13 +545,13 @@
     (set last-filter filter)
 
     ;; Schedule the run
-    (vim.schedule (partial on-update-unwraped filter view.height)))
+    (vim.schedule (partial on-update-unwraped filter view.width view.height)))
 
   ;; Handles entering
   (fn on-enter []
     (local selected-values (vim.tbl_values selected))
     (if (= (length selected-values) 0)
-      (let [row (get-cursor-row) selection (get-cursor-line row)]
+      (let [selection (get-selection)]
         (when (not= selection "")
           (config.select selection original-winnr)))
       (when config.multiselect (config.multiselect selected-values original-winnr))))
@@ -624,8 +569,7 @@
   ;; Handles select in the multiselect case
   (fn on-select-toggle []
     (when config.multiselect
-      (let [row (get-cursor-row)
-            selection (get-cursor-line row)]
+      (let [selection (get-selection)]
         (when (not= selection "")
           (if (. selected selection)
             (tset selected selection nil)
@@ -633,10 +577,10 @@
 
   ;; On key helper
   (fn on-key-direction [get-next-index]
-    (let [row (get-cursor-row)
-          index (get-next-index row)]
-      (vim.api.nvim_win_set_cursor view.winnr
-        [(math.max 1 (math.min (vim.api.nvim_buf_line_count view.bufnr) index)) 0])
+    (let [line-count (vim.api.nvim_buf_line_count view.bufnr)
+          index (math.max 1 (math.min line-count (get-next-index cursor-row)))]
+      (vim.api.nvim_win_set_cursor view.winnr [index 0])
+      (set cursor-row index)
       (write-results last-results)))
 
   ;; On up handler

@@ -138,60 +138,6 @@ local function partial_quicksort(tbl, p, r, m, comp)
     end
   end
 end
-local layouts
-do
-  local v_0_
-  do
-    local v_0_0 = {}
-    _0_0["layouts"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["layouts"] = v_0_
-  layouts = v_0_
-end
-layouts.lines = function()
-  return vim.api.nvim_get_option("lines")
-end
-layouts.columns = function()
-  return vim.api.nvim_get_option("columns")
-end
-layouts.middle = function(total, size)
-  return math.floor(((total - size) / 2))
-end
-layouts["from-bottom"] = function(size, offset)
-  return (layouts.lines() - size - offset)
-end
-layouts.size = function(_25width, _25height)
-  return {height = math.floor((layouts.lines() * _25height)), width = math.floor((layouts.columns() * _25width))}
-end
-layouts["%centered"] = function(_25width, _25height)
-  local _let_0_ = layouts.size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = layouts.middle(layouts.columns(), width), height = height, row = layouts.middle(layouts.lines(), height), width = width}
-end
-layouts["%bottom"] = function(_25width, _25height)
-  local _let_0_ = layouts.size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = layouts.middle(layouts.columns(), width), height = height, row = layouts["from-bottom"](height, 8), width = width}
-end
-layouts["%top"] = function(_25width, _25height)
-  local _let_0_ = layouts.size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = layouts.middle(layouts.columns(), width), height = height, row = 5, width = width}
-end
-layouts.centered = function()
-  return layouts["%centered"](0.8, 0.5)
-end
-layouts.bottom = function()
-  return layouts["%bottom"](0.8, 0.5)
-end
-layouts.top = function()
-  return layouts["%top"](0.8, 0.5)
-end
 local fns
 do
   local v_0_
@@ -461,12 +407,13 @@ do
       local last_results = {}
       local exit = false
       local buffers = {}
-      local layout = (config.layout or layouts.bottom)
+      local layout = (config.layout or (require("snap.layout")).bottom)
       local initial_filter = (config["initial-filter"] or "")
       local namespace = vim.api.nvim_create_namespace("Snap")
       local original_winnr = vim.api.nvim_get_current_win()
       local prompt = string.format("%s> ", (config.prompt or "Find"))
       local selected = {}
+      local cursor_row = 1
       local function on_exit()
         exit = true
         for _, bufnr in ipairs(buffers) do
@@ -485,14 +432,8 @@ do
       local function set_lines(start, _end, lines)
         return vim.api.nvim_buf_set_lines(view.bufnr, start, _end, false, lines)
       end
-      local function get_cursor_row()
-        local _let_0_ = vim.api.nvim_win_get_cursor(view.winnr)
-        local row = _let_0_[1]
-        local _ = _let_0_[2]
-        return row
-      end
-      local function get_cursor_line(row)
-        return tbl_first(vim.api.nvim_buf_get_lines(view.bufnr, (row - 1), row, false))
+      local function get_selection()
+        return tostring(last_results[cursor_row])
       end
       local function write_results(results)
         if not exit then
@@ -500,10 +441,15 @@ do
           if (result_size == 0) then
             return set_lines(0, -1, {})
           else
-            local partial_results = {unpack(results, 1, (view.height + get_cursor_row()))}
-            set_lines(0, -1, vim.tbl_map(tostring, partial_results))
-            for row, line in pairs(partial_results) do
-              if selected[tostring(line)] then
+            local max = (view.height + cursor_row)
+            local partial_results = {}
+            for _, result in ipairs(results) do
+              if (max == #partial_results) then break end
+              table.insert(partial_results, tostring(result))
+            end
+            set_lines(0, -1, partial_results)
+            for row, result in pairs(partial_results) do
+              if selected[result] then
                 add_results_highlight(row)
               end
             end
@@ -511,7 +457,7 @@ do
           end
         end
       end
-      local function on_update_unwraped(filter, height)
+      local function on_update_unwraped(filter, width, height)
         local function should_cancel()
           return (exit or (filter ~= last_filter))
         end
@@ -539,7 +485,7 @@ do
                 local function _6_(_241, _242)
                   return (_241.score > _242.score)
                 end
-                partial_quicksort(results, 1, #results, view.height, _6_)
+                partial_quicksort(results, 1, #results, (height + cursor_row), _6_)
               end
               last_results = results
               return schedule_write(results)
@@ -558,7 +504,7 @@ do
             loading_count = (loading_count + 1)
             local function _6_()
               if not request.cancel then
-                local loading = create_loading_screen(view.width, view.height, loading_count)
+                local loading = create_loading_screen(width, height, loading_count)
                 return set_lines(0, -1, loading)
               end
             end
@@ -577,11 +523,9 @@ do
                 schedule_blocking_value(value)
               elseif (_7_0 == "table") then
                 accumulate(results, value)
-                if ((#results >= view.height) and not has_meta(tbl_first(results), "score")) then
+                if ((#results >= height) and not has_meta(tbl_first(results), "score")) then
                   schedule_write(results)
                 end
-              elseif (_7_0 == "nil") then
-                _end()
               end
             else
               _end()
@@ -600,15 +544,14 @@ do
       local function on_update(filter)
         last_filter = filter
         local function _6_(...)
-          return on_update_unwraped(filter, view.height, ...)
+          return on_update_unwraped(filter, view.width, view.height, ...)
         end
         return vim.schedule(_6_)
       end
       local function on_enter()
         local selected_values = vim.tbl_values(selected)
         if (#selected_values == 0) then
-          local row = get_cursor_row()
-          local selection = get_cursor_line(row)
+          local selection = get_selection()
           if (selection ~= "") then
             return config.select(selection, original_winnr)
           end
@@ -633,8 +576,7 @@ do
       end
       local function on_select_toggle()
         if config.multiselect then
-          local row = get_cursor_row()
-          local selection = get_cursor_line(row)
+          local selection = get_selection()
           if (selection ~= "") then
             if selected[selection] then
               selected[selection] = nil
@@ -647,9 +589,10 @@ do
         end
       end
       local function on_key_direction(get_next_index)
-        local row = get_cursor_row()
-        local index = get_next_index(row)
-        vim.api.nvim_win_set_cursor(view.winnr, {math.max(1, math.min(vim.api.nvim_buf_line_count(view.bufnr), index)), 0})
+        local line_count = vim.api.nvim_buf_line_count(view.bufnr)
+        local index = math.max(1, math.min(line_count, get_next_index(cursor_row)))
+        vim.api.nvim_win_set_cursor(view.winnr, {index, 0})
+        cursor_row = index
         return write_results(last_results)
       end
       local function on_up()
