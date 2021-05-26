@@ -357,10 +357,10 @@ TODO
 
 ### `snap.sync`
 
-Makes getting values from yield easier by skiping first coroutine.yield return value.
+Yield a slow-mode function and get it's result.
 
 ```
-(value: Yieldable) => any
+(value: () => T) => T
 ```
 
 ### `snap.consume`
