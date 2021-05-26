@@ -482,16 +482,14 @@ do
           end
           local function _end()
             check:stop()
-            if not request.cancel then
-              if has_meta(tbl_first(results), "score") then
-                local function _6_(_241, _242)
-                  return (_241.score > _242.score)
-                end
-                partial_quicksort(results, 1, #results, (height + cursor_row), _6_)
+            if has_meta(tbl_first(results), "score") then
+              local function _6_(_241, _242)
+                return (_241.score > _242.score)
               end
-              last_results = results
-              schedule_write(last_results)
+              partial_quicksort(results, 1, #results, (height + cursor_row), _6_)
             end
+            last_results = results
+            schedule_write(last_results)
             results = nil
             return nil
           end
@@ -519,7 +517,7 @@ do
               return nil
             end
             local current_time = vim.loop.now()
-            request["cancel"] = should_cancel()
+            request["cancel"] = (request.cancel or should_cancel())
             if (coroutine.status(reader) ~= "dead") then
               local _, value = coroutine.resume(reader, request, blocking_value)
               local _7_0 = type(value)
@@ -528,6 +526,7 @@ do
               elseif (_7_0 == "table") then
                 accumulate(results, value)
                 if ((#results >= height) and not has_meta(tbl_first(results), "score")) then
+                  last_results = results
                   schedule_write(results)
                 end
               end

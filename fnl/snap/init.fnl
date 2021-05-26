@@ -462,21 +462,19 @@
         (fn end []
           ;; Stop the checker
           (check:stop)
-          ;; If we aren't resulting cancal then render
-          (when (not request.cancel)
             ;; When we have scores attached then sort
-            (when
-              (has_meta (tbl-first results) :score)
-              (partial-quicksort
-                results
-                1
-                (length results)
-                (+ height cursor-row)
-                #(> $1.score $2.score)))
-            ;; Store the last written results
-            (set last-results results)
-            ;; Schedule the write
-            (schedule-write last-results))
+          (when
+            (has_meta (tbl-first results) :score)
+            (partial-quicksort
+              results
+              1
+              (length results)
+              (+ height cursor-row)
+              #(> $1.score $2.score)))
+          ;; Store the last written results
+          (set last-results results)
+          ;; Schedule the write
+          (schedule-write last-results)
           ;; Free the results
           (set results nil))
 
@@ -504,7 +502,7 @@
           (local current-time (vim.loop.now))
 
           ;; Update the cancel flag
-          (tset request :cancel (should-cancel))
+          (tset request :cancel (or request.cancel (should-cancel)))
 
           ;; When the coroutine is not dead, process its results
           (if (not= (coroutine.status reader) :dead)
@@ -521,6 +519,8 @@
                   (when (and
                           (>= (length results) height)
                           (not (has_meta (tbl-first results) :score)))
+                    ;; Set the results to enable cursor
+                    (set last-results results)
                     (schedule-write results)))))
             ;; When the coroutine is dead then stop the checker and write
             (end))
