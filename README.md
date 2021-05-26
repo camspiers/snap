@@ -373,9 +373,9 @@ Consumes a producer providing an iterator of its yielded results
 
 ### Layouts
 
-### `snap.layouts.centered`
-### `snap.layouts.bottom`
-### `snap.layouts.top`
+#### `snap.layouts.centered`
+#### `snap.layouts.bottom`
+#### `snap.layouts.top`
 
 ### Producers
 
@@ -409,4 +409,14 @@ Consumes a producer providing an iterator of its yielded results
 
 #### `snap.select.cwd`
 
+# Roadmap
+
+- More producers
+- FZF score/filter consumer
+- Lua file producer
+- Lua filter consumer
+- More configurable layout system, including arbitrary windows
+- Preview system
+- Tests
+- Configurable loading screens
 
