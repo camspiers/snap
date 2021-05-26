@@ -416,6 +416,8 @@ do
       local cursor_row = 1
       local function on_exit()
         exit = true
+        last_results = nil
+        selected = nil
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then
             vim.api.nvim_buf_delete(bufnr, {force = true})
@@ -424,7 +426,7 @@ do
         vim.api.nvim_set_current_win(original_winnr)
         return vim.api.nvim_command("stopinsert")
       end
-      local view = create_results_view({["on-exit"] = on_exit, layout = layout})
+      local view = create_results_view({layout = layout})
       table.insert(buffers, view.bufnr)
       local function add_results_highlight(row)
         return vim.api.nvim_buf_add_highlight(view.bufnr, namespace, "Comment", (row - 1), 0, -1)
@@ -488,8 +490,10 @@ do
                 partial_quicksort(results, 1, #results, (height + cursor_row), _6_)
               end
               last_results = results
-              return schedule_write(results)
+              schedule_write(last_results)
             end
+            results = nil
+            return nil
           end
           local function schedule_blocking_value(fnc)
             pending_blocking_value = true

@@ -355,7 +355,7 @@
   (local prompt (string.format "%s> " (or config.prompt :Find)))
 
   ;; Stores the selected items, used for multiselect
-  (local selected {})
+  (var selected {})
 
   ;; Store the cursor row
   (var cursor-row 1)
@@ -364,6 +364,10 @@
   (fn on-exit []
     ;; Send the signal to exit to all potentially running processes in coroutines
     (set exit true)
+
+    ;; Free memory
+    (set last-results nil)
+    (set selected nil)
 
     ;; Delete each open buffer
     (each [_ bufnr (ipairs buffers)]
@@ -377,7 +381,7 @@
     (vim.api.nvim_command :stopinsert))
 
   ;; Creates the results buffer and window and stores thier numbers
-  (local view (create-results-view {: layout : on-exit}))
+  (local view (create-results-view {: layout}))
 
   ;; Register buffer for exiting
   (table.insert buffers view.bufnr)
@@ -441,7 +445,7 @@
         (var last-time (vim.loop.now))
 
         ;; Prepare new results array for collection
-        (local results [])
+        (var results [])
 
         ;; Store the request API for coroutines
         (local request {: filter
@@ -472,7 +476,9 @@
             ;; Store the last written results
             (set last-results results)
             ;; Schedule the write
-            (schedule-write results)))
+            (schedule-write last-results))
+          ;; Free the results
+          (set results nil))
 
         ;; Schedules a sync value for processing
         (fn schedule-blocking-value [fnc]
