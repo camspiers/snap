@@ -211,6 +211,65 @@ Coroutines in `snap` can yield 4 different types, each with a distinct meaning o
 type Yieldable = table<string> | table<MetaResult> | function | nil;
 ```
 
+##### Yielding `table<string>`
+
+For each `table<string>` yielded (or returned as the last value of `producer`) from a `producer`, `snap` will accumulate the values of the table and display them in the results buffer.
+
+```lua
+local function producer(message)
+  coroutine.yield({"Result 1", "Result 1"})
+  -- the nvim UI can respond to input between these yields
+  coroutine.yield({"Result 3", "Result 4"})
+end
+```
+
+This `producer` function results in a table of 4 values displayed, but given there are two yields, in between these yields `nvim` has an oppurtunity to process more input.
+
+One can see how this functionality allows for results of spawned processes to progressively yield thier results while avoiding blocking user input, and enabling the cancelation of said spawned processes.
+
+##### Yielding `table<MetaResult>`
+
+Results at times need to be decorated with additional information, e.g. a sort score.
+
+`snap` makes use of tables (with an attached metatable implementing `__tostring`) to represent results with meta data.
+
+The following shows how to add results with additional information. And because `snap` automatically sorts results with `score` meta data, the following with be ordered accordingly.
+
+```lua
+local function producer(message)
+  coroutine.yield({
+    snap.with_meta("Higher rank", "score", 10),
+    snap.with_meta("Lower rank", "score", 1),
+    snap.with_meta("Mid rank", "score", 5)
+  })
+end
+```
+
+##### Yielding `function`
+
+Given that `producer` is by design run when `fast-mode` is true. One needs an ability to at times get the result of a blocking `nvim` function, such as many of `nvim` basic functions, e.g. `vim.fn.getcwd`. As such `snap` provides the ability to `yield` a function, have its execution run with `vim.schedule` and its resulting value returned.
+
+```lua
+local function producer(message)
+  -- Yield a function to get its result
+  local cwd = snap.sync(vim.fn.getcwd)
+  -- Now we have the cwd we can do something with it
+end
+```
+
+##### Yielding `nil`
+
+Yielding nil signals to `snap` that there are not more results, and the coroutine is dead. `snap` will finish processing the `coroutine` when nil is encounted.
+
+```lua
+local function producer(message)
+  coroutine.yield({"Result 1", "Result 1"})
+  coroutine.yield(nil)
+  -- Doesn't proces this, as coroutine is dead
+  coroutine.yield({"Result 3", "Result 4"})
+end
+```
+
 #### Request
 
 This is the request that is passed to a `producer`.
@@ -260,67 +319,21 @@ type Consumer = (producer: Producer) => Producer;
 };
 ```
 
-#### Yielding `table<string>`
+## Creating Mappings
 
-For each `table<string>` yielded (or returned as the last value of `producer`) from a `producer`, `snap` will accumulate the values of the table and display them in the results buffer.
+`snap` registers no mappings, autocmds, or commands, and never will.
 
-##### Example
-
-```lua
-local function producer(message)
-  coroutine.yield({"Result 1", "Result 1"})
-  -- the nvim UI can respond to input between these yields
-  coroutine.yield({"Result 3", "Result 4"})
-end
-```
-
-This `producer` function results in a table of 4 values displayed, but given there are two yields, in between these yields `nvim` has an oppurtunity to process more input.
-
-One can see how this functionality allows for results of spawned processes to progressively yield thier results while avoiding blocking user input, and enabling the cancelation of said spawned processes.
-
-#### Yielding `table<MetaResult>`
-
-Results at times need to be decorated with additional information, e.g. a sort score.
-
-`snap` makes use of tables (with an attached metatable implementing `__tostring`) to represent results with meta data.
-
-The following shows how to add results with additional information. And because `snap` automatically sorts results with `score` meta data, the following with be ordered accordingly.
+You can register your mappings in the following way:
 
 ```lua
-local function producer(message)
-  coroutine.yield({
-    snap.with_meta("Higher rank", "score", 10),
-    snap.with_meta("Lower rank", "score", 1),
-    snap.with_meta("Mid rank", "score", 5)
-  })
-end
-```
-
-#### Yielding `function`
-
-Given that `producer` is by design run when `fast-mode` is true. One needs an ability to at times get the result of a blocking `nvim` function, such as many of `nvim` basic functions, e.g. `vim.fn.getcwd`. As such `snap` provides the ability to `yield` a function, have its execution run with `vim.schedule` and its resulting value returned.
-
-##### Example
-
-```lua
-local function producer(message)
-  -- Yield a function to get its result
-  local cwd = snap.sync(vim.fn.getcwd)
-  -- Now we have the cwd we can do something with it
-end
-```
-
-#### Yielding `nil`
-
-Yielding nil signals to `snap` that there are not more results, and the coroutine is dead. `snap` will finish processing the `coroutine` when nil is encounted.
-
-```lua
-local function producer(message)
-  coroutine.yield({"Result 1", "Result 1"})
-  coroutine.yield(nil)
-  -- Doesn't proces this, as coroutine is dead
-  coroutine.yield({"Result 3", "Result 4"})
-end
+local snap = require'snap'
+snap.register.map({"n"}, {"<Leader>f"}, function ()
+  snap.run {
+    producer = require'snap.consumer.fzy'(require'snap.producer.ripgrep.file'),
+    select = require'snap.select.file'.select
+    multiselect = require'snap.select.file'.multiselect
+  }
+end)
 ```
 
 ## Advanced API (for developers)

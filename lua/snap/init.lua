@@ -138,26 +138,26 @@ local function partial_quicksort(tbl, p, r, m, comp)
     end
   end
 end
-local fns
+local register
 do
   local v_0_
   do
     local v_0_0 = {}
-    _0_0["fns"] = v_0_0
+    _0_0["register"] = v_0_0
     v_0_ = v_0_0
   end
   local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["fns"] = v_0_
-  fns = v_0_
+  t_0_["register"] = v_0_
+  register = v_0_
 end
-fns.clean = function(bufnr)
-  fns[bufnr] = nil
+register.clean = function(group)
+  register[group] = nil
   return nil
 end
-fns.run = function(bufnr, fnc)
+register.run = function(group, fnc)
   local _2_
   do
-    local res_0_ = fns[bufnr]
+    local res_0_ = register[group]
     local function _3_()
       local res_0_0 = (res_0_)[fnc]
       return (res_0_0 and res_0_0)
@@ -165,29 +165,39 @@ fns.run = function(bufnr, fnc)
     _2_ = (res_0_ and _3_())
   end
   if _2_ then
-    return fns[bufnr][fnc]()
+    return register[group][fnc]()
   end
 end
-fns["get-by-template"] = function(bufnr, fnc, pre, post)
-  local buf_fns = (fns[bufnr] or {})
+register["get-by-template"] = function(group, fnc, pre, post)
+  local group_fns = (register[group] or {})
   local id = string.format("%s", fnc)
-  fns[bufnr] = buf_fns
-  if (buf_fns[id] == nil) then
-    buf_fns[id] = fnc
+  register[group] = group_fns
+  if (group_fns[id] == nil) then
+    group_fns[id] = fnc
   end
-  return string.format("%slua require'snap'.fns.run(%s, '%s')%s", pre, bufnr, id, post)
+  return string.format("%slua require'snap'.register.run('%s', '%s')%s", pre, group, id, post)
 end
-fns["get-map-call"] = function(bufnr, fnc)
-  return fns["get-by-template"](bufnr, fnc, "<Cmd>", "<CR>")
+register["get-map-call"] = function(group, fnc)
+  return register["get-by-template"](group, fnc, "<Cmd>", "<CR>")
 end
-fns["get-autocmd-call"] = function(bufnr, fnc)
-  return fns["get-by-template"](bufnr, fnc, ":", "")
+register["get-autocmd-call"] = function(group, fnc)
+  return register["get-by-template"](group, fnc, ":", "")
 end
-fns.map = function(bufnr, keys, fnc)
-  local rhs = fns["get-map-call"](bufnr, fnc)
+register.buf_map = function(bufnr, modes, keys, fnc, opts)
+  local rhs = register["get-map-call"](tostring(bufnr), fnc)
   for _, key in ipairs(keys) do
-    vim.api.nvim_buf_set_keymap(bufnr, "n", key, rhs, {})
-    vim.api.nvim_buf_set_keymap(bufnr, "i", key, rhs, {})
+    for _0, mode in ipairs(modes) do
+      vim.api.nvim_buf_set_keymap(bufnr, mode, key, rhs, (opts or {}))
+    end
+  end
+  return nil
+end
+register.map = function(modes, keys, fnc, opts)
+  local rhs = register["get-map-call"]("global", fnc)
+  for _, key in ipairs(keys) do
+    for _0, mode in ipairs(modes) do
+      vim.api.nvim_set_keymap(mode, key, rhs, (opts or {}))
+    end
   end
   return nil
 end
@@ -238,7 +248,7 @@ local function create_input_view(config)
     end
   end
   local function on_exit()
-    fns.clean(bufnr)
+    register.clean(bufnr)
     return config["on-exit"]()
   end
   local function on_enter()
@@ -262,18 +272,18 @@ local function create_input_view(config)
   end
   on_lines = _4_
   local function on_detach()
-    return fns.clean(bufnr)
+    return register.clean(bufnr)
   end
-  fns.map(bufnr, {"<CR>"}, on_enter)
-  fns.map(bufnr, {"<Up>", "<C-k>", "<C-p>"}, config["on-up"])
-  fns.map(bufnr, {"<Down>", "<C-j>", "<C-n>"}, config["on-down"])
-  fns.map(bufnr, {"<Esc>", "<C-c>"}, on_exit)
-  fns.map(bufnr, {"<Tab>"}, on_tab)
-  fns.map(bufnr, {"<S-Tab>"}, on_shifttab)
-  fns.map(bufnr, {"<C-a>"}, on_ctrla)
-  fns.map(bufnr, {"<C-d>"}, config["on-pagedown"])
-  fns.map(bufnr, {"<C-u>"}, config["on-pageup"])
-  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, fns["get-autocmd-call"](bufnr, on_exit)))
+  register.buf_map(bufnr, {"n", "i"}, {"<CR>"}, on_enter)
+  register.buf_map(bufnr, {"n", "i"}, {"<Up>", "<C-k>", "<C-p>"}, config["on-up"])
+  register.buf_map(bufnr, {"n", "i"}, {"<Down>", "<C-j>", "<C-n>"}, config["on-down"])
+  register.buf_map(bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
+  register.buf_map(bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
+  register.buf_map(bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
+  register.buf_map(bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
+  register.buf_map(bufnr, {"n", "i"}, {"<C-d>"}, config["on-pagedown"])
+  register.buf_map(bufnr, {"n", "i"}, {"<C-u>"}, config["on-pageup"])
+  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](bufnr, on_exit)))
   vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
   return {bufnr = bufnr, winnr = winnr}
 end

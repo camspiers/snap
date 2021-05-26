@@ -89,40 +89,47 @@
       (when (< p (- m 1))
         (partial-quicksort tbl (+ q 1) r m comp)))))
 
-;; Stores mappings for buffers
-(def fns {})
+;; Stores mappings for buffers and global user mappings
+(def register {})
 
 ;; Cleans up unneeded buffer maps
-(fn fns.clean [bufnr]
-  (tset fns bufnr nil))
+(fn register.clean [group]
+  (tset register group nil))
 
 ;; Provides ability to run fn
-(fn fns.run [bufnr fnc]
-  (when (?. fns bufnr fnc)
-    ((. fns bufnr fnc))))
+(fn register.run [group fnc]
+  (when (?. register group fnc)
+    ((. register group fnc))))
 
-(fn fns.get-by-template [bufnr fnc pre post]
-  (let [buf-fns (or (. fns bufnr) [])
+(fn register.get-by-template [group fnc pre post]
+  (let [group-fns (or (. register group) [])
         id (string.format "%s" fnc)]
-    (tset fns bufnr buf-fns)
-    (when (= (. buf-fns id) nil)
-      (tset buf-fns id fnc))
-    (string.format "%slua require'snap'.fns.run(%s, '%s')%s" pre bufnr id post)))
+    (tset register group group-fns)
+    (when (= (. group-fns id) nil)
+      (tset group-fns id fnc))
+    (string.format "%slua require'snap'.register.run('%s', '%s')%s" pre group id post)))
 
 ;; Generates call signiture for maps
-(fn fns.get-map-call [bufnr fnc]
-  (fns.get-by-template bufnr fnc :<Cmd> :<CR>))
+(fn register.get-map-call [group fnc]
+  (register.get-by-template group fnc :<Cmd> :<CR>))
 
 ;; Generates call signiture for autocmds
-(fn fns.get-autocmd-call [bufnr fnc]
-  (fns.get-by-template bufnr fnc ":" ""))
+(fn register.get-autocmd-call [group fnc]
+  (register.get-by-template group fnc ":" ""))
 
 ;; Creates a buffer mapping and creates callable signiture
-(fn fns.map [bufnr keys fnc]
-  (let [rhs (fns.get-map-call bufnr fnc)]
+(fn register.buf_map [bufnr modes keys fnc opts]
+  (let [rhs (register.get-map-call (tostring bufnr) fnc)]
     (each [_ key (ipairs keys)]
-      (vim.api.nvim_buf_set_keymap bufnr :n key rhs {})
-      (vim.api.nvim_buf_set_keymap bufnr :i key rhs {}))))
+      (each [_ mode (ipairs modes)]
+        (vim.api.nvim_buf_set_keymap bufnr mode key rhs (or opts {}))))))
+
+;; Creates a global mapping
+(fn register.map [modes keys fnc opts]
+  (let [rhs (register.get-map-call "global" fnc)]
+    (each [_ key (ipairs keys)]
+      (each [_ mode (ipairs modes)]
+        (vim.api.nvim_set_keymap mode key rhs (or opts {}))))))
 
 ;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [layout]
@@ -178,7 +185,7 @@
         (if contents (contents:sub (+ (length config.prompt) 1)) "")))
 
     (fn on-exit []
-      (fns.clean bufnr)
+      (register.clean bufnr)
       (config.on-exit))
 
     (fn on-enter []
@@ -200,20 +207,20 @@
       (config.on-update (get-filter))))
 
     (fn on_detach [] 
-      (fns.clean bufnr))
+      (register.clean bufnr))
 
-    (fns.map bufnr [:<CR>] on-enter)
-    (fns.map bufnr [:<Up> :<C-k> :<C-p>] config.on-up)
-    (fns.map bufnr [:<Down> :<C-j> :<C-n>] config.on-down)
-    (fns.map bufnr [:<Esc> :<C-c>] on-exit)
-    (fns.map bufnr [:<Tab>] on-tab)
-    (fns.map bufnr [:<S-Tab>] on-shifttab)
-    (fns.map bufnr [:<C-a>] on-ctrla)
-    (fns.map bufnr [:<C-d>] config.on-pagedown)
-    (fns.map bufnr [:<C-u>] config.on-pageup)
+    (register.buf_map bufnr [:n :i] [:<CR>] on-enter)
+    (register.buf_map bufnr [:n :i] [:<Up> :<C-k> :<C-p>] config.on-up)
+    (register.buf_map bufnr [:n :i] [:<Down> :<C-j> :<C-n>] config.on-down)
+    (register.buf_map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
+    (register.buf_map bufnr [:n :i] [:<Tab>] on-tab)
+    (register.buf_map bufnr [:n :i] [:<S-Tab>] on-shifttab)
+    (register.buf_map bufnr [:n :i] [:<C-a>] on-ctrla)
+    (register.buf_map bufnr [:n :i] [:<C-d>] config.on-pagedown)
+    (register.buf_map bufnr [:n :i] [:<C-u>] config.on-pageup)
 
     (vim.api.nvim_command
-      (string.format "autocmd! WinLeave <buffer=%s> %s" bufnr (fns.get-autocmd-call bufnr on-exit)))
+      (string.format "autocmd! WinLeave <buffer=%s> %s" bufnr (register.get-autocmd-call bufnr on-exit)))
 
     (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
 
