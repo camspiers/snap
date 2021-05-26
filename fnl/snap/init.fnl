@@ -184,13 +184,17 @@
       (let [contents (tbl-first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
         (if contents (contents:sub (+ (length config.prompt) 1)) "")))
 
+    ;; Track exit
+    (var exited false)
+
     (fn on-exit []
-      (register.clean bufnr)
-      (config.on-exit))
+      (when (not exited)
+        (set exited true)
+        (config.on-exit)))
 
     (fn on-enter []
       (config.on-enter)
-      (on-exit))
+      (config.on-exit))
 
     (fn on-tab []
       (config.on-select-toggle)
@@ -220,7 +224,10 @@
     (register.buf_map bufnr [:n :i] [:<C-u>] config.on-pageup)
 
     (vim.api.nvim_command
-      (string.format "autocmd! WinLeave <buffer=%s> %s" bufnr (register.get-autocmd-call bufnr on-exit)))
+      (string.format
+        "autocmd! WinLeave <buffer=%s> %s"
+        bufnr
+        (register.get-autocmd-call (tostring bufnr) on-exit)))
 
     (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
 
@@ -376,13 +383,13 @@
     (set last-results nil)
     (set selected nil)
 
+    ;; Return back to original window
+    (vim.api.nvim_set_current_win original-winnr)
+
     ;; Delete each open buffer
     (each [_ bufnr (ipairs buffers)]
       (when (vim.api.nvim_buf_is_valid bufnr)
         (vim.api.nvim_buf_delete bufnr {:force true})))
-
-    ;; Return back to original window
-    (vim.api.nvim_set_current_win original-winnr)
 
     ;; Return back from insert mode
     (vim.api.nvim_command :stopinsert))

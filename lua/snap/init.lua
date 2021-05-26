@@ -247,13 +247,16 @@ local function create_input_view(config)
       return ""
     end
   end
+  local exited = false
   local function on_exit()
-    register.clean(bufnr)
-    return config["on-exit"]()
+    if not exited then
+      exited = true
+      return config["on-exit"]()
+    end
   end
   local function on_enter()
     config["on-enter"]()
-    return on_exit()
+    return config["on-exit"]()
   end
   local function on_tab()
     config["on-select-toggle"]()
@@ -283,7 +286,7 @@ local function create_input_view(config)
   register.buf_map(bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
   register.buf_map(bufnr, {"n", "i"}, {"<C-d>"}, config["on-pagedown"])
   register.buf_map(bufnr, {"n", "i"}, {"<C-u>"}, config["on-pageup"])
-  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](bufnr, on_exit)))
+  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
   vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
   return {bufnr = bufnr, winnr = winnr}
 end
@@ -428,12 +431,12 @@ do
         exit = true
         last_results = nil
         selected = nil
+        vim.api.nvim_set_current_win(original_winnr)
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then
             vim.api.nvim_buf_delete(bufnr, {force = true})
           end
         end
-        vim.api.nvim_set_current_win(original_winnr)
         return vim.api.nvim_command("stopinsert")
       end
       local view = create_results_view({layout = layout})
