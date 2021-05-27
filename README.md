@@ -10,7 +10,7 @@ A fast finder system for neovim >0.5.
 use 'camspiers/snap.nvim'
 ```
 
-If you want to use the inbuilt support for `fzy`:
+If you want to use the in-built support for `fzy`:
 
 ```
 use_rocks 'fzy'
@@ -412,39 +412,89 @@ Consumes a producer providing an iterator of its yielded results
 
 #### `snap.producer.vim.buffer`
 
+Produces vim buffers.
+
 #### `snap.producer.vim.oldfiles`
+
+Produces vim oldfiles.
 
 #### `snap.producer.luv.file`
 
-#### `snap.producer.luv.vimgrep`
+Luv (`vim.loop`) based file producer.
+
+NOTE: Requires no external dependencies.
+
+#### `snap.producer.luv.directory`
+
+Luv (`vim.loop`) based directory producer.
+
+NOTE: Requires no external dependencies.
 
 #### `snap.producer.ripgrep.file`
 
+Ripgrep based file producer.
+
 #### `snap.producer.ripgrep.vimgrep`
+
+Ripgrep based grep producer in `vimgrep` format.
 
 #### `snap.producer.fd.file`
 
+Fd based file producer.
+
 #### `snap.producer.fd.directory`
+
+Fd based directory producer.
 
 ### Consumers
 
 #### `snap.consumer.cache`
 
+General cache for producers whose values don't change in response to `request`.
+
 #### `snap.consumer.limit`
+
+General limit, will stop consuming a producer when a specified limit is reached.
 
 #### `snap.consumer.fzy`
 
+The workhorse consume for filtering producers that don't themselves filter.
+
+NOTE: Requests `fzy`, e.g. `use_rocks 'fzy'`
+
 #### `snap.consumer.fzy.filter`
 
+A component piece of fzy that only filters.
+
 #### `snap.consumer.fzy.score`
+
+A component piece of fzy that only attaches score meta data.
+
+#### `snap.consumer.fzy.positions`
+
+A componentn piece of fzy that only attaches position meta data.
 
 ### Selectors
 
 #### `snap.select.file`
 
+Opens a file in a buffer in the last used window.
+
+NOTE: Provides both `select` and `multiselect`.
+
 #### `snap.select.vimgrep`
 
+If a single file is selected then simply opens the file at appropriate position.
+
+If multiple files are selected then it adds them to the quickfix list, and opens the first.
+
+NOTE: Provides both `select` and `multiselect`.
+
 #### `snap.select.cwd`
+
+Changes directory in response to selection. 
+
+NOT: Only provides `select`.
 
 # Roadmap
 
