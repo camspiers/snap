@@ -494,12 +494,20 @@ NOTE: Provides both `select` and `multiselect`.
 
 Changes directory in response to selection. 
 
-NOT: Only provides `select`.
+NOTE: Only provides `select`.
+
+### Previewers
+
+#### `snap.preview.file`
+
+Creates a basic file previewer.
+
+NOTE: Experimental, and relies on `file` program in path.
 
 # Roadmap
 
 - [x] Lua file producer
-- [ ] Preview system
+- [x] Preview system
 - [ ] More producers for vim concepts
 - [ ] FZF score/filter consumer
 - [ ] Lua filter consumer
