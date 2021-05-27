@@ -457,8 +457,15 @@ do
       end
       local view = create_results_view({layout = layout})
       table.insert(buffers, view.bufnr)
-      local function add_results_highlight(row)
+      local function add_selected_highlight(row)
         return vim.api.nvim_buf_add_highlight(view.bufnr, namespace, "Comment", (row - 1), 0, -1)
+      end
+      local function add_positions_highlight(row, positions)
+        local line = (row - 1)
+        for _, col in ipairs(positions) do
+          vim.api.nvim_buf_add_highlight(view.bufnr, namespace, "Search", line, (col - 1), col)
+        end
+        return nil
       end
       local function set_lines(start, _end, lines)
         return vim.api.nvim_buf_set_lines(view.bufnr, start, _end, false, lines)
@@ -480,8 +487,11 @@ do
             end
             set_lines(0, -1, partial_results)
             for row, result in pairs(partial_results) do
+              if has_meta(results[row], "positions") then
+                add_positions_highlight(row, results[row].positions)
+              end
               if selected[result] then
-                add_results_highlight(row)
+                add_selected_highlight(row)
               end
             end
             return nil

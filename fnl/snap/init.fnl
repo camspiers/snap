@@ -404,9 +404,15 @@
   ;; Register buffer for exiting
   (table.insert buffers view.bufnr)
 
-  ;; Helper function for highlighting
-  (fn add-results-highlight [row]
+  ;; Helper function for adding selected highlighting
+  (fn add-selected-highlight [row]
     (vim.api.nvim_buf_add_highlight view.bufnr namespace :Comment (- row 1) 0 -1))
+
+  ;; Helper function for adding positions highlights
+  (fn add-positions-highlight [row positions]
+    (local line (- row 1))
+    (each [_ col (ipairs positions)]
+      (vim.api.nvim_buf_add_highlight view.bufnr namespace :Search line (- col 1) col)))
 
   ;; Helper to set lines to results view
   (fn set-lines [start end lines]
@@ -435,7 +441,14 @@
             (set-lines 0 -1 partial-results)
             ;; Update highlights
             (each [row result (pairs partial-results)]
-              (when (. selected result) (add-results-highlight row))))))))
+              ;; Add positions highlighting
+              (when
+                (has_meta (. results row) :positions)
+                (add-positions-highlight row (. results row :positions)))
+              ;; Add selected highlighting
+              (when
+                (. selected result)
+                (add-selected-highlight row))))))))
 
   ;; This is the non-scheduled version of on-update
   (fn on-update-unwraped [filter width height]
