@@ -448,12 +448,12 @@ Consumes a producer providing an iterator of its yielded results
 
 # Roadmap
 
-- More producers
-- FZF score/filter consumer
-- Lua file producer
-- Lua filter consumer
-- More configurable layout system, including arbitrary windows
-- Preview system
-- Tests
-- Configurable loading screens
+- [x] Lua file producer
+- [ ] Preview system
+- [ ] More producers for vim concepts
+- [ ] FZF score/filter consumer
+- [ ] Lua filter consumer
+- [ ] More configurable layout system, including arbitrary windows
+- [ ] Tests
+- [ ] Configurable loading screens
 
