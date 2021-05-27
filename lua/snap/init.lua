@@ -445,7 +445,7 @@ do
       local cursor_row = 1
       local function on_exit()
         exit = true
-        last_results = nil
+        last_results = {}
         selected = nil
         vim.api.nvim_set_current_win(original_winnr)
         for _, bufnr in ipairs(buffers) do
@@ -493,7 +493,7 @@ do
           return (exit or (filter ~= last_filter))
         end
         if (filter == last_filter) then
-          local check = vim.loop.new_check()
+          local check = vim.loop.new_idle()
           local reader = coroutine.create(config.producer)
           local has_rendered = false
           local pending_blocking_value = false
@@ -519,7 +519,7 @@ do
             end
             last_results = results
             schedule_write(last_results)
-            results = nil
+            results = {}
             return nil
           end
           local function schedule_blocking_value(fnc)
@@ -558,11 +558,13 @@ do
                   last_results = results
                   schedule_write(results)
                 end
+              elseif (_7_0 == "nil") then
+                _end()
               end
             else
               _end()
             end
-            if (not has_rendered and (loading_count == 0) and (type(results) == "table") and (#results > 0)) then
+            if (not has_rendered and (loading_count == 0) and (#results > 0)) then
               render_loading_screen()
             end
             if (not has_rendered and ((current_time - last_time) > 500)) then

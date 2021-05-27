@@ -21,8 +21,18 @@ use_rocks 'fzy'
 The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
+  select = snap.get'select.vimgrep'.select
+  multiselect = snap.get'select.vimgrep'.multiselect
+}
+```
+
+Or given this can easily create the ability to ripgrep your entire filesystem with a result for every character, you can set a reasonable upper limit to 10,000 matches:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.limit'(10000, snap.get'producer.ripgrep.vimgrep'),
   select = snap.get'select.vimgrep'.select
   multiselect = snap.get'select.vimgrep'.multiselect
 }
@@ -119,7 +129,7 @@ end
 The following combines our above `consumer` and `producer`, itself creating a new producer, and passes this to `snap` to run:
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = consumer(producer),
   select = print
 }
@@ -145,7 +155,7 @@ From the above we have seen the following distinct concepts of `snap`:
 Uses built in `fzy` filter + score, and `ripgrep` for file finding.
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
   select = snap.get'select.file'.select
   multiselect = snap.get'select.file'.multiselect
@@ -155,7 +165,7 @@ require'snap'.run {
 ### Live Ripgrep
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
   select = snap.get'select.vimgrep'.select
   multiselect = snap.get'select.vimgrep'.multiselect
@@ -165,7 +175,7 @@ require'snap'.run {
 ### Find Buffers
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
   select = snap.get'select.file'.select
 }
@@ -174,7 +184,7 @@ require'snap'.run {
 ### Find Old Files
 
 ```lua
-require'snap'.run {
+snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
   select = snap.get'select.file'.select
 }
@@ -394,6 +404,10 @@ Consumes a producer providing an iterator of its yielded results
 
 #### `snap.producer.vim.oldfiles`
 
+#### `snap.producer.luv.file`
+
+#### `snap.producer.luv.vimgrep`
+
 #### `snap.producer.ripgrep.file`
 
 #### `snap.producer.ripgrep.vimgrep`
@@ -405,6 +419,8 @@ Consumes a producer providing an iterator of its yielded results
 ### Consumers
 
 #### `snap.consumer.cache`
+
+#### `snap.consumer.limit`
 
 #### `snap.consumer.fzy`
 

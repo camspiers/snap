@@ -7,7 +7,14 @@ local function _1_(producer)
       local _3_0 = type(results)
       if (_3_0 == "table") then
         local function _4_(_241)
-          return snap.with_meta(_241, "score", fzy.score(request.filter, tostring(_241)))
+          local function _5_()
+            if (request.filter ~= "") then
+              return fzy.score(request.filter, tostring(_241))
+            else
+              return 0
+            end
+          end
+          return snap.with_meta(_241, "score", _5_())
         end
         coroutine.yield(vim.tbl_map(_4_, results))
       elseif (_3_0 == "nil") then

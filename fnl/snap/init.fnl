@@ -11,13 +11,6 @@
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                                            ;;
-;; Requirements:                                                              ;;
-;;                                                                            ;;
-;;   - aniseed                                                                ;;
-;;   - fzy (via luarocks, or just path accessible via 'fzy')                  ;;
-;;                                                                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                                                            ;;
 ;; Example:                                                                   ;;
 ;;                                                                            ;;
 ;; (snap.run {:prompt "Print One or Two"                                      ;;
@@ -391,7 +384,7 @@
     (set exit true)
 
     ;; Free memory
-    (set last-results nil)
+    (set last-results [])
     (set selected nil)
 
     ;; Return back to original window
@@ -452,7 +445,7 @@
 
     ;; Only run when the filter hasn't changed from the unscheduled set
     (when (= filter last-filter)
-      (let [check (vim.loop.new_check)
+      (let [check (vim.loop.new_idle)
             reader (coroutine.create config.producer)]
         ;; Tracks if any results have rendered
         (var has-rendered false)
@@ -501,7 +494,7 @@
           ;; Schedule the write
           (schedule-write last-results)
           ;; Free the results
-          (set results nil))
+          (set results []))
 
         ;; Schedules a sync value for processing
         (fn schedule-blocking-value [fnc]
@@ -548,7 +541,8 @@
                     ;; Set the results to enable cursor
                     (set last-results results)
                     ;; Early write
-                    (schedule-write results)))))
+                    (schedule-write results)))
+                :nil (end)))
             ;; When the coroutine is dead then stop the checker and write
             (end))
 
@@ -558,7 +552,6 @@
             (and
               (not has-rendered)
               (= loading-count 0)
-              (= (type results) :table)
               (> (length results) 0))
             (render-loading-screen))
 
