@@ -162,6 +162,16 @@ snap.run {
 }
 ```
 
+or with in-built `luv` producer:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.luv.file'),
+  select = snap.get'select.file'.select
+  multiselect = snap.get'select.file'.multiselect
+}
+```
+
 ### Live Ripgrep
 
 ```lua
