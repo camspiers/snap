@@ -302,13 +302,42 @@ register.map = function(modes, keys, fnc, opts)
   end
   return nil
 end
-local function create_input_layout(layout)
-  local _let_0_ = layout()
+local function create_input_layout(config)
+  local _let_0_ = config.layout()
   local col = _let_0_["col"]
   local height = _let_0_["height"]
   local row = _let_0_["row"]
   local width = _let_0_["width"]
-  return {col = col, focusable = true, height = 1, row = (height + row + 2), width = width}
+  local _2_
+  if config.preview then
+    _2_ = math.floor((width * 0.6))
+  else
+    _2_ = width
+  end
+  return {col = col, focusable = true, height = 1, row = (height + row + 2), width = _2_}
+end
+local function create_results_layout(config)
+  local _let_0_ = config.layout()
+  local col = _let_0_["col"]
+  local height = _let_0_["height"]
+  local row = _let_0_["row"]
+  local width = _let_0_["width"]
+  local _2_
+  if config.preview then
+    _2_ = math.floor((width * 0.6))
+  else
+    _2_ = width
+  end
+  return {col = col, focusable = false, height = height, row = row, width = _2_}
+end
+local function create_preview_layout(config)
+  local _let_0_ = config.layout()
+  local col = _let_0_["col"]
+  local height = _let_0_["height"]
+  local row = _let_0_["row"]
+  local width = _let_0_["width"]
+  local offset = math.floor((width * 0.6))
+  return {col = (col + offset + 3), focusable = false, height = (height + 3), row = row, width = (width - offset)}
 end
 local function create_buffer()
   return vim.api.nvim_create_buf(false, true)
@@ -324,16 +353,26 @@ local function create_window(bufnr, _2_0)
 end
 local function create_results_view(config)
   local bufnr = create_buffer()
-  local layout = config.layout()
+  local layout = create_results_layout(config)
   local winnr = create_window(bufnr, layout)
   vim.api.nvim_win_set_option(winnr, "cursorline", true)
   vim.api.nvim_win_set_option(winnr, "wrap", false)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
 end
+local function create_preview_view(config)
+  local bufnr = create_buffer()
+  local layout = create_preview_layout(config)
+  local winnr = create_window(bufnr, layout)
+  vim.api.nvim_win_set_option(winnr, "cursorline", false)
+  vim.api.nvim_win_set_option(winnr, "wrap", false)
+  vim.api.nvim_buf_set_option(bufnr, "filetype", "on")
+  return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
+end
 local function create_input_view(config)
   local bufnr = create_buffer()
-  local winnr = create_window(bufnr, create_input_layout(config.layout))
+  local layout = create_input_layout(config)
+  local winnr = create_window(bufnr, layout)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
@@ -418,25 +457,28 @@ do
   do
     local v_0_0
     local function run0(config)
-      assert((type(config) == "table"), "Config must be a table")
-      assert(config.producer, "Config must have a producer")
-      assert((type(config.producer) == "function"), "Producer must be a function")
-      assert(config.select, "Config must have a select")
-      assert((type(config.select) == "function"), "Select must be a function")
+      assert((type(config) == "table"), "snap.run config must be a table")
+      assert(config.producer, "snap.run config must have a producer")
+      assert((type(config.producer) == "function"), "snap.run 'producer' must be a function")
+      assert(config.select, "snap.run config must have a select")
+      assert((type(config.select) == "function"), "snap.run 'select' must be a function")
       if config.multiselect then
-        assert((type(config.multiselect) == "function"), "Multiselect must be a function")
+        assert((type(config.multiselect) == "function"), "snap.run 'multiselect' must be a function")
       end
       if config.prompt then
-        assert((type(config.prompt) == "string"), "Prompt must be a string")
+        assert((type(config.prompt) == "string"), "snap.run 'prompt' must be a string")
       end
       if config.layout then
-        assert((type(config.layout) == "function"), "Layout must be a function")
+        assert((type(config.layout) == "function"), "snap.run 'layout' must be a function")
+      end
+      if config.preview then
+        assert((type(config.preview) == "function"), "snap.run 'preview' must be a function")
       end
       local last_filter = nil
       local last_results = {}
       local exit = false
       local buffers = {}
-      local layout = (config.layout or (require("snap.layout")).bottom)
+      local layout = (config.layout or (get("layout")).centered)
       local initial_filter = (config["initial-filter"] or "")
       local namespace = vim.api.nvim_create_namespace("Snap")
       local original_winnr = vim.api.nvim_get_current_win()
@@ -455,7 +497,7 @@ do
         end
         return vim.api.nvim_command("stopinsert")
       end
-      local view = create_results_view({layout = layout})
+      local view = create_results_view({layout = layout, preview = (config.preview ~= nil)})
       table.insert(buffers, view.bufnr)
       local function add_selected_highlight(row)
         return vim.api.nvim_buf_add_highlight(view.bufnr, namespace, "Comment", (row - 1), 0, -1)
@@ -473,28 +515,108 @@ do
       local function get_selection()
         return tostring(last_results[cursor_row])
       end
+      local preview_view_info = {}
+      if config.preview then
+        preview_view_info = create_preview_view({layout = layout})
+        table.insert(buffers, preview_view_info.bufnr)
+      end
+      local function write_preview(preview, selection)
+        if not exit then
+          local preview_size = #preview
+          if (preview_size == 0) then
+            return vim.api.nvim_buf_set_lines(preview_view_info.bufnr, 0, -1, false, {})
+          else
+            vim.api.nvim_buf_set_lines(preview_view_info.bufnr, 0, -1, false, preview)
+            local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(selection, ":p:gs?/?%?"))
+            vim.api.nvim_buf_set_name(preview_view_info.bufnr, fake_path)
+            local function _8_(...)
+              return vim.api.nvim_command("filetype detect", ...)
+            end
+            return vim.api.nvim_buf_call(preview_view_info.bufnr, _8_)
+          end
+        end
+      end
+      local function schedule_preview(requested_cursor_row)
+        local function should_cancel()
+          return (exit or (requested_cursor_row ~= cursor_row))
+        end
+        if (cursor_row == requested_cursor_row) then
+          local preview = {}
+          local pending_blocking_value = false
+          local blocking_value = nil
+          local request = {cancel = should_cancel(), selection = get_selection()}
+          local function schedule_preview_write(preview0)
+            local function _8_(...)
+              return write_preview(preview0, request.selection, ...)
+            end
+            return vim.schedule(_8_)
+          end
+          local function schedule_blocking_value(fnc)
+            pending_blocking_value = true
+            local function _8_()
+              blocking_value = fnc()
+              pending_blocking_value = false
+              return nil
+            end
+            return vim.schedule(_8_)
+          end
+          local check = vim.loop.new_idle()
+          local reader = coroutine.create(config.preview)
+          local function preview_end()
+            check:stop()
+            return schedule_preview_write(preview)
+          end
+          local function checker()
+            if pending_blocking_value then
+              return nil
+            end
+            request["cancel"] = (request.cancel or should_cancel())
+            if (coroutine.status(reader) ~= "dead") then
+              local _, value = coroutine.resume(reader, request, blocking_value)
+              local _9_0 = type(value)
+              if (_9_0 == "function") then
+                return schedule_blocking_value(value)
+              elseif (_9_0 == "table") then
+                return accumulate(preview, value)
+              elseif (_9_0 == "nil") then
+                return preview_end()
+              end
+            else
+              return preview_end()
+            end
+          end
+          return check:start(checker)
+        end
+      end
       local function write_results(results)
         if not exit then
-          local result_size = #results
-          if (result_size == 0) then
-            return set_lines(0, -1, {})
-          else
-            local max = (view.height + cursor_row)
-            local partial_results = {}
-            for _, result in ipairs(results) do
-              if (max == #partial_results) then break end
-              table.insert(partial_results, tostring(result))
-            end
-            set_lines(0, -1, partial_results)
-            for row, result in pairs(partial_results) do
-              if has_meta(results[row], "positions") then
-                add_positions_highlight(row, results[row].positions)
+          do
+            local result_size = #results
+            if (result_size == 0) then
+              set_lines(0, -1, {})
+            else
+              local max = (view.height + cursor_row)
+              local partial_results = {}
+              for _, result in ipairs(results) do
+                if (max == #partial_results) then break end
+                table.insert(partial_results, tostring(result))
               end
-              if selected[result] then
-                add_selected_highlight(row)
+              set_lines(0, -1, partial_results)
+              for row, result in pairs(partial_results) do
+                if has_meta(results[row], "positions") then
+                  add_positions_highlight(row, results[row].positions)
+                end
+                if selected[result] then
+                  add_selected_highlight(row)
+                end
               end
             end
-            return nil
+          end
+          if config.preview then
+            local function _8_(...)
+              return schedule_preview(cursor_row, ...)
+            end
+            return vim.schedule(_8_)
           end
         end
       end
@@ -512,44 +634,44 @@ do
           local last_time = vim.loop.now()
           local results = {}
           local request = {cancel = should_cancel(), filter = filter, height = height}
-          local function schedule_write(results0)
+          local function schedule_results_write(results0)
             has_rendered = true
-            local function _6_(...)
+            local function _8_(...)
               return write_results(results0, ...)
             end
-            return vim.schedule(_6_)
+            return vim.schedule(_8_)
           end
-          local function _end()
+          local function results_end()
             check:stop()
             if has_meta(tbl_first(results), "score") then
-              local function _6_(_241, _242)
+              local function _8_(_241, _242)
                 return (_241.score > _242.score)
               end
-              partial_quicksort(results, 1, #results, (height + cursor_row), _6_)
+              partial_quicksort(results, 1, #results, (height + cursor_row), _8_)
             end
             last_results = results
-            schedule_write(last_results)
+            schedule_results_write(last_results)
             results = {}
             return nil
           end
           local function schedule_blocking_value(fnc)
             pending_blocking_value = true
-            local function _6_()
+            local function _8_()
               blocking_value = fnc()
               pending_blocking_value = false
               return nil
             end
-            return vim.schedule(_6_)
+            return vim.schedule(_8_)
           end
           local function render_loading_screen()
             loading_count = (loading_count + 1)
-            local function _6_()
+            local function _8_()
               if not request.cancel then
                 local loading = create_loading_screen(width, height, loading_count)
                 return set_lines(0, -1, loading)
               end
             end
-            return vim.schedule(_6_)
+            return vim.schedule(_8_)
           end
           local function checker()
             if pending_blocking_value then
@@ -559,20 +681,20 @@ do
             request["cancel"] = (request.cancel or should_cancel())
             if (coroutine.status(reader) ~= "dead") then
               local _, value = coroutine.resume(reader, request, blocking_value)
-              local _7_0 = type(value)
-              if (_7_0 == "function") then
+              local _9_0 = type(value)
+              if (_9_0 == "function") then
                 schedule_blocking_value(value)
-              elseif (_7_0 == "table") then
+              elseif (_9_0 == "table") then
                 accumulate(results, value)
                 if ((#last_results == 0) and (#results >= height) and not has_meta(tbl_first(results), "score")) then
                   last_results = results
-                  schedule_write(results)
+                  schedule_results_write(results)
                 end
-              elseif (_7_0 == "nil") then
-                _end()
+              elseif (_9_0 == "nil") then
+                results_end()
               end
             else
-              _end()
+              results_end()
             end
             if (not has_rendered and (loading_count == 0) and (#results > 0)) then
               render_loading_screen()
@@ -587,10 +709,10 @@ do
       end
       local function on_update(filter)
         last_filter = filter
-        local function _6_(...)
+        local function _8_(...)
           return on_update_unwraped(filter, view.width, view.height, ...)
         end
-        return vim.schedule(_6_)
+        return vim.schedule(_8_)
       end
       local function on_enter()
         local selected_values = vim.tbl_values(selected)
@@ -640,30 +762,30 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _6_(_241)
+        local function _8_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_6_)
+        return on_key_direction(_8_)
       end
       local function on_down()
-        local function _6_(_241)
+        local function _8_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_6_)
+        return on_key_direction(_8_)
       end
       local function on_pageup()
-        local function _6_(_241)
+        local function _8_(_241)
           return (_241 - view.height)
         end
-        return on_key_direction(_6_)
+        return on_key_direction(_8_)
       end
       local function on_pagedown()
-        local function _6_(_241)
+        local function _8_(_241)
           return (_241 + view.height)
         end
-        return on_key_direction(_6_)
+        return on_key_direction(_8_)
       end
-      local input_view_info = create_input_view({["initial-filter"] = initial_filter, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, prompt = prompt})
+      local input_view_info = create_input_view({["initial-filter"] = initial_filter, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, preview = (config.preview ~= nil), prompt = prompt})
       return table.insert(buffers, input_view_info.bufnr)
     end
     v_0_0 = run0

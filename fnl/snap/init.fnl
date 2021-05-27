@@ -172,9 +172,31 @@
 ;; View Helpers
 
 ;; Modifies the basic window options to make the input sit below
-(fn create-input-layout [layout]
-  (let [{: width : height : row : col} (layout)]
-    {: width :height 1 :row (+ height row 2) : col :focusable true}))
+(fn create-input-layout [config]
+  (let [{: width : height : row : col} (config.layout)]
+    {:width (if config.preview (math.floor (* width 0.6)) width)
+     :height 1
+     :row (+ height row 2)
+     : col :focusable true}))
+
+;;  Compute the results layout
+(fn create-results-layout [config]
+  (let [{: width : height : row : col} (config.layout)]
+    {:width (if config.preview (math.floor (* width 0.6)) width)
+     : height
+     : row
+     : col
+     :focusable false}))
+
+;;  Compute the preview layout
+(fn create-preview-layout [config]
+  (let [{: width : height : row : col} (config.layout)
+        offset (math.floor (* width 0.6))]
+    {:width (- width offset)
+     :height (+ height 3)
+     : row
+     :col (+ col offset 3)
+     :focusable false}))
 
 ;; Creates a scratch buffer, used for both results and input
 (fn create-buffer []
@@ -199,11 +221,20 @@
 ;; fnlfmt: skip
 (fn create-results-view [config]
   (let [bufnr (create-buffer)
-        layout (config.layout)
+        layout (create-results-layout config)
         winnr (create-window bufnr layout)]
     (vim.api.nvim_win_set_option winnr :cursorline true)
     (vim.api.nvim_win_set_option winnr :wrap false)
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
+    {: bufnr : winnr :height layout.height :width layout.width}))
+
+(fn create-preview-view [config]
+  (let [bufnr (create-buffer)
+        layout (create-preview-layout config)
+        winnr (create-window bufnr layout)]
+    (vim.api.nvim_win_set_option winnr :cursorline false)
+    (vim.api.nvim_win_set_option winnr :wrap false)
+    (vim.api.nvim_buf_set_option bufnr :filetype :on)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
 ;; Creates the input buffer
@@ -211,7 +242,8 @@
 ;; fnlfmt: skip
 (fn create-input-view [config]
   (let [bufnr (create-buffer)
-        winnr (create-window bufnr (create-input-layout config.layout))]
+        layout (create-input-layout config)
+        winnr (create-window bufnr layout)]
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
@@ -323,6 +355,8 @@
 ;;
 ;;   "An optional function that enables multiselect executes on multiselect"
 ;;   :?multiselect (selections) => void
+
+;;   :?preview (request: PreviewRequest) => yiela<Yieldable>
 ;; }
 
 ;; fnlfmt: skip
@@ -330,19 +364,39 @@
   ;; Config validation
 
   ;; Required values
-  (assert (= (type config) "table") "Config must be a table")
-  (assert config.producer "Config must have a producer")
-  (assert (= (type config.producer) "function") "Producer must be a function")
-  (assert config.select "Config must have a select")
-  (assert (= (type config.select) "function") "Select must be a function")
+  (assert
+    (= (type config) "table")
+    "snap.run config must be a table")
+  (assert
+    config.producer
+    "snap.run config must have a producer")
+  (assert
+    (= (type config.producer) "function")
+    "snap.run 'producer' must be a function")
+  (assert
+    config.select
+    "snap.run config must have a select")
+  (assert
+    (= (type config.select) "function")
+    "snap.run 'select' must be a function")
 
   ;; Optional values
   (when config.multiselect
-    (assert (= (type config.multiselect) "function") "Multiselect must be a function"))
+    (assert
+      (= (type config.multiselect) "function")
+      "snap.run 'multiselect' must be a function"))
   (when config.prompt
-    (assert (= (type config.prompt) "string") "Prompt must be a string"))
+    (assert
+      (= (type config.prompt) "string")
+      "snap.run 'prompt' must be a string"))
   (when config.layout
-    (assert (= (type config.layout) "function") "Layout must be a function"))
+    (assert
+      (= (type config.layout) "function")
+      "snap.run 'layout' must be a function"))
+  (when config.preview
+    (assert
+      (= (type config.preview) "function")
+      "snap.run 'preview' must be a function"))
 
   ;; Store last search
   (var last-filter nil)
@@ -358,7 +412,7 @@
   (local buffers [])
 
   ;; Default to the bottom layout
-  (local layout (or config.layout (. (require :snap.layout) :bottom)))
+  (local layout (or config.layout (. (get :layout) :centered)))
 
   ;; Store the initial filter
   (local initial-filter (or config.initial-filter ""))
@@ -399,7 +453,8 @@
     (vim.api.nvim_command :stopinsert))
 
   ;; Creates the results buffer and window and stores thier numbers
-  (local view (create-results-view {: layout}))
+  (local view (create-results-view {: layout
+                                    :preview (not= config.preview nil)}))
 
   ;; Register buffer for exiting
   (table.insert buffers view.bufnr)
@@ -421,6 +476,88 @@
   ;; Helper function for getting the line under the cursor
   (fn get-selection []
     (tostring (. last-results cursor-row)))
+
+  ;; Stores the preview view info if it exists
+  (var preview-view-info {})
+
+  ;; When we have requested previewer create the view
+  (when config.preview
+    (set preview-view-info (create-preview-view {: layout}))
+    (table.insert buffers preview-view-info.bufnr))
+
+  ;; Writes a preview to the preview buffer
+  (fn write-preview [preview selection]
+    (when (not exit)
+      (let [preview-size (length preview)]
+        (if (= preview-size 0)
+          ;; If there are no results then clear
+          (vim.api.nvim_buf_set_lines preview-view-info.bufnr 0 -1 false [])
+          (do
+            ;; Set the preview
+            (vim.api.nvim_buf_set_lines preview-view-info.bufnr 0 -1 false preview)
+            ;; In case it's accidently saved
+            (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify selection ":p:gs?/?%?")))
+            ;; Use the fake path to enable ftdetection
+            (vim.api.nvim_buf_set_name preview-view-info.bufnr fake-path)
+            ;; Detect the file type
+            (vim.api.nvim_buf_call preview-view-info.bufnr (partial vim.api.nvim_command "filetype detect")))))))
+
+  ;; Schedules a preview for generation
+  (fn schedule-preview [requested-cursor-row]
+    (fn should-cancel [] (or exit (not= requested-cursor-row cursor-row)))
+
+    (when (= cursor-row requested-cursor-row)
+      ;; Preview results
+      (var preview [])
+
+      ;; Tracks the requests of slow nvim calls
+      (var pending-blocking-value false)
+
+      ;; Stores the results of slow nvim calls
+      (var blocking-value nil)
+
+      ;; Store the request API for coroutines
+      (local request {:selection (get-selection)
+                      :cancel (should-cancel)})
+
+      (fn schedule-preview-write [preview]
+        (vim.schedule (partial write-preview preview request.selection)))
+
+      (fn schedule-blocking-value [fnc]
+        (set pending-blocking-value true)
+        (vim.schedule (fn []
+          (set blocking-value (fnc))
+          (set pending-blocking-value false))))
+
+      (let [check (vim.loop.new_idle)
+            reader (coroutine.create config.preview)]
+
+      (fn preview-end []
+        (check:stop)
+        ;; Schedule the write
+        (schedule-preview-write preview))
+
+      (fn checker []
+        (when pending-blocking-value
+          (lua "return nil"))
+
+        ;; Update the cancel flag preserving an cancel set by a consumer
+        (tset request :cancel (or request.cancel (should-cancel)))
+
+        (if (not= (coroutine.status reader) :dead)
+          ;; Fetches results be also sends cancel signal
+          (let [(_ value) (coroutine.resume reader request blocking-value)]
+            (match (type value)
+              ;; We have a function so schedule it to be computed
+              :function (schedule-blocking-value value)
+              ;; Store the values, there are more to come
+              :table (accumulate preview value)
+              :nil (preview-end)))
+          ;; When the coroutine is dead then stop the checker and write
+          (preview-end)))
+
+      ;; Start the checker after each IO poll
+      (check:start checker))))
 
   ;; Only write what results are needed
   (fn write-results [results]
@@ -448,7 +585,12 @@
               ;; Add selected highlighting
               (when
                 (. selected result)
-                (add-selected-highlight row))))))))
+                (add-selected-highlight row))))))
+      ;; When we are running previews schedule one
+      ;; TODO there is an optimization here based on selection difference
+      (when config.preview
+        (vim.schedule (partial schedule-preview cursor-row)))))
+
 
   ;; This is the non-scheduled version of on-update
   (fn on-update-unwraped [filter width height]
@@ -484,13 +626,13 @@
                         :cancel (should-cancel)})
 
         ;; Schedules a write, this can be partial results
-        (fn schedule-write [results]
+        (fn schedule-results-write [results]
           ;; Update that we have rendered
           (set has-rendered true)
           (vim.schedule (partial write-results results)))
 
         ;; Run this whenever the checker should be considered to have ended
-        (fn end []
+        (fn results-end []
           ;; Stop the checker
           (check:stop)
             ;; When we have scores attached then sort
@@ -505,7 +647,7 @@
           ;; Store the last written results
           (set last-results results)
           ;; Schedule the write
-          (schedule-write last-results)
+          (schedule-results-write last-results)
           ;; Free the results
           (set results []))
 
@@ -554,10 +696,10 @@
                     ;; Set the results to enable cursor
                     (set last-results results)
                     ;; Early write
-                    (schedule-write results)))
-                :nil (end)))
+                    (schedule-results-write results)))
+                :nil (results-end)))
             ;; When the coroutine is dead then stop the checker and write
-            (end))
+            (results-end))
 
           ;; Render first loading screen if no render has occured, we have results
           ;; and no time based loading screen has rendered
@@ -642,6 +784,7 @@
   ;; Initializes the input view
   (local input-view-info (create-input-view
     {: initial-filter
+     :preview (not= config.preview nil)
      : layout
      : prompt
      : on-enter
