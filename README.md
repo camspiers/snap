@@ -1,6 +1,6 @@
 # Snap
 
-A fast finder system for neovim.
+A fast finder system for neovim >0.5.
 
 ## Installation
 
