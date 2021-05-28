@@ -357,6 +357,10 @@ snap.register.map({"n"}, {"<Leader>f"}, function ()
 end)
 ```
 
+An exmaple that configures a variety of in-built snaps is available here:
+
+https://gist.github.com/camspiers/686395ab3bda4a0d00684d72acc24c23
+
 ## Advanced API (for developers)
 
 ### `snap.meta_result`
