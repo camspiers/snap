@@ -174,7 +174,7 @@
 ;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.preview (math.floor (* width 0.6)) width)
+    {:width (if config.preview (math.floor (* width 0.55)) width)
      :height 1
      :row (+ height row 2)
      : col :focusable true}))
@@ -182,7 +182,7 @@
 ;;  Compute the results layout
 (fn create-results-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.preview (math.floor (* width 0.6)) width)
+    {:width (if config.preview (math.floor (* width 0.55)) width)
      : height
      : row
      : col
@@ -191,7 +191,7 @@
 ;;  Compute the preview layout
 (fn create-preview-layout [config]
   (let [{: width : height : row : col} (config.layout)
-        offset (math.floor (* width 0.6))]
+        offset (math.floor (* width 0.55))]
     {:width (- width offset)
      :height (+ height 3)
      : row

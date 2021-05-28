@@ -310,7 +310,7 @@ local function create_input_layout(config)
   local width = _let_0_["width"]
   local _2_
   if config.preview then
-    _2_ = math.floor((width * 0.6))
+    _2_ = math.floor((width * 0.55))
   else
     _2_ = width
   end
@@ -324,7 +324,7 @@ local function create_results_layout(config)
   local width = _let_0_["width"]
   local _2_
   if config.preview then
-    _2_ = math.floor((width * 0.6))
+    _2_ = math.floor((width * 0.55))
   else
     _2_ = width
   end
@@ -336,7 +336,7 @@ local function create_preview_layout(config)
   local height = _let_0_["height"]
   local row = _let_0_["row"]
   local width = _let_0_["width"]
-  local offset = math.floor((width * 0.6))
+  local offset = math.floor((width * 0.55))
   return {col = (col + offset + 3), focusable = false, height = (height + 3), row = row, width = (width - offset)}
 end
 local function create_buffer()
