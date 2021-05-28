@@ -2,6 +2,12 @@
 
 A fast finder system for neovim >0.5.
 
+## Demo
+
+The following shows grepping in the large `gcc` codebase.
+
+https://user-images.githubusercontent.com/51294/119935513-bb891b80-bfdb-11eb-9f67-24cdcdaa6c70.mov
+
 ## Installation
 
 ### With Packer
