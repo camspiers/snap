@@ -334,6 +334,9 @@ type Consumer = (producer: Producer) => Producer;
     row: number;
     col: number;
   };
+
+  // Optional initial filter
+  initial_filter?: string;
 };
 ```
 

@@ -376,8 +376,8 @@ local function create_input_view(config)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
-  if (config["initial-filter"] ~= "") then
-    vim.api.nvim_feedkeys(config["initial-filter"], "n", false)
+  if (config.initial_filter ~= "") then
+    vim.api.nvim_feedkeys(config.initial_filter, "n", false)
   end
   local function get_filter()
     local contents = tbl_first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
@@ -479,7 +479,7 @@ do
       local exit = false
       local buffers = {}
       local layout = (config.layout or (get("layout")).centered)
-      local initial_filter = (config["initial-filter"] or "")
+      local initial_filter = (config.initial_filter or "")
       local namespace = vim.api.nvim_create_namespace("Snap")
       local original_winnr = vim.api.nvim_get_current_win()
       local prompt = string.format("%s> ", (config.prompt or "Find"))
@@ -762,7 +762,7 @@ do
         end
         return on_key_direction(_8_)
       end
-      local input_view_info = create_input_view({["initial-filter"] = initial_filter, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, preview = (config.preview ~= nil), prompt = prompt})
+      local input_view_info = create_input_view({["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, initial_filter = initial_filter, layout = layout, preview = (config.preview ~= nil), prompt = prompt})
       return table.insert(buffers, input_view_info.bufnr)
     end
     v_0_0 = run0

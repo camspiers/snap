@@ -13,6 +13,7 @@
         (assert (vim.loop.fs_close fd))
         (vim.split data "\n" true))))
 
+    ;; Write the preview to the buffer.
     (when (not request.cancel)
       (snap.sync (fn []
         ;; Set the preview

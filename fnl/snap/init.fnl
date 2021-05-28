@@ -248,9 +248,9 @@
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
 
-    (when (~= config.initial-filter "")
+    (when (~= config.initial_filter "")
       ;; We do it this way because prompts are broken in nvim
-      (vim.api.nvim_feedkeys config.initial-filter :n false))
+      (vim.api.nvim_feedkeys config.initial_filter :n false))
 
     (fn get-filter []
       (let [contents (tbl-first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
@@ -415,7 +415,7 @@
   (local layout (or config.layout (. (get :layout) :centered)))
 
   ;; Store the initial filter
-  (local initial-filter (or config.initial-filter ""))
+  (local initial_filter (or config.initial_filter ""))
 
   ;; Creates a namespace for highlighting
   (local namespace (vim.api.nvim_create_namespace :Snap))
@@ -762,7 +762,7 @@
 
   ;; Initializes the input view
   (local input-view-info (create-input-view
-    {: initial-filter
+    {: initial_filter
      :preview (not= config.preview nil)
      : layout
      : prompt
