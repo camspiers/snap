@@ -1,5 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/file.fnl"
 local snap = require("snap")
+local max_size = 5000
 local function _1_(request)
   local path
   local function _2_(...)
@@ -8,13 +9,14 @@ local function _1_(request)
   path = snap.sync(_2_)
   local handle = io.popen(string.format("file -n -b --mime-encoding %s", path))
   local encoding = string.gsub(handle:read("*a"), "^%s*(.-)%s*$", "%1")
+  handle:close()
   local preview
   if (encoding == "binary") then
     preview = {"Binary file"}
   else
     local fd = assert(vim.loop.fs_open(path, "r", 438))
     local stat = assert(vim.loop.fs_fstat(fd))
-    local data = assert(vim.loop.fs_read(fd, stat.size, 0))
+    local data = assert(vim.loop.fs_read(fd, math.min(stat.size, max_size), 0))
     assert(vim.loop.fs_close(fd))
     preview = vim.split(data, "\n", true)
   end
