@@ -502,6 +502,7 @@
       ;; Store the request API for coroutines
       (local request {:selection (get-selection)
                       :bufnr preview-view-info.bufnr
+                      :winnr preview-view-info.winnr
                       :cancel (should-cancel)})
 
       (fn schedule-blocking-value [fnc]

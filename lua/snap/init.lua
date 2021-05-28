@@ -528,7 +528,7 @@ do
           local preview = {}
           local pending_blocking_value = false
           local blocking_value = nil
-          local request = {bufnr = preview_view_info.bufnr, cancel = should_cancel(), selection = get_selection()}
+          local request = {bufnr = preview_view_info.bufnr, cancel = should_cancel(), selection = get_selection(), winnr = preview_view_info.winnr}
           local function schedule_blocking_value(fnc)
             pending_blocking_value = true
             local function _8_()

@@ -1,7 +1,9 @@
-(let [snap (require :snap)]
+(let [snap (require :snap)
+      select (snap.get :select.vimgrep)]
   (local max-size 10000)
   (fn [request]
-    (local path (snap.sync (partial vim.fn.fnamemodify request.selection ":p")))
+    (local selection (select.parse request.selection))
+    (local path (snap.sync (partial vim.fn.fnamemodify selection.filename ":p")))
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
     (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )
     (handle:close)
@@ -20,8 +22,8 @@
     ;; Write the preview to the buffer.
     (when (not request.cancel)
       (snap.sync (fn []
-        ;; We don't need a cursorline
-        (vim.api.nvim_win_set_option request.winnr :cursorline false)
+        ;; Highlight using the cursor
+        (vim.api.nvim_win_set_option request.winnr :cursorline true)
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; In case it's accidently saved
@@ -29,4 +31,9 @@
         ;; Use the fake path to enable ftdetection
         (vim.api.nvim_buf_set_name request.bufnr fake-path)
         ;; Detect the file type
-        (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect")))))))
+        (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
+
+        (when (not= encoding :binary)
+          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum selection.col]))
+        
+        )))))

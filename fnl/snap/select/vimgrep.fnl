@@ -1,6 +1,6 @@
 (module snap.select.vimgrep)
 
-(fn parse [line]
+(defn parse [line]
   (let [parts (vim.split line ":")]
     {:filename (. parts 1)
      :lnum (tonumber (. parts 2))

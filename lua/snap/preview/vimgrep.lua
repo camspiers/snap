@@ -1,10 +1,12 @@
-local _2afile_2a = "fnl/snap/preview/file.fnl"
+local _2afile_2a = "fnl/snap/preview/vimgrep.fnl"
 local snap = require("snap")
+local select = snap.get("select.vimgrep")
 local max_size = 10000
 local function _1_(request)
+  local selection = select.parse(request.selection)
   local path
   local function _2_(...)
-    return vim.fn.fnamemodify(request.selection, ":p", ...)
+    return vim.fn.fnamemodify(selection.filename, ":p", ...)
   end
   path = snap.sync(_2_)
   local handle = io.popen(string.format("file -n -b --mime-encoding %s", path))
@@ -22,14 +24,17 @@ local function _1_(request)
   end
   if not request.cancel then
     local function _4_()
-      vim.api.nvim_win_set_option(request.winnr, "cursorline", false)
+      vim.api.nvim_win_set_option(request.winnr, "cursorline", true)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
       local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(request.selection, ":p:gs?/?%?"))
       vim.api.nvim_buf_set_name(request.bufnr, fake_path)
       local function _5_(...)
         return vim.api.nvim_command("filetype detect", ...)
       end
-      return vim.api.nvim_buf_call(request.bufnr, _5_)
+      vim.api.nvim_buf_call(request.bufnr, _5_)
+      if (encoding ~= "binary") then
+        return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, selection.col})
+      end
     end
     return snap.sync(_4_)
   end
