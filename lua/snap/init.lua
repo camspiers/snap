@@ -520,22 +520,6 @@ do
         preview_view_info = create_preview_view({layout = layout})
         table.insert(buffers, preview_view_info.bufnr)
       end
-      local function write_preview(preview, selection)
-        if not exit then
-          local preview_size = #preview
-          if (preview_size == 0) then
-            return vim.api.nvim_buf_set_lines(preview_view_info.bufnr, 0, -1, false, {})
-          else
-            vim.api.nvim_buf_set_lines(preview_view_info.bufnr, 0, -1, false, preview)
-            local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(selection, ":p:gs?/?%?"))
-            vim.api.nvim_buf_set_name(preview_view_info.bufnr, fake_path)
-            local function _8_(...)
-              return vim.api.nvim_command("filetype detect", ...)
-            end
-            return vim.api.nvim_buf_call(preview_view_info.bufnr, _8_)
-          end
-        end
-      end
       local function schedule_preview(requested_cursor_row)
         local function should_cancel()
           return (exit or (requested_cursor_row ~= cursor_row))
@@ -544,13 +528,7 @@ do
           local preview = {}
           local pending_blocking_value = false
           local blocking_value = nil
-          local request = {cancel = should_cancel(), selection = get_selection()}
-          local function schedule_preview_write(preview0)
-            local function _8_(...)
-              return write_preview(preview0, request.selection, ...)
-            end
-            return vim.schedule(_8_)
-          end
+          local request = {bufnr = preview_view_info.bufnr, cancel = should_cancel(), selection = get_selection()}
           local function schedule_blocking_value(fnc)
             pending_blocking_value = true
             local function _8_()
@@ -563,8 +541,7 @@ do
           local check = vim.loop.new_idle()
           local reader = coroutine.create(config.preview)
           local function preview_end()
-            check:stop()
-            return schedule_preview_write(preview)
+            return check:stop()
           end
           local function checker()
             if pending_blocking_value then

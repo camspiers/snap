@@ -485,23 +485,6 @@
     (set preview-view-info (create-preview-view {: layout}))
     (table.insert buffers preview-view-info.bufnr))
 
-  ;; Writes a preview to the preview buffer
-  (fn write-preview [preview selection]
-    (when (not exit)
-      (let [preview-size (length preview)]
-        (if (= preview-size 0)
-          ;; If there are no results then clear
-          (vim.api.nvim_buf_set_lines preview-view-info.bufnr 0 -1 false [])
-          (do
-            ;; Set the preview
-            (vim.api.nvim_buf_set_lines preview-view-info.bufnr 0 -1 false preview)
-            ;; In case it's accidently saved
-            (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify selection ":p:gs?/?%?")))
-            ;; Use the fake path to enable ftdetection
-            (vim.api.nvim_buf_set_name preview-view-info.bufnr fake-path)
-            ;; Detect the file type
-            (vim.api.nvim_buf_call preview-view-info.bufnr (partial vim.api.nvim_command "filetype detect")))))))
-
   ;; Schedules a preview for generation
   (fn schedule-preview [requested-cursor-row]
     (fn should-cancel [] (or exit (not= requested-cursor-row cursor-row)))
@@ -518,10 +501,8 @@
 
       ;; Store the request API for coroutines
       (local request {:selection (get-selection)
+                      :bufnr preview-view-info.bufnr
                       :cancel (should-cancel)})
-
-      (fn schedule-preview-write [preview]
-        (vim.schedule (partial write-preview preview request.selection)))
 
       (fn schedule-blocking-value [fnc]
         (set pending-blocking-value true)
@@ -533,9 +514,7 @@
             reader (coroutine.create config.preview)]
 
       (fn preview-end []
-        (check:stop)
-        ;; Schedule the write
-        (schedule-preview-write preview))
+        (check:stop))
 
       (fn checker []
         (when pending-blocking-value
