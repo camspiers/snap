@@ -8,7 +8,7 @@ local function _1_(limit, producer)
         count = (count + #results)
       end
       if (count > limit) then
-        request["cancel"] = true
+        request.cancel()
       end
       coroutine.yield(results)
     end

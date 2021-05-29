@@ -81,7 +81,7 @@
   (let [(_ result) (coroutine.resume thread request value)]
     (if
       ;; If we are cancelling then return nil
-      request.cancel nil
+      (request.canceled) nil
       ;; When we have a function, we want to yield it
       ;; get the value then continue
       (= (type result) :function) (resume thread request (sync result))
@@ -171,31 +171,41 @@
 
 ;; View Helpers
 
+;; Represents the bottom border
+(local border-size 1)
+
+;; Padding between ui elements
+(local padding-size 1)
+
 ;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.preview (math.floor (* width 0.55)) width)
+    {:width (if config.has-views (math.floor (* width 0.55)) width)
      :height 1
-     :row (+ height row 2)
+     :row (- (+ row height) border-size)
      : col :focusable true}))
 
 ;;  Compute the results layout
 (fn create-results-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.preview (math.floor (* width 0.55)) width)
-     : height
+    {:width (if config.has-views (math.floor (* width 0.55)) width)
+     :height (- height border-size border-size padding-size)
      : row
      : col
      :focusable false}))
 
-;;  Compute the preview layout
-(fn create-preview-layout [config]
+;;  Compute the view layout
+(fn create-view-layout [config]
   (let [{: width : height : row : col} (config.layout)
-        offset (math.floor (* width 0.55))]
+        index (- config.index 1)
+        offset (math.floor (* width 0.55))
+        height-with-border (math.floor (/ height config.total-views))
+        height (- height-with-border (* index border-size))]
+
     {:width (- width offset)
-     :height (+ height 3)
-     : row
-     :col (+ col offset 3)
+     : height
+     :row (+ row (* index height-with-border) (* index border-size) (* index padding-size))
+     :col (+ col offset (* border-size 2) padding-size)
      :focusable false}))
 
 ;; Creates a scratch buffer, used for both results and input
@@ -228,9 +238,9 @@
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
-(fn create-preview-view [config]
+(fn create-view [config]
   (let [bufnr (create-buffer)
-        layout (create-preview-layout config)
+        layout (create-view-layout config)
         winnr (create-window bufnr layout)]
     (vim.api.nvim_win_set_option winnr :cursorline false)
     (vim.api.nvim_win_set_option winnr :wrap false)
@@ -355,8 +365,9 @@
 ;;
 ;;   "An optional function that enables multiselect executes on multiselect"
 ;;   :?multiselect (selections) => void
-
-;;   :?preview (request: PreviewRequest) => yiela<Yieldable>
+;;
+;;   "An option table of additional views"
+;;   :?views table<(request: SelectionRequest) => yiela<Yieldable>>
 ;; }
 
 ;; fnlfmt: skip
@@ -393,13 +404,14 @@
     (assert
       (= (type config.layout) "function")
       "snap.run 'layout' must be a function"))
-  (when config.preview
+  (when config.views
     (assert
-      (= (type config.preview) "function")
-      "snap.run 'preview' must be a function"))
-
-  ;; Store last search
-  (var last-filter nil)
+      (= (type config.views) "table")
+      "snap.run 'views' must be a table")
+    (each [_ view (ipairs config.views)]
+      (assert
+        (= (type view) "function")
+        "snap.run each view in 'views' must be a function")))
 
   ;; Store the last results
   (var last-results [])
@@ -452,92 +464,108 @@
     ;; Return back from insert mode
     (vim.api.nvim_command :stopinsert))
 
+  ;; Create requested views
+  (local total-views (if config.views (length config.views) 0))
+  (local has-views (> total-views 0))
+  (local views [])
+  (when has-views
+    (each [index producer (ipairs config.views)]
+      (local view {:view (create-view {: layout : index : total-views}) : producer})
+      (table.insert views view)
+      (table.insert buffers view.view.bufnr)))
+
   ;; Creates the results buffer and window and stores thier numbers
-  (local view (create-results-view {: layout
-                                    :preview (not= config.preview nil)}))
+  (local results-view (create-results-view {: layout
+                                    : has-views}))
 
   ;; Register buffer for exiting
-  (table.insert buffers view.bufnr)
+  (table.insert buffers results-view.bufnr)
 
   ;; Helper function for adding selected highlighting
   (fn add-selected-highlight [row]
-    (vim.api.nvim_buf_add_highlight view.bufnr namespace :Comment (- row 1) 0 -1))
+    (vim.api.nvim_buf_add_highlight results-view.bufnr namespace :Comment (- row 1) 0 -1))
 
   ;; Helper function for adding positions highlights
   (fn add-positions-highlight [row positions]
     (local line (- row 1))
     (each [_ col (ipairs positions)]
-      (vim.api.nvim_buf_add_highlight view.bufnr namespace :Search line (- col 1) col)))
+      (vim.api.nvim_buf_add_highlight results-view.bufnr namespace :Search line (- col 1) col)))
 
   ;; Helper to set lines to results view
   (fn set-lines [start end lines]
-    (vim.api.nvim_buf_set_lines view.bufnr start end false lines))
+    (vim.api.nvim_buf_set_lines results-view.bufnr start end false lines))
 
   ;; Helper function for getting the line under the cursor
   (fn get-selection []
     (tostring (. last-results cursor-row)))
 
-  ;; Stores the preview view info if it exists
-  (var preview-view-info {})
+  ;; Creates an api for handling slow values
+  (fn create-slow-api []
+    (local slow-api {:pending false :value nil})
+    (fn slow-api.schedule [fnc]
+      (tset slow-api :pending true)
+      (vim.schedule (fn []
+        (tset slow-api :value (fnc))
+        (tset slow-api :pending false))))
+    (fn slow-api.free [] (tset slow-api :value nil))
+    slow-api)
 
-  ;; When we have requested previewer create the view
-  (when config.preview
-    (set preview-view-info (create-preview-view {: layout}))
-    (table.insert buffers preview-view-info.bufnr))
+  ;; Creates a producer request
+  (fn create-request [{: body : cancel}]
+    ;; Config validation
+    (assert (= (type body) :table) "body must be a table")
+    (assert (= (type cancel) :function) "cancel must be a function")
+    ;; Set up the request
+    (local request {:is-canceled false})
+    ;; Copy each value
+    (each [key value (pairs body)]
+      (tset request key value))
+    ;; Cancels the request
+    (fn request.cancel [] (tset request :is-canceled true))
+    ;; Checkes if request is canceled
+    (fn request.canceled [] (or exit request.is-canceled (cancel request)))
+    request)
 
-  ;; Schedules a preview for generation
-  (fn schedule-preview [requested-cursor-row]
-    (fn should-cancel [] (or exit (not= requested-cursor-row cursor-row)))
+  ;; Schedules a view for generation
+  (fn schedule-producer [{: producer
+                          : request
+                          : on-end
+                          : on-value}]
+    ;; By the time the routine runs, we might be able to avoid it
+    (when (not (request.canceled))
+      (let [
+            ;; Create the idle loop
+            idle (vim.loop.new_idle)
+            ;; Create the producer
+            thread (coroutine.create producer)
+            ;; Tracks the requests of slow nvim calls
+            slow-api (create-slow-api)
+            ;; Handle ending the idle loop and optionally calling on end
+            stop (fn [] (idle:stop) (when on-end (on-end)))]
 
-    (when (= cursor-row requested-cursor-row)
-      ;; Preview results
-      (var preview [])
-
-      ;; Tracks the requests of slow nvim calls
-      (var pending-blocking-value false)
-
-      ;; Stores the results of slow nvim calls
-      (var blocking-value nil)
-
-      ;; Store the request API for coroutines
-      (local request {:selection (get-selection)
-                      :bufnr preview-view-info.bufnr
-                      :winnr preview-view-info.winnr
-                      :cancel (should-cancel)})
-
-      (fn schedule-blocking-value [fnc]
-        (set pending-blocking-value true)
-        (vim.schedule (fn []
-          (set blocking-value (fnc))
-          (set pending-blocking-value false))))
-
-      (let [check (vim.loop.new_idle)
-            reader (coroutine.create config.preview)]
-
-      (fn preview-end []
-        (check:stop))
-
-      (fn checker []
-        (when pending-blocking-value
-          (lua "return nil"))
-
-        ;; Update the cancel flag preserving an cancel set by a consumer
-        (tset request :cancel (or request.cancel (should-cancel)))
-
-        (if (not= (coroutine.status reader) :dead)
-          ;; Fetches results be also sends cancel signal
-          (let [(_ value) (coroutine.resume reader request blocking-value)]
-            (match (type value)
-              ;; We have a function so schedule it to be computed
-              :function (schedule-blocking-value value)
-              ;; Store the values, there are more to come
-              :table (accumulate preview value)
-              :nil (preview-end)))
-          ;; When the coroutine is dead then stop the checker and write
-          (preview-end)))
-
-      ;; Start the checker after each IO poll
-      (check:start checker))))
+        ;; Start the checker after each IO poll
+        (idle:start (fn []
+          (if
+            ;; Only run when we aren't waiting for a slow-api call
+            slow-api.pending
+            ;; Return nil
+            nil
+            ;; When the thread is not dead
+            (not= (coroutine.status thread) :dead)
+            ;; Run the resume
+            (do
+              ;; Fetches results be also sends cancel signal
+              (let [(_ value) (coroutine.resume thread request slow-api.value)]
+                ;; Free memory
+                (slow-api.free)
+                ;; Match each type
+                (match (type value)
+                  ;; We have a function so schedule it to be computed
+                  :function (slow-api.schedule value)
+                  :nil (stop)
+                  _ (when on-value (on-value value)))))
+            ;; When the coroutine is dead then stop the loop
+            (stop)))))))
 
   ;; Only write what results are needed
   (fn write-results [results]
@@ -549,7 +577,7 @@
           ;; Otherwise render partial results
           ;; Don't render more than we need to
           ;; this is getting only the height plus the cursor
-          (let [max (+ view.height cursor-row)
+          (let [max (+ results-view.height cursor-row)
                 partial-results []]
             (each [_ result (ipairs results)
                    :until (= max (length partial-results))]
@@ -566,148 +594,105 @@
               (when
                 (. selected result)
                 (add-selected-highlight row))))))
-      ;; When we are running previews schedule one
-      ;; TODO there is an optimization here based on selection difference
-      (when config.preview
-        (vim.schedule (partial schedule-preview cursor-row)))))
 
+      ;; When we are running views schedule them
+      (when has-views
+        (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+          (local request
+            (create-request
+              {:body {:selection (get-selection) : bufnr : winnr}
+               :cancel (fn [request] (not= request.selection (get-selection)))}))
+          (schedule-producer {: producer : request})))))
 
-  ;; This is the non-scheduled version of on-update
-  (fn on-update-unwraped [filter width height]
-    ;; Helper to determine if we should cancel, sent to coroutine
-    ;; where it has the responsibility to kill running processes etc
-    (fn should-cancel [] (or exit (not= filter last-filter)))
-
-    ;; Only run when the filter hasn't changed from the unscheduled set
-    (when (= filter last-filter)
-      (let [check (vim.loop.new_idle)
-            reader (coroutine.create config.producer)]
-        ;; Tracks if any results have rendered
-        (var has-rendered false)
-
-        ;; Tracks the requests of slow nvim calls
-        (var pending-blocking-value false)
-
-        ;; Stores the results of slow nvim calls
-        (var blocking-value nil)
-
-        ;; Store the number of times the loading screen has displayed
-        (var loading-count 0)
-
-        ;; Store the last time the loap has run
-        (var last-time (vim.loop.now))
-
-        ;; Prepare new results array for collection
-        (var results [])
-
-        ;; Store the request API for coroutines
-        (local request {: filter
-                        : height
-                        :cancel (should-cancel)})
-
-        ;; Schedules a write, this can be partial results
-        (fn schedule-results-write [results]
-          ;; Update that we have rendered
-          (set has-rendered true)
-          (vim.schedule (partial write-results results)))
-
-        ;; Run this whenever the checker should be considered to have ended
-        (fn results-end []
-          ;; Stop the checker
-          (check:stop)
-            ;; When we have scores attached then sort
-          (when
-            (has_meta (tbl-first results) :score)
-            (partial-quicksort
-              results
-              1
-              (length results)
-              (+ height cursor-row)
-              #(> $1.score $2.score)))
-          ;; Store the last written results
-          (set last-results results)
-          ;; Schedule the write
-          (schedule-results-write last-results)
-          ;; Free the results
-          (set results []))
-
-        ;; Schedules a sync value for processing
-        (fn schedule-blocking-value [fnc]
-          (set pending-blocking-value true) 
-          (vim.schedule (fn []
-            (set blocking-value (fnc))
-            (set pending-blocking-value false))))
-
-        (fn render-loading-screen []
-          (set loading-count (+ loading-count 1))
-          (vim.schedule (fn []
-            (when (not request.cancel)
-              (local loading (create-loading-screen width height loading-count))
-              (set-lines 0 -1 loading)))))
-
-        ;; This checker runs on every loop of the event loop
-        ;; It checks if the coroutine is not dead and has more values
-        (fn checker []
-          (when pending-blocking-value
-            (lua "return nil"))
-
-          ;; Store the current time
-          (local current-time (vim.loop.now))
-
-          ;; Update the cancel flag preserving an cancel set by a consumer
-          (tset request :cancel (or request.cancel (should-cancel)))
-
-          ;; When the coroutine is not dead, process its results
-          (if (not= (coroutine.status reader) :dead)
-            ;; Fetches results be also sends cancel signal
-            (let [(_ value) (coroutine.resume reader request blocking-value)]
-              (match (type value)
-                ;; We have a function so schedule it to be computed
-                :function (schedule-blocking-value value)
-                ;; Store the values, there are more to come
-                :table (do
-                  (accumulate results value)
-                  ;; This is an optimization to begin writing unscored results
-                  ;; as early as we can
-                  (when (and
-                          (= (length last-results) 0)
-                          (>= (length results) height)
-                          (not (has_meta (tbl-first results) :score)))
-                    ;; Set the results to enable cursor
-                    (set last-results results)
-                    ;; Early write
-                    (schedule-results-write results)))
-                :nil (results-end)))
-            ;; When the coroutine is dead then stop the checker and write
-            (results-end))
-
-          ;; Render first loading screen if no render has occured, we have results
-          ;; and no time based loading screen has rendered
-          (when
-            (and
-              (not has-rendered)
-              (= loading-count 0)
-              (> (length results) 0))
-            (render-loading-screen))
-
-          ;; Render a basic loading screen based on time
-          (when
-            (and
-              (not has-rendered)
-              (> (- current-time last-time) 500))
-            (set last-time current-time)
-            (render-loading-screen)))
-
-        ;; Start the checker after each IO poll
-        (check:start checker))))
-
-  ;; You can't immediately start the checker so schedule
+  ;; On input update
   (fn on-update [filter]
-    ;; The last filter has changed
-    (set last-filter filter)
+    ;; Tracks if any results have rendered
+    (var has-rendered false)
 
-    ;; Schedule the run
-    (vim.schedule (partial on-update-unwraped filter view.width view.height)))
+    ;; Store the number of times the loading screen has displayed
+    (var loading-count 0)
+
+    ;; Store the first time
+    (var last-time (vim.loop.now))
+
+    ;; Accumulate results
+    (var results [])
+
+    ;; Prepare the request
+    (local request (create-request {:body {: filter :height results-view.height}
+                                    :cancel (fn [request] (not= request.filter filter))}))
+
+    ;; Prepare the scheduler config
+    (local config {:producer config.producer : request})
+
+    ;; Schedules a write, this can be partial results
+    (fn schedule-results-write [results]
+      ;; Update that we have rendered
+      (set has-rendered true)
+      (vim.schedule (partial write-results results)))
+
+    (fn render-loading-screen []
+      (set loading-count (+ loading-count 1))
+      (vim.schedule (fn []
+        (when (not (request.canceled))
+          (local loading (create-loading-screen results-view.width results-view.height loading-count))
+          (set-lines 0 -1 loading)))))
+
+    ;; Add on end handler
+    (fn config.on-end []
+      ;; When we have scores attached then sort
+      (when
+        (has_meta (tbl-first results) :score)
+        (partial-quicksort
+          results
+          1
+          (length results)
+          (+ results-view.height cursor-row)
+          #(> $1.score $2.score)))
+      ;; Store the last written results
+      (set last-results results)
+      ;; Schedule the write
+      (schedule-results-write last-results)
+      ;; Free the results
+      (set results []))
+
+    ;; Add on value handler
+    (fn config.on-value [value]
+      ;; Check the type
+      (assert (= (type value) :table) "Main producer yielded a non-yieldable value")
+      ;; Store the current time
+      (local current-time (vim.loop.now))
+      ;; Accumulate the results
+      (accumulate results value)
+      ;; This is an optimization to begin writing unscored results
+      ;; as early as we can
+      (when (and
+              (= (length last-results) 0)
+              (>= (length results) results-view.height)
+              (not (has_meta (tbl-first results) :score)))
+        ;; Set the results to enable cursor
+        (set last-results results)
+        ;; Early write
+        (schedule-results-write results))
+      ;; Render first loading screen if no render has occured, we have results
+      ;; and no time based loading screen has rendered
+      (when
+        (and
+          (not has-rendered)
+          (= loading-count 0)
+          (> (length results) 0))
+        (render-loading-screen))
+
+      ;; Render a basic loading screen based on time
+      (when
+        (and
+          (not has-rendered)
+          (> (- current-time last-time) 500))
+        (set last-time current-time)
+        (render-loading-screen)))
+
+    ;; And off we go!
+    (schedule-producer config))
 
   ;; Handles entering
   (fn on-enter []
@@ -739,9 +724,9 @@
 
   ;; On key helper
   (fn on-key-direction [get-next-index]
-    (let [line-count (vim.api.nvim_buf_line_count view.bufnr)
+    (let [line-count (vim.api.nvim_buf_line_count results-view.bufnr)
           index (math.max 1 (math.min line-count (get-next-index cursor-row)))]
-      (vim.api.nvim_win_set_cursor view.winnr [index 0])
+      (vim.api.nvim_win_set_cursor results-view.winnr [index 0])
       (set cursor-row index)
       (write-results last-results)))
 
@@ -755,16 +740,16 @@
  
   ;; Page up handler
   (fn on-pageup []
-    (on-key-direction #(- $1 view.height)))
+    (on-key-direction #(- $1 results-view.height)))
 
   ;; Page down handler
   (fn on-pagedown []
-    (on-key-direction #(+ $1 view.height)))
+    (on-key-direction #(+ $1 results-view.height)))
 
   ;; Initializes the input view
   (local input-view-info (create-input-view
     {: initial_filter
-     :preview (not= config.preview nil)
+     : has-views
      : layout
      : prompt
      : on-enter

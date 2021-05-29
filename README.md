@@ -301,7 +301,20 @@ This is the request that is passed to a `producer`.
 ```typescript
 type Request = {
   filter: string;
-  cancel: boolean;
+  canceled: () => boolean;
+};
+```
+
+### ViewRequest
+
+This is the request that is passed to view producers.
+
+```typescript
+type ViewRequest = {
+  selection: string;
+  bufnr: number;
+  winnr: number;
+  canceled: () => boolean;
 };
 ```
 
@@ -315,6 +328,12 @@ type Producer = (request: Request) => yield<Yieldable>;
 
 ```typescript
 type Consumer = (producer: Producer) => Producer;
+```
+
+### ViewProducer
+
+```typescript
+type ViewProducer = (request: ViewRequest) => yield<function | nil>;
 ```
 
 ### `snap.run`
@@ -343,6 +362,9 @@ type Consumer = (producer: Producer) => Producer;
 
   // Optional initial filter
   initial_filter?: string;
+
+  // Optional views
+  views?: table<ViewProducer>
 };
 ```
 
@@ -516,6 +538,20 @@ NOTE: Only provides `select`.
 Creates a basic file previewer.
 
 NOTE: Experimental, and relies on `file` program in path.
+
+# Contributing
+
+To install build dependencies:
+
+```bash
+make deps
+```
+
+To compile lua:
+
+```bash
+make compile
+```
 
 # Roadmap
 

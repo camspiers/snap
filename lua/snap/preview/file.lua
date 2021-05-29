@@ -20,7 +20,7 @@ local function _1_(request)
     assert(vim.loop.fs_close(fd))
     preview = vim.split(data, "\n", true)
   end
-  if not request.cancel then
+  if not request.canceled() then
     local function _4_()
       vim.api.nvim_win_set_option(request.winnr, "cursorline", false)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)

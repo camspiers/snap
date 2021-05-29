@@ -18,7 +18,7 @@
         (vim.split data "\n" true))))
 
     ;; Write the preview to the buffer.
-    (when (not request.cancel)
+    (when (not (request.canceled))
       (snap.sync (fn []
         ;; We don't need a cursorline
         (vim.api.nvim_win_set_option request.winnr :cursorline false)
