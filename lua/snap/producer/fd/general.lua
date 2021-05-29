@@ -2,7 +2,7 @@ local _2afile_2a = "fnl/snap/producer/fd/general.fnl"
 local io = require("snap.io")
 local function _1_(args, cwd, request)
   for data, err, kill in io.spawn("fd", args, cwd) do
-    if request.cancel then
+    if request.canceled() then
       kill()
       coroutine.yield(nil)
     elseif (err ~= "") then

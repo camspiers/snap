@@ -6,17 +6,17 @@ local function _1_(producer)
     for results in snap.consume(producer, request) do
       local _3_0 = type(results)
       if (_3_0 == "table") then
-        local function _4_(_241)
-          local function _5_()
-            if (request.filter ~= "") then
-              return fzy.score(request.filter, tostring(_241))
-            else
-              return 0
+        local function _4_()
+          if (request.filter == "") then
+            return results
+          else
+            local function _4_(_241)
+              return snap.with_meta(_241, "score", fzy.score(request.filter, tostring(_241)))
             end
+            return vim.tbl_map(_4_, results)
           end
-          return snap.with_meta(_241, "score", _5_())
         end
-        coroutine.yield(vim.tbl_map(_4_, results))
+        coroutine.yield(_4_())
       elseif (_3_0 == "nil") then
         coroutine.yield(nil)
       end
