@@ -3,6 +3,6 @@ local snap = require("snap")
 local general = snap.get("producer.ripgrep.general")
 local function _1_(request)
   local cwd = snap.sync(vim.fn.getcwd)
-  return general({"--files", "--no-ignore", "--hidden"}, cwd, request)
+  return general(request, {args = {"--files"}, cwd = cwd})
 end
 return _1_

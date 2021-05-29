@@ -1,5 +1,6 @@
 (let [snap (require :snap)
       general (snap.get :producer.fd.general)]
   (fn [request]
-    (general [:-H :-I :-t :d] request)))
+    (let [cwd (snap.sync vim.fn.getcwd)]
+      (general request {:args [:-H :-I :-t :d] : cwd}))))
 

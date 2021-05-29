@@ -1,5 +1,5 @@
 (let [io (require :snap.io)]
-  (fn [args cwd request]
+  (fn [request {: args : cwd}]
     (each [data err kill (io.spawn :fd args cwd)]
       (if (request.canceled) (do
                            (kill)

@@ -1,6 +1,9 @@
 local _2afile_2a = "fnl/snap/producer/fd/general.fnl"
 local io = require("snap.io")
-local function _1_(args, cwd, request)
+local function _2_(request, _1_0)
+  local _arg_0_ = _1_0
+  local args = _arg_0_["args"]
+  local cwd = _arg_0_["cwd"]
   for data, err, kill in io.spawn("fd", args, cwd) do
     if request.canceled() then
       kill()
@@ -15,4 +18,4 @@ local function _1_(args, cwd, request)
   end
   return nil
 end
-return _1_
+return _2_
