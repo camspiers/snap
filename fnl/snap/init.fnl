@@ -468,6 +468,9 @@
   ;; Store the last results
   (var last-results [])
 
+  ;; Stores the last filter
+  (var last-requested-filter "")
+
   ;; Exit flag tracks whether buffers have detatched
   ;; Used to send cancel request to producer coroutines
   (var exit false)
@@ -604,6 +607,8 @@
 
   ;; On input update
   (fn on-update [filter]
+    (set last-requested-filter filter)
+
     ;; Tracks if any results have rendered
     (var has-rendered false)
 
@@ -618,7 +623,7 @@
 
     ;; Prepare the request
     (local request (create-request {:body {: filter :height results-view.height}
-                                    :cancel (fn [request] (not= request.filter filter))}))
+                                    :cancel (fn [request] (not= request.filter last-requested-filter))}))
 
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})

@@ -542,6 +542,7 @@ do
         end
       end
       local last_results = {}
+      local last_requested_filter = ""
       local exit = false
       local buffers = {}
       local layout = (config.layout or (get("layout")).centered)
@@ -658,13 +659,14 @@ do
         end
       end
       local function on_update(filter)
+        last_requested_filter = filter
         local has_rendered = false
         local loading_count = 0
         local last_time = vim.loop.now()
         local results = {}
         local request
         local function _11_(request0)
-          return (request0.filter ~= filter)
+          return (request0.filter ~= last_requested_filter)
         end
         request = create_request({body = {filter = filter, height = results_view.height}, cancel = _11_})
         local config0 = {producer = config.producer, request = request}
