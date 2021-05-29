@@ -29,7 +29,7 @@ The following is a basic example to give a taste of the API. It creates a highly
 ```lua
 snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
-  select = snap.get'select.vimgrep'.select
+  select = snap.get'select.vimgrep'.select,
   multiselect = snap.get'select.vimgrep'.multiselect
 }
 ```
@@ -39,7 +39,7 @@ Or given this can easily create the ability to ripgrep your entire filesystem wi
 ```lua
 snap.run {
   producer = snap.get'consumer.limit'(10000, snap.get'producer.ripgrep.vimgrep'),
-  select = snap.get'select.vimgrep'.select
+  select = snap.get'select.vimgrep'.select,
   multiselect = snap.get'select.vimgrep'.multiselect
 }
 ```
