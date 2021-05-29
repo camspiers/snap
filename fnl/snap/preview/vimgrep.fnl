@@ -20,7 +20,7 @@
         (vim.split data "\n" true))))
 
     ;; Write the preview to the buffer.
-    (when (not request.cancel)
+    (when (not (request.canceled))
       (snap.sync (fn []
         ;; Highlight using the cursor
         (vim.api.nvim_win_set_option request.winnr :cursorline true)

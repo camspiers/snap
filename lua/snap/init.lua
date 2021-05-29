@@ -597,14 +597,11 @@ do
       local function get_selection()
         return tostring(last_results[cursor_row])
       end
-      local function create_request(_10_0)
-        local _arg_0_ = _10_0
-        local body = _arg_0_["body"]
-        local cancel = _arg_0_["cancel"]
-        assert((type(body) == "table"), "body must be a table")
-        assert((type(cancel) == "function"), "cancel must be a function")
+      local function create_request(config0)
+        assert((type(config0.body) == "table"), "body must be a table")
+        assert((type(config0.cancel) == "function"), "cancel must be a function")
         local request = {["is-canceled"] = false}
-        for key, value in pairs(body) do
+        for key, value in pairs(config0.body) do
           request[key] = value
         end
         request.cancel = function()
@@ -612,11 +609,11 @@ do
           return nil
         end
         request.canceled = function()
-          return (exit or request["is-canceled"] or cancel(request))
+          return (exit or request["is-canceled"] or config0.cancel(request))
         end
         return request
       end
-      local function write_results(results)
+      local function write_results(results, earlyopt)
         if not exit then
           do
             local result_size = #results
@@ -630,28 +627,29 @@ do
                 table.insert(partial_results, tostring(result))
               end
               set_lines(0, -1, partial_results)
-              for row, result in pairs(partial_results) do
-                if has_meta(results[row], "positions") then
-                  add_positions_highlight(row, results[row].positions)
+              for row, _ in pairs(partial_results) do
+                local result = results[row]
+                if has_meta(result, "positions") then
+                  add_positions_highlight(row, result.positions)
                 end
-                if selected[result] then
+                if selected[tostring(result)] then
                   add_selected_highlight(row)
                 end
               end
             end
           end
-          if has_views then
-            for _, _11_0 in ipairs(views) do
-              local _each_0_ = _11_0
+          if (not earlyopt and has_views) then
+            for _, _10_0 in ipairs(views) do
+              local _each_0_ = _10_0
               local producer = _each_0_["producer"]
               local _each_1_ = _each_0_["view"]
               local bufnr = _each_1_["bufnr"]
               local winnr = _each_1_["winnr"]
               local request
-              local function _12_(request0)
+              local function _11_(request0)
                 return (request0.selection ~= get_selection())
               end
-              request = create_request({body = {bufnr = bufnr, selection = get_selection(), winnr = winnr}, cancel = _12_})
+              request = create_request({body = {bufnr = bufnr, selection = get_selection(), winnr = winnr}, cancel = _11_})
               schedule_producer({producer = producer, request = request})
             end
             return nil
@@ -665,37 +663,37 @@ do
         local last_time = vim.loop.now()
         local results = {}
         local request
-        local function _11_(request0)
+        local function _10_(request0)
           return (request0.filter ~= last_requested_filter)
         end
-        request = create_request({body = {filter = filter, height = results_view.height}, cancel = _11_})
+        request = create_request({body = {filter = filter, height = results_view.height}, cancel = _10_})
         local config0 = {producer = config.producer, request = request}
-        local function schedule_results_write(results0)
+        local function schedule_results_write(results0, earlyopt)
           has_rendered = true
-          local function _12_(...)
-            return write_results(results0, ...)
+          local function _11_(...)
+            return write_results(results0, earlyopt, ...)
           end
-          return vim.schedule(_12_)
+          return vim.schedule(_11_)
         end
         local function render_loading_screen()
           loading_count = (loading_count + 1)
-          local function _12_()
+          local function _11_()
             if not request.canceled() then
               local loading = create_loading_screen(results_view.width, results_view.height, loading_count)
               return set_lines(0, -1, loading)
             end
           end
-          return vim.schedule(_12_)
+          return vim.schedule(_11_)
         end
         config0["on-end"] = function()
           if has_meta(tbl_first(results), "score") then
-            local function _12_(_241, _242)
+            local function _11_(_241, _242)
               return (_241.score > _242.score)
             end
-            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _12_)
+            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _11_)
           end
           last_results = results
-          schedule_results_write(last_results)
+          schedule_results_write(last_results, false)
           results = {}
           return nil
         end
@@ -705,7 +703,7 @@ do
           accumulate(results, value)
           if ((#last_results == 0) and (#results >= results_view.height) and not has_meta(tbl_first(results), "score")) then
             last_results = results
-            schedule_results_write(results)
+            schedule_results_write(results, true)
           end
           if (not has_rendered and (loading_count == 0) and (#results > 0)) then
             render_loading_screen()
@@ -765,28 +763,28 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_down()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_pageup()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_pagedown()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, initial_filter = initial_filter, layout = layout, prompt = prompt})
       return table.insert(buffers, input_view_info.bufnr)

@@ -553,23 +553,24 @@
   (fn get-selection [] (tostring (. last-results cursor-row)))
 
   ;; Creates a producer request
-  (fn create-request [{: body : cancel}]
+  (fn create-request [config]
     ;; Config validation
-    (assert (= (type body) :table) "body must be a table")
-    (assert (= (type cancel) :function) "cancel must be a function")
+    (assert (= (type config.body) :table) "body must be a table")
+    (assert (= (type config.cancel) :function) "cancel must be a function")
     ;; Set up the request
     (local request {:is-canceled false})
     ;; Copy each value
-    (each [key value (pairs body)]
+    (each [key value (pairs config.body)]
       (tset request key value))
     ;; Cancels the request
     (fn request.cancel [] (tset request :is-canceled true))
     ;; Checkes if request is canceled
-    (fn request.canceled [] (or exit request.is-canceled (cancel request)))
+    (fn request.canceled [] (or exit request.is-canceled (config.cancel request)))
     request)
 
   ;; Only write what results are needed
-  (fn write-results [results]
+  ;; TODO fix this earlyopt issue
+  (fn write-results [results earlyopt]
     (when (not exit)
       (let [result-size (length results)]
         (if (= result-size 0)
@@ -586,18 +587,19 @@
             ;; Set the lines, but make sure tables are converted to strings
             (set-lines 0 -1 partial-results)
             ;; Update highlights
-            (each [row result (pairs partial-results)]
+            (each [row _ (pairs partial-results)]
+              (local result (. results row))
               ;; Add positions highlighting
               (when
-                (has_meta (. results row) :positions)
-                (add-positions-highlight row (. results row :positions)))
+                (has_meta result :positions)
+                (add-positions-highlight row result.positions))
               ;; Add selected highlighting
               (when
-                (. selected result)
+                (. selected (tostring result))
                 (add-selected-highlight row))))))
 
       ;; When we are running views schedule them
-      (when has-views
+      (when (and (not earlyopt) has-views)
         (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
           (local request
             (create-request
@@ -629,10 +631,10 @@
     (local config {:producer config.producer : request})
 
     ;; Schedules a write, this can be partial results
-    (fn schedule-results-write [results]
+    (fn schedule-results-write [results earlyopt]
       ;; Update that we have rendered
       (set has-rendered true)
-      (vim.schedule (partial write-results results)))
+      (vim.schedule (partial write-results results earlyopt)))
 
     (fn render-loading-screen []
       (set loading-count (+ loading-count 1))
@@ -655,7 +657,7 @@
       ;; Store the last written results
       (set last-results results)
       ;; Schedule the write
-      (schedule-results-write last-results)
+      (schedule-results-write last-results false)
       ;; Free the results
       (set results []))
 
@@ -676,7 +678,8 @@
         ;; Set the results to enable cursor
         (set last-results results)
         ;; Early write
-        (schedule-results-write results))
+        ;; TODO fix this early opt issue
+        (schedule-results-write results true))
       ;; Render first loading screen if no render has occured, we have results
       ;; and no time based loading screen has rendered
       (when
@@ -685,7 +688,6 @@
           (= loading-count 0)
           (> (length results) 0))
         (render-loading-screen))
-
       ;; Render a basic loading screen based on time
       (when
         (and
