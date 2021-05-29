@@ -163,8 +163,9 @@ Uses built in `fzy` filter + score, and `ripgrep` for file finding.
 ```lua
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-  select = snap.get'select.file'.select
-  multiselect = snap.get'select.file'.multiselect
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
 }
 ```
 
@@ -173,8 +174,9 @@ or with in-built `luv` producer:
 ```lua
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.luv.file'),
-  select = snap.get'select.file'.select
-  multiselect = snap.get'select.file'.multiselect
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
 }
 ```
 
@@ -183,8 +185,9 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
-  select = snap.get'select.vimgrep'.select
-  multiselect = snap.get'select.vimgrep'.multiselect
+  select = snap.get'select.vimgrep'.select,
+  multiselect = snap.get'select.vimgrep'.multiselect,
+  views = {snap.get'preview.vimgrep'}
 }
 ```
 
@@ -193,7 +196,8 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
-  select = snap.get'select.file'.select
+  select = snap.get'select.file'.select,
+  views = {snap.get'preview.vimgrep'}
 }
 ```
 
@@ -202,7 +206,8 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
-  select = snap.get'select.file'.select
+  select = snap.get'select.file'.select,
+  views = {snap.get'preview.vimgrep'}
 }
 ```
 
@@ -560,7 +565,7 @@ make compile
 - [ ] More producers for vim concepts
 - [ ] FZF score/filter consumer
 - [ ] Lua filter consumer
-- [ ] More configurable layout system, including arbitrary windows
+- [x] More configurable layout system, including arbitrary windows
 - [ ] Tests
 - [ ] Configurable loading screens
 
