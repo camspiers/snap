@@ -1,5 +1,6 @@
 (let [snap (require :snap)]
-  (local max-size 10000)
+  ;; TODO improve this
+  (local max-size 100000)
   (fn [request]
     (local path (snap.sync (partial vim.fn.fnamemodify request.selection ":p")))
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
@@ -18,8 +19,8 @@
         (vim.split data "\n" true))))
 
     ;; Write the preview to the buffer.
-    (when (not (request.canceled))
-      (snap.sync (fn []
+    (snap.sync (fn []
+      (when (not (request.canceled))
         ;; We don't need a cursorline
         (vim.api.nvim_win_set_option request.winnr :cursorline false)
         ;; Set the preview

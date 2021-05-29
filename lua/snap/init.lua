@@ -304,6 +304,31 @@ register.map = function(modes, keys, fnc, opts)
 end
 local border_size = 1
 local padding_size = 1
+local views_width = 0.5
+local function allocate(total, parts)
+  local remaining = total
+  local sizes = {}
+  local size = math.floor((total / parts))
+  for i = 1, parts do
+    if (i == parts) then
+      table.insert(sizes, remaining)
+    else
+      table.insert(sizes, size)
+      remaining = (remaining - size)
+    end
+  end
+  return sizes
+end
+local function take(tbl, num)
+  return {unpack(tbl, 1, num)}
+end
+local function sum(tbl)
+  local count = 0
+  for _, val in ipairs(tbl) do
+    count = (count + val)
+  end
+  return count
+end
 local function create_input_layout(config)
   local _let_0_ = config.layout()
   local col = _let_0_["col"]
@@ -312,11 +337,11 @@ local function create_input_layout(config)
   local width = _let_0_["width"]
   local _2_
   if config["has-views"] then
-    _2_ = math.floor((width * 0.55))
+    _2_ = math.floor((width * views_width))
   else
     _2_ = width
   end
-  return {col = col, focusable = true, height = 1, row = ((row + height) - border_size), width = _2_}
+  return {col = col, focusable = true, height = 1, row = ((row + height) - padding_size), width = _2_}
 end
 local function create_results_layout(config)
   local _let_0_ = config.layout()
@@ -326,7 +351,7 @@ local function create_results_layout(config)
   local width = _let_0_["width"]
   local _2_
   if config["has-views"] then
-    _2_ = math.floor((width * 0.55))
+    _2_ = math.floor((width * views_width))
   else
     _2_ = width
   end
@@ -339,10 +364,14 @@ local function create_view_layout(config)
   local row = _let_0_["row"]
   local width = _let_0_["width"]
   local index = (config.index - 1)
-  local offset = math.floor((width * 0.55))
-  local height_with_border = math.floor((height / config["total-views"]))
-  local height0 = (height_with_border - (index * border_size))
-  return {col = (col + offset + (border_size * 2) + padding_size), focusable = false, height = height0, row = (row + (index * height_with_border) + (index * border_size) + (index * padding_size)), width = (width - offset)}
+  local border = (index * border_size)
+  local padding = (index * padding_size)
+  local total_borders = ((config["total-views"] - 1) * border_size)
+  local total_paddings = ((config["total-views"] - 1) * padding_size)
+  local sizes = allocate((height - total_borders - total_paddings), config["total-views"])
+  local height0 = sizes[config.index]
+  local col_offset = math.floor((width * views_width))
+  return {col = (col + col_offset + (border_size * 2) + padding_size), focusable = false, height = height0, row = (row + sum(take(sizes, index)) + border + padding), width = (width - col_offset)}
 end
 local function create_buffer()
   return vim.api.nvim_create_buf(false, true)

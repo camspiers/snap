@@ -1,6 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/file.fnl"
 local snap = require("snap")
-local max_size = 10000
+local max_size = 100000
 local function _1_(request)
   local path
   local function _2_(...)
@@ -20,8 +20,8 @@ local function _1_(request)
     assert(vim.loop.fs_close(fd))
     preview = vim.split(data, "\n", true)
   end
-  if not request.canceled() then
-    local function _4_()
+  local function _4_()
+    if not request.canceled() then
       vim.api.nvim_win_set_option(request.winnr, "cursorline", false)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
       local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(request.selection, ":p:gs?/?%?"))
@@ -31,7 +31,7 @@ local function _1_(request)
       end
       return vim.api.nvim_buf_call(request.bufnr, _5_)
     end
-    return snap.sync(_4_)
   end
+  return snap.sync(_4_)
 end
 return _1_

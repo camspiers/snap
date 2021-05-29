@@ -1,7 +1,7 @@
 local _2afile_2a = "fnl/snap/preview/vimgrep.fnl"
 local snap = require("snap")
 local select = snap.get("select.vimgrep")
-local max_size = 10000
+local max_size = 100000
 local function _1_(request)
   local selection = select.parse(request.selection)
   local path
@@ -32,7 +32,7 @@ local function _1_(request)
         return vim.api.nvim_command("filetype detect", ...)
       end
       vim.api.nvim_buf_call(request.bufnr, _5_)
-      if (encoding ~= "binary") then
+      if ((encoding ~= "binary") and (selection.lnum <= #preview)) then
         return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, selection.col})
       end
     end

@@ -44,7 +44,7 @@
 ;; Primary available layouts: centered, bottom, top
 
 (defn centered []
-  (%centered 0.8 0.5))
+  (%centered 0.9 0.7))
 
 (defn bottom []
   (%bottom 0.8 0.5))

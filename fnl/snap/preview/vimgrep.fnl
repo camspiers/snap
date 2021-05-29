@@ -1,6 +1,9 @@
 (let [snap (require :snap)
       select (snap.get :select.vimgrep)]
-  (local max-size 10000)
+
+  ;; TODO improve this approach
+  (local max-size 100000)
+
   (fn [request]
     (local selection (select.parse request.selection))
     (local path (snap.sync (partial vim.fn.fnamemodify selection.filename ":p")))
@@ -32,8 +35,6 @@
         (vim.api.nvim_buf_set_name request.bufnr fake-path)
         ;; Detect the file type
         (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
-
-        (when (not= encoding :binary)
-          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum selection.col]))
-        
-        )))))
+        ;; Try to set cursor to appropriate line
+        (when (and (not= encoding :binary) (<= selection.lnum (length preview)))
+          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum selection.col])))))))

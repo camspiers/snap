@@ -73,7 +73,7 @@ do
   do
     local v_0_0
     local function centered0()
-      return _25centered(0.8, 0.5)
+      return _25centered(0.9, 0.7)
     end
     v_0_0 = centered0
     _0_0["centered"] = v_0_0

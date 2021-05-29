@@ -177,18 +177,46 @@
 ;; Padding between ui elements
 (local padding-size 1)
 
+;; Percentage size that views should take up
+(local views-width 0.5)
+
+;; Used for allocating all total in a number of parts without remainder
+(fn allocate [total parts]
+  (var remaining total)
+  (local sizes [])
+  (local size (math.floor (/ total parts)))
+  (for [i 1 parts]
+    (if
+      (= i parts)
+      (table.insert sizes remaining)
+      (do
+        (table.insert sizes size)
+        (set remaining (- remaining size)))))
+  sizes)
+
+;; Takes 
+(fn take [tbl num]
+  [(unpack tbl 1 num)])
+
+;; Table sum
+(fn sum [tbl]
+  (var count 0)
+  (each [_ val (ipairs tbl)]
+    (set count (+ count val)))
+  count)
+
 ;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.has-views (math.floor (* width 0.55)) width)
+    {:width (if config.has-views (math.floor (* width views-width)) width)
      :height 1
-     :row (- (+ row height) border-size)
+     :row (- (+ row height) padding-size)
      : col :focusable true}))
 
 ;;  Compute the results layout
 (fn create-results-layout [config]
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.has-views (math.floor (* width 0.55)) width)
+    {:width (if config.has-views (math.floor (* width views-width)) width)
      :height (- height border-size border-size padding-size)
      : row
      : col
@@ -198,14 +226,17 @@
 (fn create-view-layout [config]
   (let [{: width : height : row : col} (config.layout)
         index (- config.index 1)
-        offset (math.floor (* width 0.55))
-        height-with-border (math.floor (/ height config.total-views))
-        height (- height-with-border (* index border-size))]
-
-    {:width (- width offset)
+        border (* index border-size)
+        padding (* index padding-size)
+        total-borders (* (- config.total-views 1) border-size)
+        total-paddings (* (- config.total-views 1) padding-size)
+        sizes (allocate (- height total-borders total-paddings) config.total-views)
+        height (. sizes config.index)
+        col-offset (math.floor (* width views-width))]
+    {:width (- width col-offset)
      : height
-     :row (+ row (* index height-with-border) (* index border-size) (* index padding-size))
-     :col (+ col offset (* border-size 2) padding-size)
+     :row (+ row (sum (take sizes index)) border padding)
+     :col (+ col col-offset (* border-size 2) padding-size)
      :focusable false}))
 
 ;; Creates a scratch buffer, used for both results and input
