@@ -343,6 +343,58 @@
     (center-with-text-width (.. "╰" (string.rep "─" 19) "╯") text-width width))
   loading)
 
+;; Creates an api for handling slow values
+(fn create-slow-api []
+  (local slow-api {:pending false :value nil})
+  (fn slow-api.schedule [fnc]
+    (tset slow-api :pending true)
+    (vim.schedule (fn []
+      (tset slow-api :value (fnc))
+      (tset slow-api :pending false))))
+  (fn slow-api.free [] (tset slow-api :value nil))
+  slow-api)
+
+;; Schedules a view for generation
+(fn schedule-producer [{: producer
+                        : request
+                        : on-end
+                        : on-value}]
+  ;; By the time the routine runs, we might be able to avoid it
+  (when (not (request.canceled))
+    (let [
+          ;; Create the idle loop
+          idle (vim.loop.new_idle)
+          ;; Create the producer
+          thread (coroutine.create producer)
+          ;; Tracks the requests of slow nvim calls
+          slow-api (create-slow-api)
+          ;; Handle ending the idle loop and optionally calling on end
+          stop (fn [] (idle:stop) (when on-end (on-end)))]
+
+      ;; Start the checker after each IO poll
+      (idle:start (fn []
+        (if
+          ;; Only run when we aren't waiting for a slow-api call
+          slow-api.pending
+          ;; Return nil
+          nil
+          ;; When the thread is not dead
+          (not= (coroutine.status thread) :dead)
+          ;; Run the resume
+          (do
+            ;; Fetches results be also sends cancel signal
+            (let [(_ value) (coroutine.resume thread request slow-api.value)]
+              ;; Free memory
+              (slow-api.free)
+              ;; Match each type
+              (match (type value)
+                ;; We have a function so schedule it to be computed
+                :function (slow-api.schedule value)
+                :nil (stop)
+                _ (when on-value (on-value value)))))
+          ;; When the coroutine is dead then stop the loop
+          (stop)))))))
+
 ;; Run docs:
 ;;
 ;; @config: {
@@ -475,8 +527,7 @@
       (table.insert buffers view.view.bufnr)))
 
   ;; Creates the results buffer and window and stores thier numbers
-  (local results-view (create-results-view {: layout
-                                    : has-views}))
+  (local results-view (create-results-view {: layout : has-views}))
 
   ;; Register buffer for exiting
   (table.insert buffers results-view.bufnr)
@@ -496,19 +547,7 @@
     (vim.api.nvim_buf_set_lines results-view.bufnr start end false lines))
 
   ;; Helper function for getting the line under the cursor
-  (fn get-selection []
-    (tostring (. last-results cursor-row)))
-
-  ;; Creates an api for handling slow values
-  (fn create-slow-api []
-    (local slow-api {:pending false :value nil})
-    (fn slow-api.schedule [fnc]
-      (tset slow-api :pending true)
-      (vim.schedule (fn []
-        (tset slow-api :value (fnc))
-        (tset slow-api :pending false))))
-    (fn slow-api.free [] (tset slow-api :value nil))
-    slow-api)
+  (fn get-selection [] (tostring (. last-results cursor-row)))
 
   ;; Creates a producer request
   (fn create-request [{: body : cancel}]
@@ -525,47 +564,6 @@
     ;; Checkes if request is canceled
     (fn request.canceled [] (or exit request.is-canceled (cancel request)))
     request)
-
-  ;; Schedules a view for generation
-  (fn schedule-producer [{: producer
-                          : request
-                          : on-end
-                          : on-value}]
-    ;; By the time the routine runs, we might be able to avoid it
-    (when (not (request.canceled))
-      (let [
-            ;; Create the idle loop
-            idle (vim.loop.new_idle)
-            ;; Create the producer
-            thread (coroutine.create producer)
-            ;; Tracks the requests of slow nvim calls
-            slow-api (create-slow-api)
-            ;; Handle ending the idle loop and optionally calling on end
-            stop (fn [] (idle:stop) (when on-end (on-end)))]
-
-        ;; Start the checker after each IO poll
-        (idle:start (fn []
-          (if
-            ;; Only run when we aren't waiting for a slow-api call
-            slow-api.pending
-            ;; Return nil
-            nil
-            ;; When the thread is not dead
-            (not= (coroutine.status thread) :dead)
-            ;; Run the resume
-            (do
-              ;; Fetches results be also sends cancel signal
-              (let [(_ value) (coroutine.resume thread request slow-api.value)]
-                ;; Free memory
-                (slow-api.free)
-                ;; Match each type
-                (match (type value)
-                  ;; We have a function so schedule it to be computed
-                  :function (slow-api.schedule value)
-                  :nil (stop)
-                  _ (when on-value (on-value value)))))
-            ;; When the coroutine is dead then stop the loop
-            (stop)))))))
 
   ;; Only write what results are needed
   (fn write-results [results]
@@ -708,9 +706,9 @@
     (when config.multiselect
       (each [_ value (ipairs last-results)]
         (let [value (tostring value)]
-          (if (= (. selected value) nil)
-            (tset selected value value)
-            (tset selected value nil))))
+          (if (. selected value)
+            (tset selected value nil)
+            (tset selected value true))))
       (write-results last-results)))
 
   ;; Handles select in the multiselect case
@@ -720,7 +718,7 @@
         (when (not= selection "")
           (if (. selected selection)
             (tset selected selection nil)
-            (tset selected selection selection))))))
+            (tset selected selection true))))))
 
   ;; On key helper
   (fn on-key-direction [get-next-index]

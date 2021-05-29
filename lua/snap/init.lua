@@ -456,6 +456,65 @@ local function create_loading_screen(width, height, counter)
   table.insert(loading, center_with_text_width(("\226\149\176" .. string.rep("\226\148\128", 19) .. "\226\149\175"), text_width, width))
   return loading
 end
+local function create_slow_api()
+  local slow_api = {pending = false, value = nil}
+  slow_api.schedule = function(fnc)
+    slow_api["pending"] = true
+    local function _3_()
+      slow_api["value"] = fnc()
+      slow_api["pending"] = false
+      return nil
+    end
+    return vim.schedule(_3_)
+  end
+  slow_api.free = function()
+    slow_api["value"] = nil
+    return nil
+  end
+  return slow_api
+end
+local function schedule_producer(_3_0)
+  local _arg_0_ = _3_0
+  local on_end = _arg_0_["on-end"]
+  local on_value = _arg_0_["on-value"]
+  local producer = _arg_0_["producer"]
+  local request = _arg_0_["request"]
+  if not request.canceled() then
+    local idle = vim.loop.new_idle()
+    local thread = coroutine.create(producer)
+    local slow_api = create_slow_api()
+    local stop
+    local function _4_()
+      idle:stop()
+      if on_end then
+        return on_end()
+      end
+    end
+    stop = _4_
+    local function _5_()
+      if slow_api.pending then
+        return nil
+      elseif (coroutine.status(thread) ~= "dead") then
+        local _, value = coroutine.resume(thread, request, slow_api.value)
+        slow_api.free()
+        local _6_0 = type(value)
+        if (_6_0 == "function") then
+          return slow_api.schedule(value)
+        elseif (_6_0 == "nil") then
+          return stop()
+        else
+          local _0 = _6_0
+          if on_value then
+            return on_value(value)
+          end
+        end
+      else
+        return stop()
+      end
+    end
+    return idle:start(_5_)
+  end
+end
 local run
 do
   local v_0_
@@ -537,25 +596,8 @@ do
       local function get_selection()
         return tostring(last_results[cursor_row])
       end
-      local function create_slow_api()
-        local slow_api = {pending = false, value = nil}
-        slow_api.schedule = function(fnc)
-          slow_api["pending"] = true
-          local function _9_()
-            slow_api["value"] = fnc()
-            slow_api["pending"] = false
-            return nil
-          end
-          return vim.schedule(_9_)
-        end
-        slow_api.free = function()
-          slow_api["value"] = nil
-          return nil
-        end
-        return slow_api
-      end
-      local function create_request(_9_0)
-        local _arg_0_ = _9_0
+      local function create_request(_10_0)
+        local _arg_0_ = _10_0
         local body = _arg_0_["body"]
         local cancel = _arg_0_["cancel"]
         assert((type(body) == "table"), "body must be a table")
@@ -572,48 +614,6 @@ do
           return (exit or request["is-canceled"] or cancel(request))
         end
         return request
-      end
-      local function schedule_producer(_10_0)
-        local _arg_0_ = _10_0
-        local on_end = _arg_0_["on-end"]
-        local on_value = _arg_0_["on-value"]
-        local producer = _arg_0_["producer"]
-        local request = _arg_0_["request"]
-        if not request.canceled() then
-          local idle = vim.loop.new_idle()
-          local thread = coroutine.create(producer)
-          local slow_api = create_slow_api()
-          local stop
-          local function _11_()
-            idle:stop()
-            if on_end then
-              return on_end()
-            end
-          end
-          stop = _11_
-          local function _12_()
-            if slow_api.pending then
-              return nil
-            elseif (coroutine.status(thread) ~= "dead") then
-              local _, value = coroutine.resume(thread, request, slow_api.value)
-              slow_api.free()
-              local _13_0 = type(value)
-              if (_13_0 == "function") then
-                return slow_api.schedule(value)
-              elseif (_13_0 == "nil") then
-                return stop()
-              else
-                local _0 = _13_0
-                if on_value then
-                  return on_value(value)
-                end
-              end
-            else
-              return stop()
-            end
-          end
-          return idle:start(_12_)
-        end
       end
       local function write_results(results)
         if not exit then
@@ -732,10 +732,10 @@ do
         if config.multiselect then
           for _, value in ipairs(last_results) do
             local value0 = tostring(value)
-            if (selected[value0] == nil) then
-              selected[value0] = value0
-            else
+            if selected[value0] then
               selected[value0] = nil
+            else
+              selected[value0] = true
             end
           end
           return write_results(last_results)
@@ -749,7 +749,7 @@ do
               selected[selection] = nil
               return nil
             else
-              selected[selection] = selection
+              selected[selection] = true
               return nil
             end
           end
