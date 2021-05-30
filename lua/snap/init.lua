@@ -709,7 +709,7 @@ do
             end
           end
           local selection = get_selection()
-          if (has_views and (last_requested_selection ~= selection)) then
+          if (has_views and (selection ~= "nil") and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
             local function _11_()
               for _, _12_ in ipairs(views) do

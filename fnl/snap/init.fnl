@@ -646,7 +646,7 @@
 
       ;; When we are running views schedule them
       (local selection (get-selection))
-      (when (and has-views (not= last-requested-selection selection))
+      (when (and has-views (not= selection "nil") (not= last-requested-selection selection))
         (set last-requested-selection selection)
         (vim.schedule (fn []
           (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
