@@ -1,5 +1,5 @@
 local _2afile_2a = "fnl/snap/io.fnl"
-local _0_0
+local _0_
 do
   local name_0_ = "snap.io"
   local module_0_
@@ -13,28 +13,33 @@ do
   end
   module_0_["aniseed/module"] = name_0_
   module_0_["aniseed/locals"] = ((module_0_)["aniseed/locals"] or {})
-  module_0_["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
-  package.loaded[name_0_] = module_0_
-  _0_0 = module_0_
+  do end (module_0_)["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
+  do end (package.loaded)[name_0_] = module_0_
+  _0_ = module_0_
 end
+local autoload
 local function _1_(...)
+  return (require("aniseed.autoload")).autoload(...)
+end
+autoload = _1_
+local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
-  local function _1_()
+  local function _2_()
     return {require("snap")}
   end
-  ok_3f_0_, val_0_ = pcall(_1_)
+  ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_0["aniseed/local-fns"] = {require = {snap = "snap"}}
+    _0_["aniseed/local-fns"] = {require = {snap = "snap"}}
     return val_0_
   else
     return print(val_0_)
   end
 end
-local _local_0_ = _1_(...)
+local _local_0_ = _2_(...)
 local snap = _local_0_[1]
-local _2amodule_2a = _0_0
+local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.io"
-do local _ = ({nil, _0_0, {{}, nil, nil, nil}})[2] end
+do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
 local spawn
 do
   local v_0_
@@ -46,30 +51,30 @@ do
       local stdout = vim.loop.new_pipe(false)
       local stderr = vim.loop.new_pipe(false)
       local handle
-      local function _2_(code, signal)
+      local function _3_(code, signal)
         stdout:read_stop()
         stderr:read_stop()
         stdout:close()
         stderr:close()
         return handle:close()
       end
-      handle = vim.loop.spawn(cmd, {args = args, cwd = cwd, stdio = {nil, stdout, stderr}}, _2_)
-      local function _3_(err, data)
+      handle = vim.loop.spawn(cmd, {args = args, cwd = cwd, stdio = {nil, stdout, stderr}}, _3_)
+      local function _4_(err, data)
         assert(not err)
         if data then
           stdinbuffer = data
           return nil
         end
       end
-      stdout:read_start(_3_)
-      local function _4_(err, data)
+      stdout:read_start(_4_)
+      local function _5_(err, data)
         assert(not err)
         if data then
           stderrbuffer = data
           return nil
         end
       end
-      stderr:read_start(_4_)
+      stderr:read_start(_5_)
       local function kill()
         return handle:kill(vim.loop.constants.SIGTERM)
       end
@@ -87,10 +92,10 @@ do
       return iterator
     end
     v_0_0 = spawn0
-    _0_0["spawn"] = v_0_0
+    _0_["spawn"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["spawn"] = v_0_
   spawn = v_0_
 end

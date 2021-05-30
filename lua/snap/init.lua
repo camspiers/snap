@@ -1,5 +1,5 @@
 local _2afile_2a = "fnl/snap/init.fnl"
-local _0_0
+local _0_
 do
   local name_0_ = "snap"
   local module_0_
@@ -13,27 +13,32 @@ do
   end
   module_0_["aniseed/module"] = name_0_
   module_0_["aniseed/locals"] = ((module_0_)["aniseed/locals"] or {})
-  module_0_["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
-  package.loaded[name_0_] = module_0_
-  _0_0 = module_0_
+  do end (module_0_)["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
+  do end (package.loaded)[name_0_] = module_0_
+  _0_ = module_0_
 end
+local autoload
 local function _1_(...)
+  return (require("aniseed.autoload")).autoload(...)
+end
+autoload = _1_
+local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
-  local function _1_()
+  local function _2_()
     return {}
   end
-  ok_3f_0_, val_0_ = pcall(_1_)
+  ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_0["aniseed/local-fns"] = {}
+    _0_["aniseed/local-fns"] = {}
     return val_0_
   else
     return print(val_0_)
   end
 end
-local _local_0_ = _1_(...)
-local _2amodule_2a = _0_0
+local _local_0_ = _2_(...)
+local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap"
-do local _ = ({nil, _0_0, {{}, nil, nil, nil}})[2] end
+do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
 local function tbl_first(tbl)
   if tbl then
     return tbl[1]
@@ -73,10 +78,10 @@ do
       return require(string.format("snap.%s", mod))
     end
     v_0_0 = get0
-    _0_0["get"] = v_0_0
+    _0_["get"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["get"] = v_0_
   get = v_0_
 end
@@ -96,10 +101,10 @@ do
       end
     end
     v_0_0 = accumulate0
-    _0_0["accumulate"] = v_0_0
+    _0_["accumulate"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["accumulate"] = v_0_
   accumulate = v_0_
 end
@@ -113,10 +118,10 @@ do
       return result
     end
     v_0_0 = sync0
-    _0_0["sync"] = v_0_0
+    _0_["sync"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["sync"] = v_0_
   sync = v_0_
 end
@@ -130,10 +135,10 @@ do
       return coroutine.yield(continue_value, on_cancel)
     end
     v_0_0 = continue0
-    _0_0["continue"] = v_0_0
+    _0_["continue"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["continue"] = v_0_
   continue = v_0_
 end
@@ -153,10 +158,10 @@ do
       end
     end
     v_0_0 = resume0
-    _0_0["resume"] = v_0_0
+    _0_["resume"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["resume"] = v_0_
   resume = v_0_
 end
@@ -167,18 +172,18 @@ do
     local v_0_0
     local function consume0(producer, request)
       local reader = coroutine.create(producer)
-      local function _2_()
+      local function _3_()
         if (coroutine.status(reader) ~= "dead") then
           return resume(reader, request)
         end
       end
-      return _2_
+      return _3_
     end
     v_0_0 = consume0
-    _0_0["consume"] = v_0_0
+    _0_["consume"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["consume"] = v_0_
   consume = v_0_
 end
@@ -187,14 +192,14 @@ do
   local v_0_
   do
     local v_0_0
-    local function _2_(_241)
+    local function _3_(_241)
       return _241.result
     end
-    v_0_0 = {__tostring = _2_}
-    _0_0["meta-tbl"] = v_0_0
+    v_0_0 = {__tostring = _3_}
+    _0_["meta-tbl"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["meta-tbl"] = v_0_
   meta_tbl = v_0_
 end
@@ -204,21 +209,21 @@ do
   do
     local v_0_0
     local function meta_result0(result)
-      local _2_0 = type(result)
-      if (_2_0 == "string") then
+      local _3_ = type(result)
+      if (_3_ == "string") then
         local meta_result1 = {result = result}
         setmetatable(meta_result1, meta_tbl)
         return meta_result1
-      elseif (_2_0 == "table") then
+      elseif (_3_ == "table") then
         assert((getmetatable(result) == meta_tbl))
         return result
       end
     end
     v_0_0 = meta_result0
-    _0_0["meta_result"] = v_0_0
+    _0_["meta_result"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["meta_result"] = v_0_
   meta_result = v_0_
 end
@@ -229,14 +234,14 @@ do
     local v_0_0
     local function with_meta0(result, field, value)
       local meta_result0 = meta_result(result)
-      meta_result0[field] = value
+      do end (meta_result0)[field] = value
       return meta_result0
     end
     v_0_0 = with_meta0
-    _0_0["with_meta"] = v_0_0
+    _0_["with_meta"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["with_meta"] = v_0_
   with_meta = v_0_
 end
@@ -249,10 +254,10 @@ do
       return ((getmetatable(result) == meta_tbl) and (result[field] ~= nil))
     end
     v_0_0 = has_meta0
-    _0_0["has_meta"] = v_0_0
+    _0_["has_meta"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
 end
@@ -261,10 +266,10 @@ do
   local v_0_
   do
     local v_0_0 = {}
-    _0_0["register"] = v_0_0
+    _0_["register"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["register"] = v_0_
   register = v_0_
 end
@@ -273,23 +278,25 @@ register.clean = function(group)
   return nil
 end
 register.run = function(group, fnc)
-  local _2_
+  local _3_
   do
-    local res_0_ = register[group]
-    local function _3_()
-      local res_0_0 = (res_0_)[fnc]
-      return (res_0_0 and res_0_0)
+    local t_0_ = register
+    if (nil ~= t_0_) then
+      t_0_ = (t_0_)[group]
     end
-    _2_ = (res_0_ and _3_())
+    if (nil ~= t_0_) then
+      t_0_ = (t_0_)[fnc]
+    end
+    _3_ = t_0_
   end
-  if _2_ then
+  if _3_ then
     return register[group][fnc]()
   end
 end
 register["get-by-template"] = function(group, fnc, pre, post)
   local group_fns = (register[group] or {})
   local id = string.format("%s", fnc)
-  register[group] = group_fns
+  do end (register)[group] = group_fns
   if (group_fns[id] == nil) then
     group_fns[id] = fnc
   end
@@ -352,13 +359,13 @@ local function create_input_layout(config)
   local height = _let_0_["height"]
   local row = _let_0_["row"]
   local width = _let_0_["width"]
-  local _2_
+  local _3_
   if config["has-views"] then
-    _2_ = math.floor((width * views_width))
+    _3_ = math.floor((width * views_width))
   else
-    _2_ = width
+    _3_ = width
   end
-  return {col = col, focusable = true, height = 1, row = ((row + height) - padding_size), width = _2_}
+  return {col = col, focusable = true, height = 1, row = ((row + height) - padding_size), width = _3_}
 end
 local function create_results_layout(config)
   local _let_0_ = config.layout()
@@ -366,13 +373,13 @@ local function create_results_layout(config)
   local height = _let_0_["height"]
   local row = _let_0_["row"]
   local width = _let_0_["width"]
-  local _2_
+  local _3_
   if config["has-views"] then
-    _2_ = math.floor((width * views_width))
+    _3_ = math.floor((width * views_width))
   else
-    _2_ = width
+    _3_ = width
   end
-  return {col = col, focusable = false, height = (height - border_size - border_size - padding_size), row = row, width = _2_}
+  return {col = col, focusable = false, height = (height - border_size - border_size - padding_size), row = row, width = _3_}
 end
 local function create_view_layout(config)
   local _let_0_ = config.layout()
@@ -393,8 +400,8 @@ end
 local function create_buffer()
   return vim.api.nvim_create_buf(false, true)
 end
-local function create_window(bufnr, _2_0)
-  local _arg_0_ = _2_0
+local function create_window(bufnr, _3_)
+  local _arg_0_ = _3_
   local col = _arg_0_["col"]
   local focusable = _arg_0_["focusable"]
   local height = _arg_0_["height"]
@@ -461,10 +468,10 @@ local function create_input_view(config)
     return config["on-select-all-toggle"]()
   end
   local on_lines
-  local function _4_()
+  local function _5_()
     return config["on-update"](get_filter())
   end
-  on_lines = _4_
+  on_lines = _5_
   local function on_detach()
     return register.clean(bufnr)
   end
@@ -506,12 +513,12 @@ local function create_slow_api()
   local slow_api = {pending = false, value = nil}
   slow_api.schedule = function(fnc)
     slow_api["pending"] = true
-    local function _3_()
+    local function _4_()
       slow_api["value"] = fnc()
-      slow_api["pending"] = false
+      do end (slow_api)["pending"] = false
       return nil
     end
-    return vim.schedule(_3_)
+    return vim.schedule(_4_)
   end
   slow_api.free = function()
     slow_api["value"] = nil
@@ -519,8 +526,8 @@ local function create_slow_api()
   end
   return slow_api
 end
-local function schedule_producer(_3_0)
-  local _arg_0_ = _3_0
+local function schedule_producer(_4_)
+  local _arg_0_ = _4_
   local on_end = _arg_0_["on-end"]
   local on_value = _arg_0_["on-value"]
   local producer = _arg_0_["producer"]
@@ -530,14 +537,14 @@ local function schedule_producer(_3_0)
     local thread = coroutine.create(producer)
     local slow_api = create_slow_api()
     local stop
-    local function _4_()
+    local function _5_()
       idle:stop()
       if on_end then
         return on_end()
       end
     end
-    stop = _4_
-    local function _5_()
+    stop = _5_
+    local function _6_()
       if slow_api.pending then
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
@@ -545,17 +552,16 @@ local function schedule_producer(_3_0)
         if slow_api.value then
           slow_api.free()
         end
-        local _7_0, _8_0, _9_0 = type(value)
-        if (_7_0 == "function") then
+        local _8_ = type(value)
+        if (_8_ == "function") then
           return slow_api.schedule(value)
-        elseif (_7_0 == "nil") then
+        elseif (_8_ == "nil") then
           return stop()
         else
-          local _10_
-          do
-            _10_ = ((_7_0 == "table") and (value == continue_value))
+          local function _9_()
+            return (value == continue_value)
           end
-          if _10_ then
+          if ((_8_ == "table") and _9_()) then
             if request.canceled() then
               if on_cancel then
                 on_cancel()
@@ -565,7 +571,7 @@ local function schedule_producer(_3_0)
               return nil
             end
           else
-            local _0 = _7_0
+            local _0 = _8_
             if on_value then
               return on_value(value)
             end
@@ -575,7 +581,7 @@ local function schedule_producer(_3_0)
         return stop()
       end
     end
-    return idle:start(_5_)
+    return idle:start(_6_)
   end
 end
 local run
@@ -705,23 +711,23 @@ do
           local selection = get_selection()
           if (has_views and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
-            local function _10_()
-              for _, _11_0 in ipairs(views) do
-                local _each_0_ = _11_0
+            local function _11_()
+              for _, _12_ in ipairs(views) do
+                local _each_0_ = _12_
                 local producer = _each_0_["producer"]
                 local _each_1_ = _each_0_["view"]
                 local bufnr = _each_1_["bufnr"]
                 local winnr = _each_1_["winnr"]
                 local request
-                local function _12_(request0)
+                local function _13_(request0)
                   return (request0.selection ~= get_selection())
                 end
-                request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
+                request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
                 schedule_producer({producer = producer, request = request})
               end
               return nil
             end
-            return vim.schedule(_10_)
+            return vim.schedule(_11_)
           end
         end
       end
@@ -732,34 +738,34 @@ do
         local last_time = vim.loop.now()
         local results = {}
         local request
-        local function _10_(request0)
+        local function _11_(request0)
           return (request0.filter ~= last_requested_filter)
         end
-        request = create_request({body = {filter = filter, height = results_view.height}, cancel = _10_})
+        request = create_request({body = {filter = filter, height = results_view.height}, cancel = _11_})
         local config0 = {producer = config.producer, request = request}
         local function schedule_results_write(results0)
           has_rendered = true
-          local function _11_(...)
+          local function _12_(...)
             return write_results(results0, ...)
           end
-          return vim.schedule(_11_)
+          return vim.schedule(_12_)
         end
         local function render_loading_screen()
           loading_count = (loading_count + 1)
-          local function _11_()
+          local function _12_()
             if not request.canceled() then
               local loading = create_loading_screen(results_view.width, results_view.height, loading_count)
               return set_lines(0, -1, loading)
             end
           end
-          return vim.schedule(_11_)
+          return vim.schedule(_12_)
         end
         config0["on-end"] = function()
           if has_meta(tbl_first(results), "score") then
-            local function _11_(_241, _242)
+            local function _12_(_241, _242)
               return (_241.score > _242.score)
             end
-            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _11_)
+            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _12_)
           end
           last_results = results
           schedule_results_write(last_results)
@@ -789,17 +795,17 @@ do
         if (#selected_values == 0) then
           local selection = get_selection()
           if (selection ~= "") then
-            local function _10_(...)
+            local function _11_(...)
               return config.select(selection, original_winnr, ...)
             end
-            return vim.schedule(_10_)
+            return vim.schedule(_11_)
           end
         else
           if config.multiselect then
-            local function _10_(...)
+            local function _11_(...)
               return config.multiselect(selected_values, original_winnr, ...)
             end
-            return vim.schedule(_10_)
+            return vim.schedule(_11_)
           end
         end
       end
@@ -838,37 +844,37 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _10_(_241)
+        local function _11_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_11_)
       end
       local function on_down()
-        local function _10_(_241)
+        local function _11_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_11_)
       end
       local function on_pageup()
-        local function _10_(_241)
+        local function _11_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_11_)
       end
       local function on_pagedown()
-        local function _10_(_241)
+        local function _11_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_11_)
       end
       local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, initial_filter = initial_filter, layout = layout, prompt = prompt})
       return table.insert(buffers, input_view_info.bufnr)
     end
     v_0_0 = run0
-    _0_0["run"] = v_0_0
+    _0_["run"] = v_0_0
     v_0_ = v_0_0
   end
-  local t_0_ = (_0_0)["aniseed/locals"]
+  local t_0_ = (_0_)["aniseed/locals"]
   t_0_["run"] = v_0_
   run = v_0_
 end

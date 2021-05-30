@@ -14,10 +14,10 @@ local function _1_(producer)
   end
   local function _2_(request)
     for results in snap.consume(producer, request) do
-      local _3_0 = type(results)
-      if (_3_0 == "table") then
+      local _3_ = type(results)
+      if (_3_ == "table") then
         coroutine.yield(filter(request.filter, results))
-      elseif (_3_0 == "nil") then
+      elseif (_3_ == "nil") then
         coroutine.yield(nil)
       end
     end

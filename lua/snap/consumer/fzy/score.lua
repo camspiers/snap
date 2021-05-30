@@ -4,8 +4,8 @@ local fzy = require("fzy")
 local function _1_(producer)
   local function _2_(request)
     for results in snap.consume(producer, request) do
-      local _3_0 = type(results)
-      if (_3_0 == "table") then
+      local _3_ = type(results)
+      if (_3_ == "table") then
         local function _4_()
           if (request.filter == "") then
             return results
@@ -17,7 +17,7 @@ local function _1_(producer)
           end
         end
         coroutine.yield(_4_())
-      elseif (_3_0 == "nil") then
+      elseif (_3_ == "nil") then
         coroutine.yield(nil)
       end
     end

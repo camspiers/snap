@@ -3,7 +3,7 @@
 default: deps compile test
 
 deps:
-	scripts/dep.sh camspiers aniseed origin/feature/fix-autoload-in-module-macro
+	scripts/dep.sh Olical aniseed origin/develop
 
 compile:
 	rm -rf lua
