@@ -785,15 +785,21 @@ do
         return schedule_producer(config0)
       end
       local function on_enter()
-        local selected_values = vim.tbl_values(selected)
+        local selected_values = vim.tbl_keys(selected)
         if (#selected_values == 0) then
           local selection = get_selection()
           if (selection ~= "") then
-            return config.select(selection, original_winnr)
+            local function _10_(...)
+              return config.select(selection, original_winnr, ...)
+            end
+            return vim.schedule(_10_)
           end
         else
           if config.multiselect then
-            return config.multiselect(selected_values, original_winnr)
+            local function _10_(...)
+              return config.multiselect(selected_values, original_winnr, ...)
+            end
+            return vim.schedule(_10_)
           end
         end
       end

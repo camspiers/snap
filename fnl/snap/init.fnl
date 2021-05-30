@@ -749,12 +749,14 @@
 
   ;; Handles entering
   (fn on-enter []
-    (local selected-values (vim.tbl_values selected))
+    (local selected-values (vim.tbl_keys selected))
     (if (= (length selected-values) 0)
       (let [selection (get-selection)]
         (when (not= selection "")
-          (config.select selection original-winnr)))
-      (when config.multiselect (config.multiselect selected-values original-winnr))))
+          (vim.schedule (partial config.select selection original-winnr))))
+      (when
+        config.multiselect
+        (vim.schedule (partial config.multiselect selected-values original-winnr)))))
 
   ;; Handles select all in the multiselect case
   (fn on-select-all-toggle []
