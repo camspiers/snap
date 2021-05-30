@@ -1,8 +1,6 @@
 (let [snap (require :snap)
+      snap-io (snap.get :io)
       parse (snap.get :common.vimgrep.parse)]
-
-  ;; TODO improve this approach
-  (local max-size 100000)
 
   (fn [request]
     (local selection (parse request.selection))
@@ -14,42 +12,36 @@
     ;; Allows other processes to run
     (snap.continue)
 
-    ;; Track whether we have the whole file
-    (var has-whole-file false)
-
     ;; Read the data only for non-binary files
     (local preview (if
       (= encoding :binary)
       ["Binary file"]
       (do
-        (local fd (assert (vim.loop.fs_open path "r" 438)))
-        (local stat (assert (vim.loop.fs_fstat fd)))
-        (local data (assert (vim.loop.fs_read fd (math.min stat.size max-size) 0)))
-        (assert (vim.loop.fs_close fd))
-        (set has-whole-file (>= max-size stat.size))
-        (vim.split data "\n" true))))
-
-    ;; Allows other processes to run
+        (var databuffer "")
+        (local reader (coroutine.create snap-io.read))
+        (while (not= (coroutine.status reader) :dead)
+          (local (_ cancel data) (coroutine.resume reader path))
+          (when (not= data nil) (set databuffer (.. databuffer data)))
+          (when (request.canceled) (cancel) (coroutine.yield nil))
+          ;; Need to continue in order to be able to read the file
+          (snap.continue))
+        (vim.split databuffer "\n" true))))
 
     ;; Write the preview to the buffer.
-    (when (not (request.canceled))
-      (snap.sync (fn []
+    (snap.sync (fn []
+      (when (not (request.canceled))
         ;; Highlight using the cursor
         (vim.api.nvim_win_set_option request.winnr :cursorline true)
         (vim.api.nvim_win_set_option request.winnr :cursorcolumn true)
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
-
-        ;; Only do file type detection when we have the whole file
-        (when has-whole-file
-          ;; In case it's accidently saved
-          (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify request.selection ":p:gs?/?%?")))
-          ;; Use the fake path to enable ftdetection
-          (vim.api.nvim_buf_set_name request.bufnr fake-path)
-          ;; Detect the file type
-          (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect")))
-
+        ;; In case it's accidently saved
+        (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify selection.filename ":p:gs?/?%?")))
+        ;; Use the fake path to enable ftdetection
+        (vim.api.nvim_buf_set_name request.bufnr fake-path)
+        ;; Detect the file type
+        (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
         ;; Try to set cursor to appropriate line
-        (when (and (not= encoding :binary) (<= selection.lnum (length preview)))
+        (when (not= encoding :binary)
           ;; TODO Col highlighting isn't working
           (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)])))))))

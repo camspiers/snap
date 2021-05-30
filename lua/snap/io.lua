@@ -62,7 +62,7 @@ do
       local function _4_(err, data)
         assert(not err)
         if data then
-          stdinbuffer = data
+          stdinbuffer = (stdinbuffer .. data)
           return nil
         end
       end
@@ -70,7 +70,7 @@ do
       local function _5_(err, data)
         assert(not err)
         if data then
-          stderrbuffer = data
+          stderrbuffer = (stderrbuffer .. data)
           return nil
         end
       end
@@ -78,7 +78,7 @@ do
       local function kill()
         return handle:kill(vim.loop.constants.SIGTERM)
       end
-      local function iterator()
+      local function _6_()
         if (handle and handle:is_active()) then
           local stdin = stdinbuffer
           local stderr0 = stderrbuffer
@@ -89,7 +89,7 @@ do
           return nil
         end
       end
-      return iterator
+      return _6_
     end
     v_0_0 = spawn0
     _0_["spawn"] = v_0_0
@@ -98,5 +98,71 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["spawn"] = v_0_
   spawn = v_0_
+end
+local chunk_size = 1000
+local read
+do
+  local v_0_
+  do
+    local v_0_0
+    local function read0(path)
+      local closed = false
+      local canceled = false
+      local databuffer = ""
+      local fd = nil
+      local stat = nil
+      local current_offset = 0
+      local function on_close(err)
+        return assert(not err, err)
+      end
+      local function close()
+        closed = true
+        return vim.loop.fs_close(fd, on_close)
+      end
+      local function cancel()
+        canceled = true
+        return nil
+      end
+      local function on_read(err, data)
+        assert(not err, err)
+        databuffer = (databuffer .. data)
+        current_offset = (current_offset + chunk_size)
+        if not closed then
+          if (canceled or (current_offset >= stat.size)) then
+            return close()
+          else
+            return vim.loop.fs_read(fd, chunk_size, current_offset, on_read)
+          end
+        end
+      end
+      local function on_stat(err, s)
+        assert(not err, err)
+        stat = s
+        return vim.loop.fs_read(fd, math.min(chunk_size, stat.size), current_offset, on_read)
+      end
+      local function on_open(err, f)
+        assert(not err, err)
+        fd = f
+        return vim.loop.fs_fstat(fd, on_stat)
+      end
+      local handle = vim.loop.fs_open(path, "r", 438, on_open)
+      while (not closed or (databuffer ~= "")) do
+        if (databuffer ~= "") then
+          local data = databuffer
+          databuffer = ""
+          coroutine.yield(cancel, data)
+        else
+          coroutine.yield(cancel)
+        end
+      end
+      return nil
+    end
+    v_0_0 = read0
+    _0_["read"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["read"] = v_0_
+  read = v_0_
 end
 return nil
