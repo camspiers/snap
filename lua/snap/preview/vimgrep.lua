@@ -12,6 +12,8 @@ local function _1_(request)
   local handle = io.popen(string.format("file -n -b --mime-encoding %s", path))
   local encoding = string.gsub(handle:read("*a"), "^%s*(.-)%s*$", "%1")
   handle:close()
+  snap.continue()
+  local has_whole_file = false
   local preview
   if (encoding == "binary") then
     preview = {"Binary file"}
@@ -20,6 +22,7 @@ local function _1_(request)
     local stat = assert(vim.loop.fs_fstat(fd))
     local data = assert(vim.loop.fs_read(fd, math.min(stat.size, max_size), 0))
     assert(vim.loop.fs_close(fd))
+    has_whole_file = (max_size >= stat.size)
     preview = vim.split(data, "\n", true)
   end
   if not request.canceled() then
@@ -27,12 +30,14 @@ local function _1_(request)
       vim.api.nvim_win_set_option(request.winnr, "cursorline", true)
       vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", true)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
-      local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(request.selection, ":p:gs?/?%?"))
-      vim.api.nvim_buf_set_name(request.bufnr, fake_path)
-      local function _5_(...)
-        return vim.api.nvim_command("filetype detect", ...)
+      if has_whole_file then
+        local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(request.selection, ":p:gs?/?%?"))
+        vim.api.nvim_buf_set_name(request.bufnr, fake_path)
+        local function _5_(...)
+          return vim.api.nvim_command("filetype detect", ...)
+        end
+        vim.api.nvim_buf_call(request.bufnr, _5_)
       end
-      vim.api.nvim_buf_call(request.bufnr, _5_)
       if ((encoding ~= "binary") and (selection.lnum <= #preview)) then
         return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
       end
