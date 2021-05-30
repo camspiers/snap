@@ -1,9 +1,9 @@
 local _2afile_2a = "fnl/snap/preview/vimgrep.fnl"
 local snap = require("snap")
-local select = snap.get("select.vimgrep")
+local parse = snap.get("common.vimgrep.parse")
 local max_size = 100000
 local function _1_(request)
-  local selection = select.parse(request.selection)
+  local selection = parse(request.selection)
   local path
   local function _2_(...)
     return vim.fn.fnamemodify(selection.filename, ":p", ...)

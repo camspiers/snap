@@ -1,11 +1,6 @@
 (module snap.select.vimgrep)
 
-(defn parse [line]
-  (let [parts (vim.split line ":")]
-    {:filename (. parts 1)
-     :lnum (tonumber (. parts 2))
-     :col (tonumber (. parts 3))
-     :text (. parts 4)}))
+(local parse (require :snap.common.vimgrep.parse))
 
 (defn multiselect [lines winnr]
   (vim.fn.setqflist (vim.tbl_map parse lines))

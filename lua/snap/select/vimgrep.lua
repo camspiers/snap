@@ -34,23 +34,7 @@ local _local_0_ = _1_(...)
 local _2amodule_2a = _0_0
 local _2amodule_name_2a = "snap.select.vimgrep"
 do local _ = ({nil, _0_0, {{}, nil, nil, nil}})[2] end
-local parse
-do
-  local v_0_
-  do
-    local v_0_0
-    local function parse0(line)
-      local parts = vim.split(line, ":")
-      return {col = tonumber(parts[3]), filename = parts[1], lnum = tonumber(parts[2]), text = parts[4]}
-    end
-    v_0_0 = parse0
-    _0_0["parse"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_0)["aniseed/locals"]
-  t_0_["parse"] = v_0_
-  parse = v_0_
-end
+local parse = require("snap.common.vimgrep.parse")
 local multiselect
 do
   local v_0_
