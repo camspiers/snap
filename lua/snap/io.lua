@@ -146,7 +146,7 @@ do
         return vim.loop.fs_fstat(fd, on_stat)
       end
       local handle = vim.loop.fs_open(path, "r", 438, on_open)
-      while (not closed or (databuffer ~= "")) do
+      while ((not canceled and not closed) or (databuffer ~= "")) do
         if (databuffer ~= "") then
           local data = databuffer
           databuffer = ""

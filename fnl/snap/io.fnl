@@ -79,7 +79,7 @@
   (local handle (vim.loop.fs_open path "r" 438 on-open))
 
   (while
-    (or (not closed) (not= databuffer ""))
+    (or (and (not canceled) (not closed)) (not= databuffer ""))
     (if
       (not= databuffer "")
       (do
