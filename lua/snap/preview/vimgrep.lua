@@ -25,6 +25,7 @@ local function _1_(request)
   if not request.canceled() then
     local function _4_()
       vim.api.nvim_win_set_option(request.winnr, "cursorline", true)
+      vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", true)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
       local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(request.selection, ":p:gs?/?%?"))
       vim.api.nvim_buf_set_name(request.bufnr, fake_path)
@@ -33,7 +34,7 @@ local function _1_(request)
       end
       vim.api.nvim_buf_call(request.bufnr, _5_)
       if ((encoding ~= "binary") and (selection.lnum <= #preview)) then
-        return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, selection.col})
+        return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
       end
     end
     return snap.sync(_4_)

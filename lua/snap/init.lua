@@ -120,6 +120,23 @@ do
   t_0_["sync"] = v_0_
   sync = v_0_
 end
+local continue_value = {continue = true}
+local continue
+do
+  local v_0_
+  do
+    local v_0_0
+    local function continue0(on_cancel)
+      return coroutine.yield(continue_value, on_cancel)
+    end
+    v_0_0 = continue0
+    _0_0["continue"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_0)["aniseed/locals"]
+  t_0_["continue"] = v_0_
+  continue = v_0_
+end
 local resume
 do
   local v_0_
@@ -524,17 +541,34 @@ local function schedule_producer(_3_0)
       if slow_api.pending then
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
-        local _, value = coroutine.resume(thread, request, slow_api.value)
-        slow_api.free()
-        local _6_0 = type(value)
-        if (_6_0 == "function") then
+        local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
+        if slow_api.value then
+          slow_api.free()
+        end
+        local _7_0, _8_0, _9_0 = type(value)
+        if (_7_0 == "function") then
           return slow_api.schedule(value)
-        elseif (_6_0 == "nil") then
+        elseif (_7_0 == "nil") then
           return stop()
         else
-          local _0 = _6_0
-          if on_value then
-            return on_value(value)
+          local _10_
+          do
+            _10_ = ((_7_0 == "table") and (value == continue_value))
+          end
+          if _10_ then
+            if request.canceled() then
+              if on_cancel then
+                on_cancel()
+              end
+              return stop()
+            else
+              return nil
+            end
+          else
+            local _0 = _7_0
+            if on_value then
+              return on_value(value)
+            end
           end
         end
       else
@@ -572,6 +606,7 @@ do
       end
       local last_results = {}
       local last_requested_filter = ""
+      local last_requested_selection = nil
       local exit = false
       local buffers = {}
       local layout = (config.layout or (get("layout")).centered)
@@ -642,7 +677,7 @@ do
         end
         return request
       end
-      local function write_results(results, earlyopt)
+      local function write_results(results)
         if not exit then
           do
             local result_size = #results
@@ -667,21 +702,26 @@ do
               end
             end
           end
-          if (not earlyopt and has_views) then
-            for _, _10_0 in ipairs(views) do
-              local _each_0_ = _10_0
-              local producer = _each_0_["producer"]
-              local _each_1_ = _each_0_["view"]
-              local bufnr = _each_1_["bufnr"]
-              local winnr = _each_1_["winnr"]
-              local request
-              local function _11_(request0)
-                return (request0.selection ~= get_selection())
+          local selection = get_selection()
+          if (has_views and (last_requested_selection ~= selection)) then
+            last_requested_selection = selection
+            local function _10_()
+              for _, _11_0 in ipairs(views) do
+                local _each_0_ = _11_0
+                local producer = _each_0_["producer"]
+                local _each_1_ = _each_0_["view"]
+                local bufnr = _each_1_["bufnr"]
+                local winnr = _each_1_["winnr"]
+                local request
+                local function _12_(request0)
+                  return (request0.selection ~= get_selection())
+                end
+                request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
+                schedule_producer({producer = producer, request = request})
               end
-              request = create_request({body = {bufnr = bufnr, selection = get_selection(), winnr = winnr}, cancel = _11_})
-              schedule_producer({producer = producer, request = request})
+              return nil
             end
-            return nil
+            return vim.schedule(_10_)
           end
         end
       end
@@ -697,10 +737,10 @@ do
         end
         request = create_request({body = {filter = filter, height = results_view.height}, cancel = _10_})
         local config0 = {producer = config.producer, request = request}
-        local function schedule_results_write(results0, earlyopt)
+        local function schedule_results_write(results0)
           has_rendered = true
           local function _11_(...)
-            return write_results(results0, earlyopt, ...)
+            return write_results(results0, ...)
           end
           return vim.schedule(_11_)
         end
@@ -722,7 +762,7 @@ do
             partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _11_)
           end
           last_results = results
-          schedule_results_write(last_results, false)
+          schedule_results_write(last_results)
           results = {}
           return nil
         end
@@ -732,7 +772,7 @@ do
           accumulate(results, value)
           if ((#last_results == 0) and (#results >= results_view.height) and not has_meta(tbl_first(results), "score")) then
             last_results = results
-            schedule_results_write(results, true)
+            schedule_results_write(results)
           end
           if (not has_rendered and (loading_count == 0) and (#results > 0)) then
             render_loading_screen()

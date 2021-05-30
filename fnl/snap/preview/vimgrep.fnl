@@ -27,6 +27,7 @@
       (snap.sync (fn []
         ;; Highlight using the cursor
         (vim.api.nvim_win_set_option request.winnr :cursorline true)
+        (vim.api.nvim_win_set_option request.winnr :cursorcolumn true)
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; In case it's accidently saved
@@ -37,4 +38,5 @@
         (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
         ;; Try to set cursor to appropriate line
         (when (and (not= encoding :binary) (<= selection.lnum (length preview)))
-          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum selection.col])))))))
+          ;; TODO Col highlighting isn't working
+          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)])))))))

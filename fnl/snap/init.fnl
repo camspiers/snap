@@ -75,6 +75,12 @@
   (let [(_ result) (coroutine.yield value)]
     result))
 
+;; Represents a request to yield for other processing
+(local continue-value {:continue true})
+(defn continue [on-cancel]
+  "Yields for other processing or cancels if needed"
+  (coroutine.yield continue-value on-cancel))
+
 ;; fnlfmt: skip
 (defn resume [thread request value]
   "Transfers sync values allowing the yielding of functions with non fast-api access"
@@ -414,14 +420,21 @@
           ;; Run the resume
           (do
             ;; Fetches results be also sends cancel signal
-            (let [(_ value) (coroutine.resume thread request slow-api.value)]
+            (let [(_ value on-cancel) (coroutine.resume thread request slow-api.value)]
               ;; Free memory
-              (slow-api.free)
+              (when slow-api.value (slow-api.free))
               ;; Match each type
               (match (type value)
                 ;; We have a function so schedule it to be computed
                 :function (slow-api.schedule value)
                 :nil (stop)
+                (where :table (= value continue-value))
+                  (if
+                    (request.canceled)
+                    (do
+                      (when on-cancel (on-cancel))
+                      (stop))
+                    nil)
                 _ (when on-value (on-value value)))))
           ;; When the coroutine is dead then stop the loop
           (stop)))))))
@@ -501,6 +514,9 @@
 
   ;; Stores the last filter
   (var last-requested-filter "")
+
+  ;; Stores the last selection
+  (var last-requested-selection nil)
 
   ;; Exit flag tracks whether buffers have detatched
   ;; Used to send cancel request to producer coroutines
@@ -600,8 +616,7 @@
     request)
 
   ;; Only write what results are needed
-  ;; TODO fix this earlyopt issue
-  (fn write-results [results earlyopt]
+  (fn write-results [results]
     (when (not exit)
       (let [result-size (length results)]
         (if (= result-size 0)
@@ -630,13 +645,16 @@
                 (add-selected-highlight row))))))
 
       ;; When we are running views schedule them
-      (when (and (not earlyopt) has-views)
-        (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
-          (local request
-            (create-request
-              {:body {:selection (get-selection) : bufnr : winnr}
-               :cancel (fn [request] (not= request.selection (get-selection)))}))
-          (schedule-producer {: producer : request})))))
+      (local selection (get-selection))
+      (when (and has-views (not= last-requested-selection selection))
+        (set last-requested-selection selection)
+        (vim.schedule (fn []
+          (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+            (local request
+              (create-request
+                {:body {: selection : bufnr : winnr}
+                 :cancel (fn [request] (not= request.selection (get-selection)))}))
+            (schedule-producer {: producer : request})))))))
 
   ;; On input update
   (fn on-update [filter]
@@ -662,10 +680,10 @@
     (local config {:producer config.producer : request})
 
     ;; Schedules a write, this can be partial results
-    (fn schedule-results-write [results earlyopt]
+    (fn schedule-results-write [results]
       ;; Update that we have rendered
       (set has-rendered true)
-      (vim.schedule (partial write-results results earlyopt)))
+      (vim.schedule (partial write-results results)))
 
     (fn render-loading-screen []
       (set loading-count (+ loading-count 1))
@@ -688,7 +706,7 @@
       ;; Store the last written results
       (set last-results results)
       ;; Schedule the write
-      (schedule-results-write last-results false)
+      (schedule-results-write last-results)
       ;; Free the results
       (set results []))
 
@@ -709,8 +727,7 @@
         ;; Set the results to enable cursor
         (set last-results results)
         ;; Early write
-        ;; TODO fix this early opt issue
-        (schedule-results-write results true))
+        (schedule-results-write results))
       ;; Render first loading screen if no render has occured, we have results
       ;; and no time based loading screen has rendered
       (when
