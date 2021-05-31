@@ -97,10 +97,12 @@
 ;; fnlfmt: skip
 (defn consume [producer request]
   "Returns an iterator that consumes a producer"
-  (let [reader (coroutine.create producer)]
-    (fn []
-      (when (not= (coroutine.status reader) :dead)
-        (values (resume reader request))))))
+  (var reader (coroutine.create producer))
+  (fn []
+    (if
+      (= (coroutine.status reader) :dead)
+      (set reader nil)
+      (values (resume reader request)))))
 
 
 ;; Metatable for a result, allows the representation of results as both strings
@@ -127,6 +129,9 @@
     (tset meta-result field value)
     meta-result))
 
+;; Sets multiple meta values
+
+;; fnlfmt: skip
 (defn with_metas [result data]
   (let [meta-result (meta_result result)]
     (each [field value (pairs data)]
@@ -394,7 +399,6 @@
     (vim.schedule (fn []
       (tset slow-api :value (fnc))
       (tset slow-api :pending false))))
-  (fn slow-api.free [] (tset slow-api :value nil))
   slow-api)
 
 ;; Schedules a view for generation
@@ -404,46 +408,78 @@
                         : on-value}]
   ;; By the time the routine runs, we might be able to avoid it
   (when (not (request.canceled))
-    (let [
-          ;; Create the idle loop
-          idle (vim.loop.new_idle)
-          ;; Create the producer
-          thread (coroutine.create producer)
-          ;; Tracks the requests of slow nvim calls
-          slow-api (create-slow-api)
-          ;; Handle ending the idle loop and optionally calling on end
-          stop (fn [] (idle:stop) (when on-end (on-end)))]
+    ;; Create the idle loop
+    (var idle (vim.loop.new_idle))
+    ;; Create the producer
+    (var thread (coroutine.create producer))
+    ;; Tracks the requests of slow nvim calls
+    (var slow-api (create-slow-api))
+    ;; Handle ending the idle loop and optionally calling on end
+    (var stop (fn []
+           (idle:stop)
+           (set idle nil)
+           (set thread nil)
+           (set slow-api nil)
+           (when on-end (on-end))))
 
-      ;; Start the checker after each IO poll
-      (idle:start (fn []
-        (if
-          ;; Only run when we aren't waiting for a slow-api call
-          slow-api.pending
-          ;; Return nil
-          nil
-          ;; When the thread is not dead
-          (not= (coroutine.status thread) :dead)
-          ;; Run the resume
-          (do
-            ;; Fetches results be also sends cancel signal
-            (let [(_ value on-cancel) (coroutine.resume thread request slow-api.value)]
-              ;; Free memory
-              (when slow-api.value (slow-api.free))
-              ;; Match each type
-              (match (type value)
-                ;; We have a function so schedule it to be computed
-                :function (slow-api.schedule value)
-                :nil (stop)
-                (where :table (= value continue-value))
-                  (if
-                    (request.canceled)
-                    (do
-                      (when on-cancel (on-cancel))
-                      (stop))
-                    nil)
-                _ (when on-value (on-value value)))))
-          ;; When the coroutine is dead then stop the loop
-          (stop)))))))
+    ;; Start the checker after each IO poll
+    (idle:start (fn []
+      (if
+        ;; Only run when we aren't waiting for a slow-api call
+        slow-api.pending
+        ;; Return nil
+        nil
+        ;; When the thread is not dead
+        (not= (coroutine.status thread) :dead)
+        ;; Run the resume
+        (do
+          ;; Fetches results be also sends cancel signal
+          (let [(_ value on-cancel) (coroutine.resume thread request slow-api.value)]
+            ;; Match each type
+            (match (type value)
+              ;; We have a function so schedule it to be computed
+              :function (slow-api.schedule value)
+              :nil (stop)
+              (where :table (= value continue-value))
+                (if
+                  (request.canceled)
+                  (do
+                    (when on-cancel (on-cancel))
+                    (stop))
+                  nil)
+              _ (when on-value (on-value value)))))
+        ;; When the coroutine is dead then stop the loop
+        (stop))))))
+
+;; Helper function for adding selected highlighting
+(fn add-selected-highlight [bufnr namespace row]
+  (vim.api.nvim_buf_add_highlight bufnr namespace :Comment (- row 1) 0 -1))
+
+;; Helper function for adding positions highlights
+(fn add-positions-highlight [bufnr namespace row positions]
+  (local line (- row 1))
+  (each [_ col (ipairs positions)]
+    (vim.api.nvim_buf_add_highlight bufnr namespace :Search line (- col 1) col)))
+
+;; Helper to set lines to results view
+(fn set-lines [bufnr start end lines]
+  (vim.api.nvim_buf_set_lines bufnr start end false lines))
+
+;; Creates a producer request
+(fn create-request [config]
+  ;; Config validation
+  (assert (= (type config.body) :table) "body must be a table")
+  (assert (= (type config.cancel) :function) "cancel must be a function")
+  ;; Set up the request
+  (local request {:is-canceled false})
+  ;; Copy each value
+  (each [key value (pairs config.body)]
+    (tset request key value))
+  ;; Cancels the request
+  (fn request.cancel [] (tset request :is-canceled true))
+  ;; Checkes if request is canceled
+  (fn request.canceled [] (or request.is-canceled (config.cancel request)))
+  request)
 
 ;; Run docs:
 ;;
@@ -560,6 +596,7 @@
     ;; Free memory
     (set last-results [])
     (set selected nil)
+    (set config.producer nil)
 
     ;; Return back to original window
     (vim.api.nvim_set_current_win original-winnr)
@@ -588,38 +625,8 @@
   ;; Register buffer for exiting
   (table.insert buffers results-view.bufnr)
 
-  ;; Helper function for adding selected highlighting
-  (fn add-selected-highlight [row]
-    (vim.api.nvim_buf_add_highlight results-view.bufnr namespace :Comment (- row 1) 0 -1))
-
-  ;; Helper function for adding positions highlights
-  (fn add-positions-highlight [row positions]
-    (local line (- row 1))
-    (each [_ col (ipairs positions)]
-      (vim.api.nvim_buf_add_highlight results-view.bufnr namespace :Search line (- col 1) col)))
-
-  ;; Helper to set lines to results view
-  (fn set-lines [start end lines]
-    (vim.api.nvim_buf_set_lines results-view.bufnr start end false lines))
-
   ;; Helper function for getting the line under the cursor
   (fn get-selection [] (. last-results cursor-row))
-
-  ;; Creates a producer request
-  (fn create-request [config]
-    ;; Config validation
-    (assert (= (type config.body) :table) "body must be a table")
-    (assert (= (type config.cancel) :function) "cancel must be a function")
-    ;; Set up the request
-    (local request {:is-canceled false})
-    ;; Copy each value
-    (each [key value (pairs config.body)]
-      (tset request key value))
-    ;; Cancels the request
-    (fn request.cancel [] (tset request :is-canceled true))
-    ;; Checkes if request is canceled
-    (fn request.canceled [] (or exit request.is-canceled (config.cancel request)))
-    request)
 
   ;; Only write what results are needed
   (fn write-results [results]
@@ -627,7 +634,7 @@
       (let [result-size (length results)]
         (if (= result-size 0)
           ;; If there are no results then clear
-          (set-lines 0 -1 [])
+          (set-lines results-view.bufnr 0 -1 [])
           ;; Otherwise render partial results
           ;; Don't render more than we need to
           ;; this is getting only the height plus the cursor
@@ -637,18 +644,18 @@
                    :until (= max (length partial-results))]
               (table.insert partial-results (tostring result)))
             ;; Set the lines, but make sure tables are converted to strings
-            (set-lines 0 -1 partial-results)
+            (set-lines results-view.bufnr 0 -1 partial-results)
             ;; Update highlights
             (each [row _ (pairs partial-results)]
               (local result (. results row))
               ;; Add positions highlighting
               (when
                 (has_meta result :positions)
-                (add-positions-highlight row result.positions))
+                (add-positions-highlight results-view.bufnr namespace row result.positions))
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (add-selected-highlight row))))))
+                (add-selected-highlight results-view.bufnr namespace row))))))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
@@ -659,7 +666,9 @@
             (local request
               (create-request
                 {:body {: selection : bufnr : winnr}
-                 :cancel (fn [request] (not= request.selection (get-selection)))}))
+                 :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+            ;; TODO optimization, this should pass all the producers, not just one
+            ;; that way we can avoid creating multiple idle checkers
             (schedule-producer {: producer : request})))))))
 
   ;; On input update
@@ -678,9 +687,14 @@
     ;; Accumulate results
     (var results [])
 
+    ;; Create the cancel function
+    (fn cancel [request] (or exit (not= request.filter last-requested-filter)))
+
+    ;; Create the request body
+    (local body {: filter :height results-view.height :winnr original-winnr})
+
     ;; Prepare the request
-    (local request (create-request {:body {: filter :height results-view.height :winnr original-winnr}
-                                    :cancel (fn [request] (not= request.filter last-requested-filter))}))
+    (local request (create-request {: body : cancel}))
 
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
@@ -696,7 +710,7 @@
       (vim.schedule (fn []
         (when (not (request.canceled))
           (local loading (create-loading-screen results-view.width results-view.height loading-count))
-          (set-lines 0 -1 loading)))))
+          (set-lines results-view.bufnr 0 -1 loading)))))
 
     ;; Add on end handler
     (fn config.on-end []
@@ -824,5 +838,7 @@
      : on-update}))
 
   ;; Register buffer for exiting
-  (table.insert buffers input-view-info.bufnr))
+  (table.insert buffers input-view-info.bufnr)
+
+  nil)
 

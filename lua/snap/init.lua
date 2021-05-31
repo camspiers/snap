@@ -173,7 +173,10 @@ do
     local function consume0(producer, request)
       local reader = coroutine.create(producer)
       local function _3_()
-        if (coroutine.status(reader) ~= "dead") then
+        if (coroutine.status(reader) == "dead") then
+          reader = nil
+          return nil
+        else
           return resume(reader, request)
         end
       end
@@ -540,10 +543,6 @@ local function create_slow_api()
     end
     return vim.schedule(_4_)
   end
-  slow_api.free = function()
-    slow_api["value"] = nil
-    return nil
-  end
   return slow_api
 end
 local function schedule_producer(_4_)
@@ -559,6 +558,9 @@ local function schedule_producer(_4_)
     local stop
     local function _5_()
       idle:stop()
+      idle = nil
+      thread = nil
+      slow_api = nil
       if on_end then
         return on_end()
       end
@@ -569,19 +571,16 @@ local function schedule_producer(_4_)
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
         local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
-        if slow_api.value then
-          slow_api.free()
-        end
-        local _8_ = type(value)
-        if (_8_ == "function") then
+        local _7_ = type(value)
+        if (_7_ == "function") then
           return slow_api.schedule(value)
-        elseif (_8_ == "nil") then
+        elseif (_7_ == "nil") then
           return stop()
         else
-          local function _9_()
+          local function _8_()
             return (value == continue_value)
           end
-          if ((_8_ == "table") and _9_()) then
+          if ((_7_ == "table") and _8_()) then
             if request.canceled() then
               if on_cancel then
                 on_cancel()
@@ -591,7 +590,7 @@ local function schedule_producer(_4_)
               return nil
             end
           else
-            local _0 = _8_
+            local _0 = _7_
             if on_value then
               return on_value(value)
             end
@@ -603,6 +602,35 @@ local function schedule_producer(_4_)
     end
     return idle:start(_6_)
   end
+end
+local function add_selected_highlight(bufnr, namespace, row)
+  return vim.api.nvim_buf_add_highlight(bufnr, namespace, "Comment", (row - 1), 0, -1)
+end
+local function add_positions_highlight(bufnr, namespace, row, positions)
+  local line = (row - 1)
+  for _, col in ipairs(positions) do
+    vim.api.nvim_buf_add_highlight(bufnr, namespace, "Search", line, (col - 1), col)
+  end
+  return nil
+end
+local function set_lines(bufnr, start, _end, lines)
+  return vim.api.nvim_buf_set_lines(bufnr, start, _end, false, lines)
+end
+local function create_request(config)
+  assert((type(config.body) == "table"), "body must be a table")
+  assert((type(config.cancel) == "function"), "cancel must be a function")
+  local request = {["is-canceled"] = false}
+  for key, value in pairs(config.body) do
+    request[key] = value
+  end
+  request.cancel = function()
+    request["is-canceled"] = true
+    return nil
+  end
+  request.canceled = function()
+    return (request["is-canceled"] or config.cancel(request))
+  end
+  return request
 end
 local run
 do
@@ -646,6 +674,7 @@ do
         exit = true
         last_results = {}
         selected = nil
+        config.producer = nil
         vim.api.nvim_set_current_win(original_winnr)
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then
@@ -671,44 +700,15 @@ do
       end
       local results_view = create_results_view({["has-views"] = has_views, layout = layout})
       table.insert(buffers, results_view.bufnr)
-      local function add_selected_highlight(row)
-        return vim.api.nvim_buf_add_highlight(results_view.bufnr, namespace, "Comment", (row - 1), 0, -1)
-      end
-      local function add_positions_highlight(row, positions)
-        local line = (row - 1)
-        for _, col in ipairs(positions) do
-          vim.api.nvim_buf_add_highlight(results_view.bufnr, namespace, "Search", line, (col - 1), col)
-        end
-        return nil
-      end
-      local function set_lines(start, _end, lines)
-        return vim.api.nvim_buf_set_lines(results_view.bufnr, start, _end, false, lines)
-      end
       local function get_selection()
         return last_results[cursor_row]
-      end
-      local function create_request(config0)
-        assert((type(config0.body) == "table"), "body must be a table")
-        assert((type(config0.cancel) == "function"), "cancel must be a function")
-        local request = {["is-canceled"] = false}
-        for key, value in pairs(config0.body) do
-          request[key] = value
-        end
-        request.cancel = function()
-          request["is-canceled"] = true
-          return nil
-        end
-        request.canceled = function()
-          return (exit or request["is-canceled"] or config0.cancel(request))
-        end
-        return request
       end
       local function write_results(results)
         if not exit then
           do
             local result_size = #results
             if (result_size == 0) then
-              set_lines(0, -1, {})
+              set_lines(results_view.bufnr, 0, -1, {})
             else
               local max = (results_view.height + cursor_row)
               local partial_results = {}
@@ -716,14 +716,14 @@ do
                 if (max == #partial_results) then break end
                 table.insert(partial_results, tostring(result))
               end
-              set_lines(0, -1, partial_results)
+              set_lines(results_view.bufnr, 0, -1, partial_results)
               for row, _ in pairs(partial_results) do
                 local result = results[row]
                 if has_meta(result, "positions") then
-                  add_positions_highlight(row, result.positions)
+                  add_positions_highlight(results_view.bufnr, namespace, row, result.positions)
                 end
                 if selected[tostring(result)] then
-                  add_selected_highlight(row)
+                  add_selected_highlight(results_view.bufnr, namespace, row)
                 end
               end
             end
@@ -740,7 +740,7 @@ do
                 local winnr = _each_1_["winnr"]
                 local request
                 local function _13_(request0)
-                  return (request0.selection ~= get_selection())
+                  return (exit or (request0.selection ~= get_selection()))
                 end
                 request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
                 schedule_producer({producer = producer, request = request})
@@ -757,35 +757,35 @@ do
         local loading_count = 0
         local last_time = vim.loop.now()
         local results = {}
-        local request
-        local function _11_(request0)
-          return (request0.filter ~= last_requested_filter)
+        local function cancel(request)
+          return (exit or (request.filter ~= last_requested_filter))
         end
-        request = create_request({body = {filter = filter, height = results_view.height, winnr = original_winnr}, cancel = _11_})
+        local body = {filter = filter, height = results_view.height, winnr = original_winnr}
+        local request = create_request({body = body, cancel = cancel})
         local config0 = {producer = config.producer, request = request}
         local function schedule_results_write(results0)
           has_rendered = true
-          local function _12_(...)
+          local function _11_(...)
             return write_results(results0, ...)
           end
-          return vim.schedule(_12_)
+          return vim.schedule(_11_)
         end
         local function render_loading_screen()
           loading_count = (loading_count + 1)
-          local function _12_()
+          local function _11_()
             if not request.canceled() then
               local loading = create_loading_screen(results_view.width, results_view.height, loading_count)
-              return set_lines(0, -1, loading)
+              return set_lines(results_view.bufnr, 0, -1, loading)
             end
           end
-          return vim.schedule(_12_)
+          return vim.schedule(_11_)
         end
         config0["on-end"] = function()
           if has_meta(tbl_first(results), "score") then
-            local function _12_(_241, _242)
+            local function _11_(_241, _242)
               return (_241.score > _242.score)
             end
-            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _12_)
+            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _11_)
           end
           last_results = results
           schedule_results_write(last_results)
@@ -888,7 +888,8 @@ do
         return on_key_direction(_11_)
       end
       local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, initial_filter = initial_filter, layout = layout, prompt = prompt})
-      return table.insert(buffers, input_view_info.bufnr)
+      table.insert(buffers, input_view_info.bufnr)
+      return nil
     end
     v_0_0 = run0
     _0_["run"] = v_0_0
