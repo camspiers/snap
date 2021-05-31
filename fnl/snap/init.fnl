@@ -655,7 +655,9 @@
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (add-selected-highlight results-view.bufnr namespace row))))))
+                (add-selected-highlight results-view.bufnr namespace row)))))
+        ;; Make sure cursor stays in view
+        (when (> cursor-row result-size) (set cursor-row result-size)))
 
       ;; When we are running views schedule them
       (local selection (get-selection))

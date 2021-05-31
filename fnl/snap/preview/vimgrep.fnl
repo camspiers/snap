@@ -1,31 +1,13 @@
 (let [snap (require :snap)
-      snap-io (snap.get :io)
+      get (snap.get :preview.get)
       parse (snap.get :common.vimgrep.parse)]
 
   (fn [request]
     (local selection (parse (tostring request.selection)))
     (local path (snap.sync (partial vim.fn.fnamemodify selection.filename ":p")))
-    (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
-    (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )
-    (handle:close)
-
-    ;; Allows other processes to run
-    (snap.continue)
-
-    ;; Read the data only for non-binary files
-    (local preview (if
-      (= encoding :binary)
-      ["Binary file"]
-      (do
-        (var databuffer "")
-        (local reader (coroutine.create snap-io.read))
-        (while (not= (coroutine.status reader) :dead)
-          (local (_ cancel data) (coroutine.resume reader path))
-          (when (not= data nil) (set databuffer (.. databuffer data)))
-          ;; Need to continue in order to be able to read the file
-          (snap.continue cancel))
-        (vim.split databuffer "\n" true))))
-
+    ;; Get the preview
+    (var preview (get path))
+    (local preview-size (length preview))
     ;; Write the preview to the buffer.
     (snap.sync (fn []
       (when (not (request.canceled))
@@ -34,6 +16,10 @@
         (vim.api.nvim_win_set_option request.winnr :cursorcolumn true)
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
+        (set preview nil))))
+    ;; Do file type detection
+    (snap.sync (fn []
+      (when (not (request.canceled))
         ;; In case it's accidently saved
         (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify selection.filename ":p:gs?/?%?")))
         ;; Use the fake path to enable ftdetection
@@ -41,6 +27,8 @@
         ;; Detect the file type
         (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
         ;; Try to set cursor to appropriate line
-        (when (not= encoding :binary)
+        (when (<= selection.lnum preview-size)
           ;; TODO Col highlighting isn't working
-          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)])))))))
+          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)])))))
+    
+    (set preview nil)))

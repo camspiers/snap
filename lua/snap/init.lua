@@ -727,6 +727,9 @@ do
                 end
               end
             end
+            if (cursor_row > result_size) then
+              cursor_row = result_size
+            end
           end
           local selection = get_selection()
           if (has_views and (selection ~= nil) and (last_requested_selection ~= selection)) then

@@ -4,9 +4,9 @@ local function _2_(request, _1_)
   local _arg_0_ = _1_
   local args = _arg_0_["args"]
   local cwd = _arg_0_["cwd"]
-  for data, err, kill in io.spawn("rg", args, cwd) do
+  for data, err, cancel in io.spawn("rg", args, cwd) do
     if request.canceled() then
-      kill()
+      cancel()
       coroutine.yield(nil)
     elseif (err ~= "") then
       coroutine.yield(nil)
