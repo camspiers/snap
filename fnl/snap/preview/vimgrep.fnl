@@ -22,9 +22,8 @@
         (while (not= (coroutine.status reader) :dead)
           (local (_ cancel data) (coroutine.resume reader path))
           (when (not= data nil) (set databuffer (.. databuffer data)))
-          (when (request.canceled) (cancel) (coroutine.yield nil))
           ;; Need to continue in order to be able to read the file
-          (snap.continue))
+          (snap.continue cancel))
         (vim.split databuffer "\n" true))))
 
     ;; Write the preview to the buffer.

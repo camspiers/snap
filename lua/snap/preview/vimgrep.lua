@@ -24,11 +24,7 @@ local function _1_(request)
       if (data ~= nil) then
         databuffer = (databuffer .. data)
       end
-      if request.canceled() then
-        cancel()
-        coroutine.yield(nil)
-      end
-      snap.continue()
+      snap.continue(cancel)
     end
     preview = vim.split(databuffer, "\n", true)
   end
