@@ -245,6 +245,26 @@ do
   t_0_["with_meta"] = v_0_
   with_meta = v_0_
 end
+local with_metas
+do
+  local v_0_
+  do
+    local v_0_0
+    local function with_metas0(result, data)
+      local meta_result0 = meta_result(result)
+      for field, value in pairs(data) do
+        meta_result0[field] = value
+      end
+      return meta_result0
+    end
+    v_0_0 = with_metas0
+    _0_["with_metas"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["with_metas"] = v_0_
+  with_metas = v_0_
+end
 local has_meta
 do
   local v_0_
@@ -665,7 +685,7 @@ do
         return vim.api.nvim_buf_set_lines(results_view.bufnr, start, _end, false, lines)
       end
       local function get_selection()
-        return tostring(last_results[cursor_row])
+        return last_results[cursor_row]
       end
       local function create_request(config0)
         assert((type(config0.body) == "table"), "body must be a table")
@@ -709,7 +729,7 @@ do
             end
           end
           local selection = get_selection()
-          if (has_views and (selection ~= "nil") and (last_requested_selection ~= selection)) then
+          if (has_views and (selection ~= nil) and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
             local function _11_()
               for _, _12_ in ipairs(views) do
@@ -741,7 +761,7 @@ do
         local function _11_(request0)
           return (request0.filter ~= last_requested_filter)
         end
-        request = create_request({body = {filter = filter, height = results_view.height}, cancel = _11_})
+        request = create_request({body = {filter = filter, height = results_view.height, winnr = original_winnr}, cancel = _11_})
         local config0 = {producer = config.producer, request = request}
         local function schedule_results_write(results0)
           has_rendered = true
@@ -794,7 +814,7 @@ do
         local selected_values = vim.tbl_keys(selected)
         if (#selected_values == 0) then
           local selection = get_selection()
-          if (selection ~= "") then
+          if (selection ~= nil) then
             local function _11_(...)
               return config.select(selection, original_winnr, ...)
             end
@@ -825,8 +845,8 @@ do
       local function on_select_toggle()
         if config.multiselect then
           local selection = get_selection()
-          if (selection ~= "") then
-            if selected[selection] then
+          if (selection ~= nil) then
+            if selected[tostring(selection)] then
               selected[selection] = nil
               return nil
             else

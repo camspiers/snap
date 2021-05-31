@@ -1,7 +1,7 @@
 (let [snap (require :snap)
       snap-io (snap.get :io)]
   (fn [request]
-    (local path (snap.sync (partial vim.fn.fnamemodify request.selection ":p")))
+    (local path (snap.sync (partial vim.fn.fnamemodify (tostring request.selection) ":p")))
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
     (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )
     (handle:close)
@@ -33,7 +33,7 @@
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; In case it's accidently saved
-        (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify request.selection ":p:gs?/?%?")))
+        (local fake-path (.. (vim.fn.tempname) "%" (vim.fn.fnamemodify (tostring request.selection) ":p:gs?/?%?")))
         ;; Use the fake path to enable ftdetection
         (vim.api.nvim_buf_set_name request.bufnr fake-path)
         ;; Detect the file type

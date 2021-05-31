@@ -3,7 +3,7 @@
       parse (snap.get :common.vimgrep.parse)]
 
   (fn [request]
-    (local selection (parse request.selection))
+    (local selection (parse (tostring request.selection)))
     (local path (snap.sync (partial vim.fn.fnamemodify selection.filename ":p")))
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
     (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )

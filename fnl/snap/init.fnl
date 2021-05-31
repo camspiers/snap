@@ -127,6 +127,12 @@
     (tset meta-result field value)
     meta-result))
 
+(defn with_metas [result data]
+  (let [meta-result (meta_result result)]
+    (each [field value (pairs data)]
+      (tset meta-result field value))
+    meta-result))
+
 ;; Basic function for detecting metafield
 
 ;; fnlfmt: skip
@@ -597,7 +603,7 @@
     (vim.api.nvim_buf_set_lines results-view.bufnr start end false lines))
 
   ;; Helper function for getting the line under the cursor
-  (fn get-selection [] (tostring (. last-results cursor-row)))
+  (fn get-selection [] (. last-results cursor-row))
 
   ;; Creates a producer request
   (fn create-request [config]
@@ -646,7 +652,7 @@
 
       ;; When we are running views schedule them
       (local selection (get-selection))
-      (when (and has-views (not= selection "nil") (not= last-requested-selection selection))
+      (when (and has-views (not= selection nil) (not= last-requested-selection selection))
         (set last-requested-selection selection)
         (vim.schedule (fn []
           (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
@@ -673,7 +679,7 @@
     (var results [])
 
     ;; Prepare the request
-    (local request (create-request {:body {: filter :height results-view.height}
+    (local request (create-request {:body {: filter :height results-view.height :winnr original-winnr}
                                     :cancel (fn [request] (not= request.filter last-requested-filter))}))
 
     ;; Prepare the scheduler config
@@ -752,7 +758,7 @@
     (local selected-values (vim.tbl_keys selected))
     (if (= (length selected-values) 0)
       (let [selection (get-selection)]
-        (when (not= selection "")
+        (when (not= selection nil)
           (vim.schedule (partial config.select selection original-winnr))))
       (when
         config.multiselect
@@ -772,8 +778,8 @@
   (fn on-select-toggle []
     (when config.multiselect
       (let [selection (get-selection)]
-        (when (not= selection "")
-          (if (. selected selection)
+        (when (not= selection nil)
+          (if (. selected (tostring selection))
             (tset selected selection nil)
             (tset selected selection true))))))
 

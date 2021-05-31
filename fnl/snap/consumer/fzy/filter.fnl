@@ -6,7 +6,7 @@
       (if
         (= filter "")
         results
-        (vim.tbl_filter #(fzy.has_match filter $1) results)))
+        (vim.tbl_filter #(fzy.has_match filter (tostring $1)) results)))
 
     (fn [request]
       (each [results (snap.consume producer request)]

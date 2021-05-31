@@ -7,7 +7,7 @@ local function _1_(producer)
       return results
     else
       local function _2_(_241)
-        return fzy.has_match(filter0, _241)
+        return fzy.has_match(filter0, tostring(_241))
       end
       return vim.tbl_filter(_2_, results)
     end

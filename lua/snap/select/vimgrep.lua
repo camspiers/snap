@@ -45,8 +45,8 @@ do
   local v_0_
   do
     local v_0_0
-    local function multiselect0(lines, winnr)
-      vim.fn.setqflist(vim.tbl_map(parse, lines))
+    local function multiselect0(selections, winnr)
+      vim.fn.setqflist(vim.tbl_map(parse, selections))
       vim.api.nvim_command("copen")
       return vim.api.nvim_command("cfirst")
     end
@@ -63,8 +63,8 @@ do
   local v_0_
   do
     local v_0_0
-    local function select0(line, winnr)
-      local _let_0_ = parse(line)
+    local function select0(selection, winnr)
+      local _let_0_ = parse(selection)
       local col = _let_0_["col"]
       local filename = _let_0_["filename"]
       local lnum = _let_0_["lnum"]

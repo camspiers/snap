@@ -1,7 +1,7 @@
-local _2afile_2a = "fnl/snap/select/file.fnl"
+local _2afile_2a = "fnl/snap/select/currentbuffer.fnl"
 local _0_
 do
-  local name_0_ = "snap.select.file"
+  local name_0_ = "snap.select.currentbuffer"
   local module_0_
   do
     local x_0_ = package.loaded[name_0_]
@@ -37,19 +37,18 @@ local function _2_(...)
 end
 local _local_0_ = _2_(...)
 local _2amodule_2a = _0_
-local _2amodule_name_2a = "snap.select.file"
+local _2amodule_name_2a = "snap.select.currentbuffer"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
 local select
 do
   local v_0_
   do
     local v_0_0
-    local function select0(selection, winnr)
-      local buffer = vim.fn.bufnr(tostring(selection), true)
+    local function select0(result, winnr)
+      local buffer = vim.fn.bufnr(result.filename, true)
       vim.api.nvim_buf_set_option(buffer, "buflisted", true)
-      if (winnr ~= false) then
-        return vim.api.nvim_win_set_buf(winnr, buffer)
-      end
+      vim.api.nvim_win_set_buf(winnr, buffer)
+      return vim.api.nvim_win_set_cursor(winnr, {result.row, 0})
     end
     v_0_0 = select0
     _0_["select"] = v_0_0
@@ -58,31 +57,5 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["select"] = v_0_
   select = v_0_
-end
-local multiselect
-do
-  local v_0_
-  do
-    local v_0_0
-    local function multiselect0(selections, winnr)
-      for index, selection in ipairs(selections) do
-        local function _3_()
-          if (#selections == index) then
-            return winnr
-          else
-            return false
-          end
-        end
-        select(selection, _3_())
-      end
-      return nil
-    end
-    v_0_0 = multiselect0
-    _0_["multiselect"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["multiselect"] = v_0_
-  multiselect = v_0_
 end
 return nil

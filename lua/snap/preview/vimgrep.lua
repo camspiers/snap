@@ -3,7 +3,7 @@ local snap = require("snap")
 local snap_io = snap.get("io")
 local parse = snap.get("common.vimgrep.parse")
 local function _1_(request)
-  local selection = parse(request.selection)
+  local selection = parse(tostring(request.selection))
   local path
   local function _2_(...)
     return vim.fn.fnamemodify(selection.filename, ":p", ...)

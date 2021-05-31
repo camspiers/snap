@@ -306,6 +306,7 @@ This is the request that is passed to a `producer`.
 ```typescript
 type Request = {
   filter: string;
+  winnr: number;
   canceled: () => boolean;
 };
 ```
