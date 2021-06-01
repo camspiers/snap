@@ -629,8 +629,8 @@
   (fn get-selection [] (. last-results cursor-row))
 
   ;; Only write what results are needed
-  (fn write-results [results write-request]
-    (when (not (write-request.canceled))
+  (fn write-results [results]
+    (when (not exit)
       (let [result-size (length results)]
         (if (= result-size 0)
           ;; If there are no results then clear
@@ -657,25 +657,18 @@
                 (. selected (tostring result))
                 (add-selected-highlight results-view.bufnr namespace row)))))
         ;; Make sure cursor stays in view
-        (when (> cursor-row result-size)
-          (set cursor-row (math.max result-size 1))
-          (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0])))
+        (when (> cursor-row result-size) (set cursor-row result-size)))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
       (when (and has-views (not= selection nil) (not= last-requested-selection selection))
         (set last-requested-selection selection)
         (vim.schedule (fn []
-          (fn cancel [request]
-            (or
-              exit
-              (write-request.canceled)
-              (not= request.selection (get-selection))))
           (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
             (local request
               (create-request
                 {:body {: selection : bufnr : winnr}
-                 : cancel}))
+                 :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
             ;; TODO optimization, this should pass all the producers, not just one
             ;; that way we can avoid creating multiple idle checkers
             (schedule-producer {: producer : request})))))))
@@ -712,7 +705,7 @@
     (fn schedule-results-write [results]
       ;; Update that we have rendered
       (set has-rendered true)
-      (vim.schedule (partial write-results results request)))
+      (vim.schedule (partial write-results results)))
 
     (fn render-loading-screen []
       (set loading-count (+ loading-count 1))
@@ -795,7 +788,7 @@
           (if (. selected value)
             (tset selected value nil)
             (tset selected value true))))
-      (write-results last-results {:canceled (fn [] false)})))
+      (write-results last-results)))
 
   ;; Handles select in the multiselect case
   (fn on-select-toggle []
@@ -813,7 +806,7 @@
           index (math.max 1 (math.min line-count (get-next-index cursor-row)))]
       (vim.api.nvim_win_set_cursor results-view.winnr [index 0])
       (set cursor-row index)
-      (write-results last-results {:canceled (fn [] false)})))
+      (write-results last-results)))
 
   ;; On up handler
   (fn on-up []
