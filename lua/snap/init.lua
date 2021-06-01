@@ -335,7 +335,7 @@ register.buf_map = function(bufnr, modes, keys, fnc, opts)
   local rhs = register["get-map-call"](tostring(bufnr), fnc)
   for _, key in ipairs(keys) do
     for _0, mode in ipairs(modes) do
-      vim.api.nvim_buf_set_keymap(bufnr, mode, key, rhs, (opts or {}))
+      vim.api.nvim_buf_set_keymap(bufnr, mode, key, rhs, (opts or {nowait = true}))
     end
   end
   return nil
@@ -703,8 +703,8 @@ do
       local function get_selection()
         return last_results[cursor_row]
       end
-      local function write_results(results)
-        if not exit then
+      local function write_results(results, write_request)
+        if not write_request.canceled() then
           do
             local result_size = #results
             if (result_size == 0) then
@@ -728,24 +728,24 @@ do
               end
             end
             if (cursor_row > result_size) then
-              cursor_row = result_size
+              cursor_row = math.max(result_size, 1)
+              vim.api.nvim_win_set_cursor(results_view.winnr, {cursor_row, 0})
             end
           end
           local selection = get_selection()
           if (has_views and (selection ~= nil) and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
             local function _11_()
+              local function cancel(request)
+                return (exit or write_request.canceled() or (request.selection ~= get_selection()))
+              end
               for _, _12_ in ipairs(views) do
                 local _each_0_ = _12_
                 local producer = _each_0_["producer"]
                 local _each_1_ = _each_0_["view"]
                 local bufnr = _each_1_["bufnr"]
                 local winnr = _each_1_["winnr"]
-                local request
-                local function _13_(request0)
-                  return (exit or (request0.selection ~= get_selection()))
-                end
-                request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
+                local request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = cancel})
                 schedule_producer({producer = producer, request = request})
               end
               return nil
@@ -769,7 +769,7 @@ do
         local function schedule_results_write(results0)
           has_rendered = true
           local function _11_(...)
-            return write_results(results0, ...)
+            return write_results(results0, request, ...)
           end
           return vim.schedule(_11_)
         end
@@ -842,18 +842,22 @@ do
               selected[value0] = true
             end
           end
-          return write_results(last_results)
+          local function _11_()
+            return false
+          end
+          return write_results(last_results, {canceled = _11_})
         end
       end
       local function on_select_toggle()
         if config.multiselect then
           local selection = get_selection()
           if (selection ~= nil) then
-            if selected[tostring(selection)] then
-              selected[selection] = nil
+            local value = tostring(selection)
+            if selected[value] then
+              selected[value] = nil
               return nil
             else
-              selected[selection] = true
+              selected[value] = true
               return nil
             end
           end
@@ -864,7 +868,10 @@ do
         local index = math.max(1, math.min(line_count, get_next_index(cursor_row)))
         vim.api.nvim_win_set_cursor(results_view.winnr, {index, 0})
         cursor_row = index
-        return write_results(last_results)
+        local function _11_()
+          return false
+        end
+        return write_results(last_results, {canceled = _11_})
       end
       local function on_up()
         local function _11_(_241)

@@ -177,7 +177,7 @@
   (let [rhs (register.get-map-call (tostring bufnr) fnc)]
     (each [_ key (ipairs keys)]
       (each [_ mode (ipairs modes)]
-        (vim.api.nvim_buf_set_keymap bufnr mode key rhs (or opts {}))))))
+        (vim.api.nvim_buf_set_keymap bufnr mode key rhs (or opts {:nowait true}))))))
 
 ;; Creates a global mapping
 (fn register.map [modes keys fnc opts]
@@ -416,11 +416,11 @@
     (var slow-api (create-slow-api))
     ;; Handle ending the idle loop and optionally calling on end
     (var stop (fn []
-           (idle:stop)
-           (set idle nil)
-           (set thread nil)
-           (set slow-api nil)
-           (when on-end (on-end))))
+      (idle:stop)
+      (set idle nil)
+      (set thread nil)
+      (set slow-api nil)
+      (when on-end (on-end))))
 
     ;; Start the checker after each IO poll
     (idle:start (fn []
@@ -629,8 +629,8 @@
   (fn get-selection [] (. last-results cursor-row))
 
   ;; Only write what results are needed
-  (fn write-results [results]
-    (when (not exit)
+  (fn write-results [results write-request]
+    (when (not (write-request.canceled))
       (let [result-size (length results)]
         (if (= result-size 0)
           ;; If there are no results then clear
@@ -657,18 +657,25 @@
                 (. selected (tostring result))
                 (add-selected-highlight results-view.bufnr namespace row)))))
         ;; Make sure cursor stays in view
-        (when (> cursor-row result-size) (set cursor-row result-size)))
+        (when (> cursor-row result-size)
+          (set cursor-row (math.max result-size 1))
+          (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0])))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
       (when (and has-views (not= selection nil) (not= last-requested-selection selection))
         (set last-requested-selection selection)
         (vim.schedule (fn []
+          (fn cancel [request]
+            (or
+              exit
+              (write-request.canceled)
+              (not= request.selection (get-selection))))
           (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
             (local request
               (create-request
                 {:body {: selection : bufnr : winnr}
-                 :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+                 : cancel}))
             ;; TODO optimization, this should pass all the producers, not just one
             ;; that way we can avoid creating multiple idle checkers
             (schedule-producer {: producer : request})))))))
@@ -705,7 +712,7 @@
     (fn schedule-results-write [results]
       ;; Update that we have rendered
       (set has-rendered true)
-      (vim.schedule (partial write-results results)))
+      (vim.schedule (partial write-results results request)))
 
     (fn render-loading-screen []
       (set loading-count (+ loading-count 1))
@@ -788,16 +795,17 @@
           (if (. selected value)
             (tset selected value nil)
             (tset selected value true))))
-      (write-results last-results)))
+      (write-results last-results {:canceled (fn [] false)})))
 
   ;; Handles select in the multiselect case
   (fn on-select-toggle []
     (when config.multiselect
       (let [selection (get-selection)]
         (when (not= selection nil)
-          (if (. selected (tostring selection))
-            (tset selected selection nil)
-            (tset selected selection true))))))
+          (local value (tostring selection))
+          (if (. selected value)
+            (tset selected value nil)
+            (tset selected value true))))))
 
   ;; On key helper
   (fn on-key-direction [get-next-index]
@@ -805,7 +813,7 @@
           index (math.max 1 (math.min line-count (get-next-index cursor-row)))]
       (vim.api.nvim_win_set_cursor results-view.winnr [index 0])
       (set cursor-row index)
-      (write-results last-results)))
+      (write-results last-results {:canceled (fn [] false)})))
 
   ;; On up handler
   (fn on-up []
