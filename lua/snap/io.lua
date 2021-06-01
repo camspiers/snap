@@ -99,7 +99,7 @@ do
   t_0_["spawn"] = v_0_
   spawn = v_0_
 end
-local chunk_size = 1000
+local chunk_size = 10000
 local read
 do
   local v_0_
@@ -116,8 +116,10 @@ do
         return assert(not err, err)
       end
       local function close()
-        closed = true
-        return vim.loop.fs_close(fd, on_close)
+        if not closed then
+          closed = true
+          return vim.loop.fs_close(fd, on_close)
+        end
       end
       local function cancel()
         canceled = true
@@ -126,13 +128,8 @@ do
       local function on_read(err, data)
         assert(not err, err)
         databuffer = (databuffer .. data)
-        current_offset = (current_offset + chunk_size)
-        if not closed then
-          if (canceled or (current_offset >= stat.size)) then
-            return close()
-          else
-            return vim.loop.fs_read(fd, chunk_size, current_offset, on_read)
-          end
+        if (canceled or (current_offset >= stat.size)) then
+          return close()
         end
       end
       local function on_stat(err, s)
@@ -145,14 +142,16 @@ do
         fd = f
         return vim.loop.fs_fstat(fd, on_stat)
       end
-      local handle = vim.loop.fs_open(path, "r", 438, on_open)
-      while ((not canceled and not closed) or (databuffer ~= "")) do
-        if (databuffer ~= "") then
+      vim.loop.fs_open(path, "r", 438, on_open)
+      while not closed do
+        if ((databuffer == "") or not fd or not stat) then
+          coroutine.yield(cancel)
+        else
           local data = databuffer
           databuffer = ""
           coroutine.yield(cancel, data)
-        else
-          coroutine.yield(cancel)
+          vim.loop.fs_read(fd, chunk_size, current_offset, on_read)
+          current_offset = (current_offset + chunk_size)
         end
       end
       return nil

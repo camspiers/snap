@@ -12,6 +12,8 @@ local function _1_(request)
     if not request.canceled() then
       vim.api.nvim_win_set_option(request.winnr, "cursorline", false)
       vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", false)
+      vim.api.nvim_buf_set_name(request.bufnr, "")
+      vim.api.nvim_buf_set_option(request.bufnr, "filetype", "")
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
       preview = nil
       return nil
@@ -22,10 +24,14 @@ local function _1_(request)
     if not request.canceled() then
       local fake_path = (vim.fn.tempname() .. "%" .. vim.fn.fnamemodify(tostring(request.selection), ":p:gs?/?%?"))
       vim.api.nvim_buf_set_name(request.bufnr, fake_path)
-      local function _5_(...)
-        return vim.api.nvim_command("filetype detect", ...)
+      local function _5_()
+        return vim.api.nvim_command("filetype detect")
       end
-      return vim.api.nvim_buf_call(request.bufnr, _5_)
+      vim.api.nvim_buf_call(request.bufnr, _5_)
+      local highlighter = vim.treesitter.highlighter.active[request.bufnr]
+      if highlighter then
+        return highlighter:destroy()
+      end
     end
   end
   snap.sync(_4_)

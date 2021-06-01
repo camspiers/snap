@@ -30,7 +30,8 @@ The following is a basic example to give a taste of the API. It creates a highly
 snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
   select = snap.get'select.vimgrep'.select,
-  multiselect = snap.get'select.vimgrep'.multiselect
+  multiselect = snap.get'select.vimgrep'.multiselect,
+  views = {snap.get'preview.vimgrep'}
 }
 ```
 
@@ -40,7 +41,8 @@ Or given this can easily create the ability to ripgrep your entire filesystem wi
 snap.run {
   producer = snap.get'consumer.limit'(10000, snap.get'producer.ripgrep.vimgrep'),
   select = snap.get'select.vimgrep'.select,
-  multiselect = snap.get'select.vimgrep'.multiselect
+  multiselect = snap.get'select.vimgrep'.multiselect,
+  views = {snap.get'preview.vimgrep'}
 }
 ```
 

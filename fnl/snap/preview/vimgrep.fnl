@@ -14,6 +14,8 @@
         ;; Highlight using the cursor
         (vim.api.nvim_win_set_option request.winnr :cursorline true)
         (vim.api.nvim_win_set_option request.winnr :cursorcolumn true)
+        ;; Clear the filetype
+        (vim.api.nvim_buf_set_option request.bufnr "filetype" "")
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         (set preview nil))))
@@ -25,7 +27,11 @@
         ;; Use the fake path to enable ftdetection
         (vim.api.nvim_buf_set_name request.bufnr fake-path)
         ;; Detect the file type
-        (vim.api.nvim_buf_call request.bufnr (partial vim.api.nvim_command "filetype detect"))
+        (vim.api.nvim_buf_call request.bufnr (fn []
+          (vim.api.nvim_command "filetype detect")))
+        ;; For the moment kill ts as it is causing performance problems
+        (local highlighter (. vim.treesitter.highlighter.active request.bufnr))
+        (when highlighter (highlighter:destroy))
         ;; Try to set cursor to appropriate line
         (when (<= selection.lnum preview-size)
           ;; TODO Col highlighting isn't working
