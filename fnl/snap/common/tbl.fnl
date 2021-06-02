@@ -1,6 +1,5 @@
 (module snap.common.tbl)
 
-;; fnlfmt: skip
 (defn accumulate [tbl vals]
   "Accumulates non nil values"
   (when (not= vals nil)
@@ -8,12 +7,10 @@
       (when (not= value "")
         (table.insert tbl value)))))
 
-;; Takes 
 (defn take [tbl num]
   "Takes the first n values from tbl"
   [(unpack tbl 1 num)])
 
-;; Table sum
 (defn sum [tbl]
   "Sums table"
   (var count 0)
@@ -25,7 +22,6 @@
   "Gets the first value from the table"
   (when tbl (. tbl 1)))
 
-;; Used for allocating all total in a number of parts without remainder
 (defn allocate [total divisor]
   "Divides by allocation, ensuing remainers are handled"
   (var remainder total)
@@ -40,7 +36,6 @@
         (set remainder (- remainder part)))))
   parts)
 
-;; Partition for quick sort
 (fn partition [tbl p r comp]
   "Partitions a tbl"
   (let [x (. tbl r)]
@@ -56,7 +51,6 @@
     (tset tbl r temp)
     (+ i 1)))
 
-;; fnlfmt: skip
 (defn partial-quicksort [tbl p r m comp]
   "Partial quicksort for avoiding completely sorting tables when not needed"
   (when (< p r)

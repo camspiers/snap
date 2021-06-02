@@ -24,15 +24,13 @@
                        buffer snap.common.buffer
                        window snap.common.window}})
 
-;; Stores mappings for buffers and global user mappings
+;; Exposes register as a main API
 (def register register)
-;; Public API
 
-;; Provides easy access to submodules
 (defn get [mod]
+  "Provides easy access to submodules"
   (require (string.format "snap.%s" mod)))
 
-;; fnlfmt: skip
 (defn sync [value]
   "Basic wrapper around coroutine.yield that returns first result"
   (let [(_ result) (coroutine.yield value)]
@@ -44,7 +42,6 @@
   "Yields for other processing or cancels if needed"
   (coroutine.yield continue-value on-cancel))
 
-;; fnlfmt: skip
 (defn resume [thread request value]
   "Transfers sync values allowing the yielding of functions with non fast-api access"
   (let [(_ result) (coroutine.resume thread request value)]
@@ -57,7 +54,6 @@
       ;; If we aren't canceling then return result
       result)))
 
-;; fnlfmt: skip
 (defn consume [producer request]
   "Returns an iterator that consumes a producer"
   (var reader (coroutine.create producer))
@@ -72,10 +68,8 @@
 ;; and tables with extra data
 (def meta-tbl {:__tostring #$1.result})
 
-;; Turns a result into a meta result
-
-;; fnlfmt: skip
 (defn meta_result [result]
+  "Turns a result into a meta result"
   (match (type result)
     :string (let [meta-result {: result}]
               (setmetatable meta-result meta-tbl)
@@ -84,27 +78,21 @@
              (assert (= (getmetatable result) meta-tbl))
              result)))
 
-;; Sets a meta field like score
-
-;; fnlfmt: skip
 (defn with_meta [result field value]
+  "Sets a meta field like score"
   (let [meta-result (meta_result result)]
     (tset meta-result field value)
     meta-result))
 
-;; Sets multiple meta values
-
-;; fnlfmt: skip
 (defn with_metas [result data]
+  "Sets multiple meta values"
   (let [meta-result (meta_result result)]
     (each [field value (pairs data)]
       (tset meta-result field value))
     meta-result))
 
-;; Basic function for detecting metafield
-
-;; fnlfmt: skip
 (defn has_meta [result field]
+  "Basic function for detecting metafield"
   (and (= (getmetatable result) meta-tbl) (not= (. result field) nil)))
 
 ;; View Helpers
@@ -152,7 +140,6 @@
      :col (+ col col-offset (* border-size 2) padding-size)
      :focusable false}))
 
-;; fnlfmt: skip
 (fn create-results-view [config]
   "Creates the results view"
   (let [bufnr (buffer.create)
@@ -174,7 +161,6 @@
     (vim.api.nvim_win_set_option winnr :wrap false)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
-;; fnlfmt: skip
 (fn create-input-view [config]
   "Creates the input view"
   (let [bufnr (buffer.create)
@@ -238,17 +224,16 @@
     {: bufnr : winnr}))
 
 (fn center-with-text-width [text text-width width]
+  "Centers by using a text width"
   (let [space (string.rep " " (/ (- width text-width) 2))]
     (.. space text space)))
 
-;; Center text for loading screen
 (fn center [text width]
+  "Center text for loading screen"
   (center-with-text-width text (string.len text) width))
 
-;; Create a basic loading screen
-
-;; fnlfmt: skip
 (fn create-loading-screen [width height counter]
+  "Create a basic loading screen"
   (local dots (string.rep "." (% counter 5)))
   (local space (string.rep " " (- 5 (string.len dots))))
   (local loading-with-dots (.. "│" space dots " Loading " dots space "│")) 
@@ -265,8 +250,8 @@
     (center-with-text-width (.. "╰" (string.rep "─" 19) "╯") text-width width))
   loading)
 
-;; Creates an api for handling slow values
 (fn create-slow-api []
+  "Creates an api for handling slow values"
   (local slow-api {:pending false :value nil})
   (fn slow-api.schedule [fnc]
     (tset slow-api :pending true)
@@ -275,11 +260,11 @@
       (tset slow-api :pending false))))
   slow-api)
 
-;; Schedules a view for generation
 (fn schedule-producer [{: producer
                         : request
                         : on-end
                         : on-value}]
+  "Schedules a view for generation"
   ;; By the time the routine runs, we might be able to avoid it
   (when (not (request.canceled))
     ;; Create the idle loop
@@ -289,15 +274,14 @@
     ;; Tracks the requests of slow nvim calls
     (var slow-api (create-slow-api))
     ;; Handle ending the idle loop and optionally calling on end
-    (var stop (fn []
+    (fn stop []
       (idle:stop)
       (set idle nil)
       (set thread nil)
       (set slow-api nil)
-      (when on-end (on-end))))
-
-    ;; Start the checker after each IO poll
-    (idle:start (fn []
+      (when on-end (on-end)))
+    ;; This runs on each idle check
+    (fn start []
       (if
         ;; Only run when we aren't waiting for a slow-api call
         slow-api.pending
@@ -323,10 +307,13 @@
                   nil)
               _ (when on-value (on-value value)))))
         ;; When the coroutine is dead then stop the loop
-        (stop))))))
+        (stop)))
 
-;; Creates a producer request
+    ;; Start the checker after each IO poll
+    (idle:start start)))
+
 (fn create-request [config]
+  "Creates a producer request"
   ;; Config validation
   (assert (= (type config.body) :table) "body must be a table")
   (assert (= (type config.cancel) :function) "cancel must be a function")
@@ -367,11 +354,8 @@
 ;;   "An option table of additional views"
 ;;   :?views table<(request: SelectionRequest) => yiela<Yieldable>>
 ;; }
-
-;; fnlfmt: skip
 (defn run [config]
-  ;; Config validation
-
+  "The main entry point for running snaps"
   ;; Required values
   (assert
     (= (type config) "table")
@@ -453,7 +437,8 @@
     ;; Free memory
     (set last-results [])
     (set selected nil)
-    (set config.producer nil)
+    (tset config :producer nil)
+    (tset config :views nil)
 
     ;; Return back to original window
     (vim.api.nvim_set_current_win original-winnr)
@@ -710,6 +695,7 @@
   ;; Register buffer for exiting
   (table.insert buffers input-view-info.bufnr)
 
+  ;; Feed the initial filer to the input
   (when (not= initial_filter "")
     ;; We do it this way because prompts are broken in nvim
     (vim.api.nvim_feedkeys initial_filter :n false))

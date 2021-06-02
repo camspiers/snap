@@ -415,8 +415,7 @@ local function schedule_producer(_3_)
     local idle = vim.loop.new_idle()
     local thread = coroutine.create(producer)
     local slow_api = create_slow_api()
-    local stop
-    local function _4_()
+    local function stop()
       idle:stop()
       idle = nil
       thread = nil
@@ -425,22 +424,21 @@ local function schedule_producer(_3_)
         return on_end()
       end
     end
-    stop = _4_
-    local function _5_()
+    local function start()
       if slow_api.pending then
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
         local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
-        local _6_ = type(value)
-        if (_6_ == "function") then
+        local _4_ = type(value)
+        if (_4_ == "function") then
           return slow_api.schedule(value)
-        elseif (_6_ == "nil") then
+        elseif (_4_ == "nil") then
           return stop()
         else
-          local function _7_()
+          local function _5_()
             return (value == continue_value)
           end
-          if ((_6_ == "table") and _7_()) then
+          if ((_4_ == "table") and _5_()) then
             if request.canceled() then
               if on_cancel then
                 on_cancel()
@@ -450,7 +448,7 @@ local function schedule_producer(_3_)
               return nil
             end
           else
-            local _0 = _6_
+            local _0 = _4_
             if on_value then
               return on_value(value)
             end
@@ -460,7 +458,7 @@ local function schedule_producer(_3_)
         return stop()
       end
     end
-    return idle:start(_5_)
+    return idle:start(start)
   end
 end
 local function create_request(config)
@@ -520,7 +518,8 @@ do
         exit = true
         last_results = {}
         selected = nil
-        config.producer = nil
+        config["producer"] = nil
+        config["views"] = nil
         vim.api.nvim_set_current_win(original_winnr)
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then

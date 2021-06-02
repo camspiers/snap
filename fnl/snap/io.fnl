@@ -92,8 +92,4 @@
                 (set reading false)
                 (close)))))
 
-        (coroutine.yield cancel data)
-        
-        
-        
-        ))))
+        (coroutine.yield cancel data)))))
