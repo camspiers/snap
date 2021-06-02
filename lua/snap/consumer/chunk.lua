@@ -3,7 +3,7 @@ local function chunk(size, tbl)
   local index = 1
   local tbl_size = #tbl
   local function _1_()
-    if (index == tbl_size) then
+    if (index > tbl_size) then
       return nil
     end
     local chunk0 = {}
