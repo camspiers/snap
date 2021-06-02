@@ -19,12 +19,12 @@
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(module snap {require {tbl snap.common.tbl
+(module snap {require {tbl      snap.common.tbl
                        register snap.common.register
-                       buffer snap.common.buffer
-                       input snap.view.input
-                       results snap.view.results
-                       view snap.view.view}})
+                       buffer   snap.common.buffer
+                       input    snap.view.input
+                       results  snap.view.results
+                       view     snap.view.view}})
 
 ;; Exposes register as a main API
 (def register register)
