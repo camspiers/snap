@@ -726,29 +726,44 @@ do
               end
             end
             if (cursor_row > result_size) then
-              cursor_row = result_size
+              cursor_row = math.max(1, result_size)
             end
           end
           local selection = get_selection()
-          if (has_views and (selection ~= nil) and (last_requested_selection ~= selection)) then
+          if (has_views and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
-            local function _11_()
-              for _, _12_ in ipairs(views) do
-                local _each_0_ = _12_
-                local producer = _each_0_["producer"]
-                local _each_1_ = _each_0_["view"]
-                local bufnr = _each_1_["bufnr"]
-                local winnr = _each_1_["winnr"]
-                local request
-                local function _13_(request0)
-                  return (exit or (request0.selection ~= get_selection()))
+            if (selection == nil) then
+              local function _11_()
+                for _, _12_ in ipairs(views) do
+                  local _each_0_ = _12_
+                  local producer = _each_0_["producer"]
+                  local _each_1_ = _each_0_["view"]
+                  local bufnr = _each_1_["bufnr"]
+                  local winnr = _each_1_["winnr"]
+                  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
                 end
-                request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
-                schedule_producer({producer = producer, request = request})
+                return nil
               end
-              return nil
+              return vim.schedule(_11_)
+            else
+              local function _11_()
+                for _, _12_ in ipairs(views) do
+                  local _each_0_ = _12_
+                  local producer = _each_0_["producer"]
+                  local _each_1_ = _each_0_["view"]
+                  local bufnr = _each_1_["bufnr"]
+                  local winnr = _each_1_["winnr"]
+                  local request
+                  local function _13_(request0)
+                    return (exit or (request0.selection ~= get_selection()))
+                  end
+                  request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
+                  schedule_producer({producer = producer, request = request})
+                end
+                return nil
+              end
+              return vim.schedule(_11_)
             end
-            return vim.schedule(_11_)
           end
         end
       end

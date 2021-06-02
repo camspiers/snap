@@ -654,21 +654,27 @@
                 (. selected (tostring result))
                 (add-selected-highlight results-view.bufnr namespace row)))))
         ;; Make sure cursor stays in view
-        (when (> cursor-row result-size) (set cursor-row result-size)))
+        (when (> cursor-row result-size) (set cursor-row (math.max 1 result-size))))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
-      (when (and has-views (not= selection nil) (not= last-requested-selection selection))
+      (when
+        (and has-views (not= last-requested-selection selection))
         (set last-requested-selection selection)
-        (vim.schedule (fn []
-          (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
-            (local request
-              (create-request
-                {:body {: selection : bufnr : winnr}
-                 :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
-            ;; TODO optimization, this should pass all the producers, not just one
-            ;; that way we can avoid creating multiple idle checkers
-            (schedule-producer {: producer : request})))))))
+        (if
+          (= selection nil)
+          (vim.schedule (fn []
+            (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+              (vim.api.nvim_buf_set_lines bufnr 0 -1 false []))))
+          (vim.schedule (fn []
+            (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+              (local request
+                (create-request
+                  {:body {: selection : bufnr : winnr}
+                   :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+              ;; TODO optimization, this should pass all the producers, not just one
+              ;; that way we can avoid creating multiple idle checkers
+              (schedule-producer {: producer : request}))))))))
 
   ;; On input update
   (fn on-update [filter]
