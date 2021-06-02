@@ -19,55 +19,18 @@
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(module snap)
+(module snap {require {tbl snap.common.tbl
+                       register snap.common.register
+                       buffer snap.common.buffer
+                       window snap.common.window}})
 
-;; Local helpers
-
-;; Basic helper to get the first value
-(fn tbl-first [tbl]
-  (when tbl
-    (. tbl 1)))
-
-;; Partition for quick sort
-(fn partition [tbl p r comp]
-  (let [x (. tbl r)]
-    (var i (- p 1))
-    (for [j p (- r 1) 1]
-      (when (comp (. tbl j) x)
-        (set i (+ i 1))
-        (local temp (. tbl i))
-        (tset tbl i (. tbl j))
-        (tset tbl j temp)))
-    (local temp (. tbl (+ i 1)))
-    (tset tbl (+ i 1) (. tbl r))
-    (tset tbl r temp)
-    (+ i 1)))
-
-;; Implementation of partial quicksort
-;; For large amounts of results we can skip sorting the entire table
-
-;; fnlfmt: skip
-(fn partial-quicksort [tbl p r m comp]
-  (when (< p r)
-    (let [q (partition tbl p r comp)]
-      (partial-quicksort tbl p (- q 1) m comp)
-      (when (< p (- m 1))
-        (partial-quicksort tbl (+ q 1) r m comp)))))
-
+;; Stores mappings for buffers and global user mappings
+(def register register)
 ;; Public API
 
 ;; Provides easy access to submodules
 (defn get [mod]
   (require (string.format "snap.%s" mod)))
-
-;; Accumulates non empty results
-
-;; fnlfmt: skip
-(defn accumulate [results partial-results]
-  (when (not= partial-results nil)
-    (each [_ value (ipairs partial-results)]
-      (when (not= (tostring value) "")
-        (table.insert results value)))))
 
 ;; fnlfmt: skip
 (defn sync [value]
@@ -144,48 +107,6 @@
 (defn has_meta [result field]
   (and (= (getmetatable result) meta-tbl) (not= (. result field) nil)))
 
-;; Stores mappings for buffers and global user mappings
-(def register {})
-
-;; Cleans up unneeded buffer maps
-(fn register.clean [group]
-  (tset register group nil))
-
-;; Provides ability to run fn
-(fn register.run [group fnc]
-  (when (?. register group fnc)
-    ((. register group fnc))))
-
-(fn register.get-by-template [group fnc pre post]
-  (let [group-fns (or (. register group) [])
-        id (string.format "%s" fnc)]
-    (tset register group group-fns)
-    (when (= (. group-fns id) nil)
-      (tset group-fns id fnc))
-    (string.format "%slua require'snap'.register.run('%s', '%s')%s" pre group id post)))
-
-;; Generates call signiture for maps
-(fn register.get-map-call [group fnc]
-  (register.get-by-template group fnc :<Cmd> :<CR>))
-
-;; Generates call signiture for autocmds
-(fn register.get-autocmd-call [group fnc]
-  (register.get-by-template group fnc ":" ""))
-
-;; Creates a buffer mapping and creates callable signiture
-(fn register.buf_map [bufnr modes keys fnc opts]
-  (let [rhs (register.get-map-call (tostring bufnr) fnc)]
-    (each [_ key (ipairs keys)]
-      (each [_ mode (ipairs modes)]
-        (vim.api.nvim_buf_set_keymap bufnr mode key rhs (or opts {:nowait true}))))))
-
-;; Creates a global mapping
-(fn register.map [modes keys fnc opts]
-  (let [rhs (register.get-map-call "global" fnc)]
-    (each [_ key (ipairs keys)]
-      (each [_ mode (ipairs modes)]
-        (vim.api.nvim_set_keymap mode key rhs (or opts {}))))))
-
 ;; View Helpers
 
 ;; Represents the bottom border
@@ -197,41 +118,16 @@
 ;; Percentage size that views should take up
 (local views-width 0.5)
 
-;; Used for allocating all total in a number of parts without remainder
-(fn allocate [total parts]
-  (var remaining total)
-  (local sizes [])
-  (local size (math.floor (/ total parts)))
-  (for [i 1 parts]
-    (if
-      (= i parts)
-      (table.insert sizes remaining)
-      (do
-        (table.insert sizes size)
-        (set remaining (- remaining size)))))
-  sizes)
-
-;; Takes 
-(fn take [tbl num]
-  [(unpack tbl 1 num)])
-
-;; Table sum
-(fn sum [tbl]
-  (var count 0)
-  (each [_ val (ipairs tbl)]
-    (set count (+ count val)))
-  count)
-
-;; Modifies the basic window options to make the input sit below
 (fn create-input-layout [config]
+  "Creates the input layout"
   (let [{: width : height : row : col} (config.layout)]
     {:width (if config.has-views (math.floor (* width views-width)) width)
      :height 1
      :row (- (+ row height) padding-size)
      : col :focusable true}))
 
-;;  Compute the results layout
 (fn create-results-layout [config]
+  "Creates the results layout"
   (let [{: width : height : row : col} (config.layout)]
     {:width (if config.has-views (math.floor (* width views-width)) width)
      :height (- height border-size border-size padding-size)
@@ -239,48 +135,29 @@
      : col
      :focusable false}))
 
-;;  Compute the view layout
 (fn create-view-layout [config]
+  "Creates a view layout"
   (let [{: width : height : row : col} (config.layout)
         index (- config.index 1)
         border (* index border-size)
         padding (* index padding-size)
         total-borders (* (- config.total-views 1) border-size)
         total-paddings (* (- config.total-views 1) padding-size)
-        sizes (allocate (- height total-borders total-paddings) config.total-views)
+        sizes (tbl.allocate (- height total-borders total-paddings) config.total-views)
         height (. sizes config.index)
         col-offset (math.floor (* width views-width))]
     {:width (- width col-offset)
      : height
-     :row (+ row (sum (take sizes index)) border padding)
+     :row (+ row (tbl.sum (tbl.take sizes index)) border padding)
      :col (+ col col-offset (* border-size 2) padding-size)
      :focusable false}))
 
-;; Creates a scratch buffer, used for both results and input
-(fn create-buffer []
-  (vim.api.nvim_create_buf false true))
-
-;; Creates a window with specified options
-
-;; fnlfmt: skip
-(fn create-window [bufnr {: width : height : row : col : focusable}]
-  (vim.api.nvim_open_win bufnr 0 {: width
-                          : height
-                          : row
-                          : col
-                          : focusable
-                          :relative :editor
-                          :anchor :NW
-                          :style :minimal
-                          :border ["╭" "─" "╮" "│" "╯" "─" "╰" "│"]}))
-
-;; Creates the results buffer and window
-
 ;; fnlfmt: skip
 (fn create-results-view [config]
-  (let [bufnr (create-buffer)
+  "Creates the results view"
+  (let [bufnr (buffer.create)
         layout (create-results-layout config)
-        winnr (create-window bufnr layout)]
+        winnr (window.create bufnr layout)]
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     (vim.api.nvim_buf_set_option bufnr :textwidth 0)
     (vim.api.nvim_buf_set_option bufnr :wrapmargin 0)
@@ -289,26 +166,26 @@
     {: bufnr : winnr :height layout.height :width layout.width}))
 
 (fn create-view [config]
-  (let [bufnr (create-buffer)
+  "Creates a view"
+  (let [bufnr (buffer.create)
         layout (create-view-layout config)
-        winnr (create-window bufnr layout)]
+        winnr (window.create bufnr layout)]
     (vim.api.nvim_win_set_option winnr :cursorline false)
     (vim.api.nvim_win_set_option winnr :wrap false)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
-;; Creates the input buffer
-
 ;; fnlfmt: skip
 (fn create-input-view [config]
-  (let [bufnr (create-buffer)
+  "Creates the input view"
+  (let [bufnr (buffer.create)
         layout (create-input-layout config)
-        winnr (create-window bufnr layout)]
+        winnr (window.create bufnr layout)]
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
 
     (fn get-filter []
-      (let [contents (tbl-first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
+      (let [contents (tbl.first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
         (if contents (contents:sub (+ (length config.prompt) 1)) "")))
 
     ;; Track exit
@@ -340,15 +217,15 @@
     (fn on_detach [] 
       (register.clean bufnr))
 
-    (register.buf_map bufnr [:n :i] [:<CR>] on-enter)
-    (register.buf_map bufnr [:n :i] [:<Up> :<C-k> :<C-p>] config.on-up)
-    (register.buf_map bufnr [:n :i] [:<Down> :<C-j> :<C-n>] config.on-down)
-    (register.buf_map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
-    (register.buf_map bufnr [:n :i] [:<Tab>] on-tab)
-    (register.buf_map bufnr [:n :i] [:<S-Tab>] on-shifttab)
-    (register.buf_map bufnr [:n :i] [:<C-a>] on-ctrla)
-    (register.buf_map bufnr [:n :i] [:<C-d>] config.on-pagedown)
-    (register.buf_map bufnr [:n :i] [:<C-u>] config.on-pageup)
+    (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
+    (register.buf-map bufnr [:n :i] [:<Up> :<C-k> :<C-p>] config.on-up)
+    (register.buf-map bufnr [:n :i] [:<Down> :<C-j> :<C-n>] config.on-down)
+    (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
+    (register.buf-map bufnr [:n :i] [:<Tab>] on-tab)
+    (register.buf-map bufnr [:n :i] [:<S-Tab>] on-shifttab)
+    (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
+    (register.buf-map bufnr [:n :i] [:<C-d>] config.on-pagedown)
+    (register.buf-map bufnr [:n :i] [:<C-u>] config.on-pageup)
 
     (vim.api.nvim_command
       (string.format
@@ -447,20 +324,6 @@
               _ (when on-value (on-value value)))))
         ;; When the coroutine is dead then stop the loop
         (stop))))))
-
-;; Helper function for adding selected highlighting
-(fn add-selected-highlight [bufnr namespace row]
-  (vim.api.nvim_buf_add_highlight bufnr namespace :Comment (- row 1) 0 -1))
-
-;; Helper function for adding positions highlights
-(fn add-positions-highlight [bufnr namespace row positions]
-  (local line (- row 1))
-  (each [_ col (ipairs positions)]
-    (vim.api.nvim_buf_add_highlight bufnr namespace :Search line (- col 1) col)))
-
-;; Helper to set lines to results view
-(fn set-lines [bufnr start end lines]
-  (vim.api.nvim_buf_set_lines bufnr start end false lines))
 
 ;; Creates a producer request
 (fn create-request [config]
@@ -570,9 +433,6 @@
   ;; Store the initial filter
   (local initial_filter (or config.initial_filter ""))
 
-  ;; Creates a namespace for highlighting
-  (local namespace (vim.api.nvim_create_namespace :Snap))
-
   ;; Stores the original window to so we can pass it back to the select function
   (local original-winnr (vim.api.nvim_get_current_win))
 
@@ -631,7 +491,7 @@
       (let [result-size (length results)]
         (if (= result-size 0)
           ;; If there are no results then clear
-          (set-lines results-view.bufnr 0 -1 [])
+          (buffer.set-lines results-view.bufnr 0 -1 [])
           ;; Otherwise render partial results
           ;; Don't render more than we need to
           ;; this is getting only the height plus the cursor
@@ -641,18 +501,23 @@
                    :until (= max (length partial-results))]
               (table.insert partial-results (tostring result)))
             ;; Set the lines, but make sure tables are converted to strings
-            (set-lines results-view.bufnr 0 -1 partial-results)
+            (buffer.set-lines results-view.bufnr 0 -1 partial-results)
             ;; Update highlights
             (each [row _ (pairs partial-results)]
               (local result (. results row))
               ;; Add positions highlighting
               (when
                 (has_meta result :positions)
-                (add-positions-highlight results-view.bufnr namespace row result.positions))
+                (buffer.add-positions-highlight
+                  results-view.bufnr
+                  row
+                  result.positions))
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (add-selected-highlight results-view.bufnr namespace row)))))
+                (buffer.add-selected-highlight
+                  results-view.bufnr
+                  row)))))
         ;; Make sure cursor stays in view
         (when (> cursor-row result-size) (set cursor-row (math.max 1 result-size))))
 
@@ -664,7 +529,7 @@
         (if
           (= selection nil)
           (vim.schedule (fn []
-            (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+            (each [_ {:view { : bufnr}} (ipairs views)]
               (vim.api.nvim_buf_set_lines bufnr 0 -1 false []))))
           (vim.schedule (fn []
             (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
@@ -715,14 +580,14 @@
       (vim.schedule (fn []
         (when (not (request.canceled))
           (local loading (create-loading-screen results-view.width results-view.height loading-count))
-          (set-lines results-view.bufnr 0 -1 loading)))))
+          (buffer.set-lines results-view.bufnr 0 -1 loading)))))
 
     ;; Add on end handler
     (fn config.on-end []
       ;; When we have scores attached then sort
       (when
-        (has_meta (tbl-first results) :score)
-        (partial-quicksort
+        (has_meta (tbl.first results) :score)
+        (tbl.partial-quicksort
           results
           1
           (length results)
@@ -742,13 +607,13 @@
       ;; Store the current time
       (local current-time (vim.loop.now))
       ;; Accumulate the results
-      (accumulate results value)
+      (tbl.accumulate results value)
       ;; This is an optimization to begin writing unscored results
       ;; as early as we can
       (when (and
               (= (length last-results) 0)
               (>= (length results) results-view.height)
-              (not (has_meta (tbl-first results) :score)))
+              (not (has_meta (tbl.first results) :score)))
         ;; Set the results to enable cursor
         (set last-results results)
         ;; Early write

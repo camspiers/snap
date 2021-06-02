@@ -25,49 +25,35 @@ autoload = _1_
 local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _2_()
-    return {}
+    return {require("snap.common.buffer"), require("snap.common.register"), require("snap.common.tbl"), require("snap.common.window")}
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {}
+    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", register = "snap.common.register", tbl = "snap.common.tbl", window = "snap.common.window"}}
     return val_0_
   else
     return print(val_0_)
   end
 end
 local _local_0_ = _2_(...)
+local buffer = _local_0_[1]
+local register = _local_0_[2]
+local tbl = _local_0_[3]
+local window = _local_0_[4]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
-local function tbl_first(tbl)
-  if tbl then
-    return tbl[1]
+local register0
+do
+  local v_0_
+  do
+    local v_0_0 = register
+    _0_["register"] = v_0_0
+    v_0_ = v_0_0
   end
-end
-local function partition(tbl, p, r, comp)
-  local x = tbl[r]
-  local i = (p - 1)
-  for j = p, (r - 1), 1 do
-    if comp(tbl[j], x) then
-      i = (i + 1)
-      local temp = tbl[i]
-      tbl[i] = tbl[j]
-      tbl[j] = temp
-    end
-  end
-  local temp = tbl[(i + 1)]
-  tbl[(i + 1)] = tbl[r]
-  tbl[r] = temp
-  return (i + 1)
-end
-local function partial_quicksort(tbl, p, r, m, comp)
-  if (p < r) then
-    local q = partition(tbl, p, r, comp)
-    partial_quicksort(tbl, p, (q - 1), m, comp)
-    if (p < (m - 1)) then
-      return partial_quicksort(tbl, (q + 1), r, m, comp)
-    end
-  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["register"] = v_0_
+  register0 = v_0_
 end
 local get
 do
@@ -84,29 +70,6 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["get"] = v_0_
   get = v_0_
-end
-local accumulate
-do
-  local v_0_
-  do
-    local v_0_0
-    local function accumulate0(results, partial_results)
-      if (partial_results ~= nil) then
-        for _, value in ipairs(partial_results) do
-          if (tostring(value) ~= "") then
-            table.insert(results, value)
-          end
-        end
-        return nil
-      end
-    end
-    v_0_0 = accumulate0
-    _0_["accumulate"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["accumulate"] = v_0_
-  accumulate = v_0_
 end
 local sync
 do
@@ -284,98 +247,9 @@ do
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
 end
-local register
-do
-  local v_0_
-  do
-    local v_0_0 = {}
-    _0_["register"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["register"] = v_0_
-  register = v_0_
-end
-register.clean = function(group)
-  register[group] = nil
-  return nil
-end
-register.run = function(group, fnc)
-  local _3_
-  do
-    local t_0_ = register
-    if (nil ~= t_0_) then
-      t_0_ = (t_0_)[group]
-    end
-    if (nil ~= t_0_) then
-      t_0_ = (t_0_)[fnc]
-    end
-    _3_ = t_0_
-  end
-  if _3_ then
-    return register[group][fnc]()
-  end
-end
-register["get-by-template"] = function(group, fnc, pre, post)
-  local group_fns = (register[group] or {})
-  local id = string.format("%s", fnc)
-  do end (register)[group] = group_fns
-  if (group_fns[id] == nil) then
-    group_fns[id] = fnc
-  end
-  return string.format("%slua require'snap'.register.run('%s', '%s')%s", pre, group, id, post)
-end
-register["get-map-call"] = function(group, fnc)
-  return register["get-by-template"](group, fnc, "<Cmd>", "<CR>")
-end
-register["get-autocmd-call"] = function(group, fnc)
-  return register["get-by-template"](group, fnc, ":", "")
-end
-register.buf_map = function(bufnr, modes, keys, fnc, opts)
-  local rhs = register["get-map-call"](tostring(bufnr), fnc)
-  for _, key in ipairs(keys) do
-    for _0, mode in ipairs(modes) do
-      vim.api.nvim_buf_set_keymap(bufnr, mode, key, rhs, (opts or {nowait = true}))
-    end
-  end
-  return nil
-end
-register.map = function(modes, keys, fnc, opts)
-  local rhs = register["get-map-call"]("global", fnc)
-  for _, key in ipairs(keys) do
-    for _0, mode in ipairs(modes) do
-      vim.api.nvim_set_keymap(mode, key, rhs, (opts or {}))
-    end
-  end
-  return nil
-end
 local border_size = 1
 local padding_size = 1
 local views_width = 0.5
-local function allocate(total, parts)
-  local remaining = total
-  local sizes = {}
-  local size = math.floor((total / parts))
-  for i = 1, parts do
-    if (i == parts) then
-      table.insert(sizes, remaining)
-    else
-      table.insert(sizes, size)
-      remaining = (remaining - size)
-    end
-  end
-  return sizes
-end
-local function take(tbl, num)
-  return {unpack(tbl, 1, num)}
-end
-local function sum(tbl)
-  local count = 0
-  for _, val in ipairs(tbl) do
-    count = (count + val)
-  end
-  return count
-end
 local function create_input_layout(config)
   local _let_0_ = config.layout()
   local col = _let_0_["col"]
@@ -415,27 +289,15 @@ local function create_view_layout(config)
   local padding = (index * padding_size)
   local total_borders = ((config["total-views"] - 1) * border_size)
   local total_paddings = ((config["total-views"] - 1) * padding_size)
-  local sizes = allocate((height - total_borders - total_paddings), config["total-views"])
+  local sizes = tbl.allocate((height - total_borders - total_paddings), config["total-views"])
   local height0 = sizes[config.index]
   local col_offset = math.floor((width * views_width))
-  return {col = (col + col_offset + (border_size * 2) + padding_size), focusable = false, height = height0, row = (row + sum(take(sizes, index)) + border + padding), width = (width - col_offset)}
-end
-local function create_buffer()
-  return vim.api.nvim_create_buf(false, true)
-end
-local function create_window(bufnr, _3_)
-  local _arg_0_ = _3_
-  local col = _arg_0_["col"]
-  local focusable = _arg_0_["focusable"]
-  local height = _arg_0_["height"]
-  local row = _arg_0_["row"]
-  local width = _arg_0_["width"]
-  return vim.api.nvim_open_win(bufnr, 0, {anchor = "NW", border = {"\226\149\173", "\226\148\128", "\226\149\174", "\226\148\130", "\226\149\175", "\226\148\128", "\226\149\176", "\226\148\130"}, col = col, focusable = focusable, height = height, relative = "editor", row = row, style = "minimal", width = width})
+  return {col = (col + col_offset + (border_size * 2) + padding_size), focusable = false, height = height0, row = (row + tbl.sum(tbl.take(sizes, index)) + border + padding), width = (width - col_offset)}
 end
 local function create_results_view(config)
-  local bufnr = create_buffer()
+  local bufnr = buffer.create()
   local layout = create_results_layout(config)
-  local winnr = create_window(bufnr, layout)
+  local winnr = window.create(bufnr, layout)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   vim.api.nvim_buf_set_option(bufnr, "textwidth", 0)
   vim.api.nvim_buf_set_option(bufnr, "wrapmargin", 0)
@@ -444,22 +306,22 @@ local function create_results_view(config)
   return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
 end
 local function create_view(config)
-  local bufnr = create_buffer()
+  local bufnr = buffer.create()
   local layout = create_view_layout(config)
-  local winnr = create_window(bufnr, layout)
+  local winnr = window.create(bufnr, layout)
   vim.api.nvim_win_set_option(winnr, "cursorline", false)
   vim.api.nvim_win_set_option(winnr, "wrap", false)
   return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
 end
 local function create_input_view(config)
-  local bufnr = create_buffer()
+  local bufnr = buffer.create()
   local layout = create_input_layout(config)
-  local winnr = create_window(bufnr, layout)
+  local winnr = window.create(bufnr, layout)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
   local function get_filter()
-    local contents = tbl_first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
+    local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
     if contents then
       return contents:sub((#config.prompt + 1))
     else
@@ -489,23 +351,23 @@ local function create_input_view(config)
     return config["on-select-all-toggle"]()
   end
   local on_lines
-  local function _4_()
+  local function _3_()
     return config["on-update"](get_filter())
   end
-  on_lines = _4_
+  on_lines = _3_
   local function on_detach()
-    return register.clean(bufnr)
+    return register0.clean(bufnr)
   end
-  register.buf_map(bufnr, {"n", "i"}, {"<CR>"}, on_enter)
-  register.buf_map(bufnr, {"n", "i"}, {"<Up>", "<C-k>", "<C-p>"}, config["on-up"])
-  register.buf_map(bufnr, {"n", "i"}, {"<Down>", "<C-j>", "<C-n>"}, config["on-down"])
-  register.buf_map(bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
-  register.buf_map(bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
-  register.buf_map(bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
-  register.buf_map(bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
-  register.buf_map(bufnr, {"n", "i"}, {"<C-d>"}, config["on-pagedown"])
-  register.buf_map(bufnr, {"n", "i"}, {"<C-u>"}, config["on-pageup"])
-  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
+  register0["buf-map"](bufnr, {"n", "i"}, {"<CR>"}, on_enter)
+  register0["buf-map"](bufnr, {"n", "i"}, {"<Up>", "<C-k>", "<C-p>"}, config["on-up"])
+  register0["buf-map"](bufnr, {"n", "i"}, {"<Down>", "<C-j>", "<C-n>"}, config["on-down"])
+  register0["buf-map"](bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
+  register0["buf-map"](bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
+  register0["buf-map"](bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
+  register0["buf-map"](bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
+  register0["buf-map"](bufnr, {"n", "i"}, {"<C-d>"}, config["on-pagedown"])
+  register0["buf-map"](bufnr, {"n", "i"}, {"<C-u>"}, config["on-pageup"])
+  vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register0["get-autocmd-call"](tostring(bufnr), on_exit)))
   vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
   return {bufnr = bufnr, winnr = winnr}
 end
@@ -534,17 +396,17 @@ local function create_slow_api()
   local slow_api = {pending = false, value = nil}
   slow_api.schedule = function(fnc)
     slow_api["pending"] = true
-    local function _4_()
+    local function _3_()
       slow_api["value"] = fnc()
       do end (slow_api)["pending"] = false
       return nil
     end
-    return vim.schedule(_4_)
+    return vim.schedule(_3_)
   end
   return slow_api
 end
-local function schedule_producer(_4_)
-  local _arg_0_ = _4_
+local function schedule_producer(_3_)
+  local _arg_0_ = _3_
   local on_end = _arg_0_["on-end"]
   local on_value = _arg_0_["on-value"]
   local producer = _arg_0_["producer"]
@@ -554,7 +416,7 @@ local function schedule_producer(_4_)
     local thread = coroutine.create(producer)
     local slow_api = create_slow_api()
     local stop
-    local function _5_()
+    local function _4_()
       idle:stop()
       idle = nil
       thread = nil
@@ -563,22 +425,22 @@ local function schedule_producer(_4_)
         return on_end()
       end
     end
-    stop = _5_
-    local function _6_()
+    stop = _4_
+    local function _5_()
       if slow_api.pending then
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
         local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
-        local _7_ = type(value)
-        if (_7_ == "function") then
+        local _6_ = type(value)
+        if (_6_ == "function") then
           return slow_api.schedule(value)
-        elseif (_7_ == "nil") then
+        elseif (_6_ == "nil") then
           return stop()
         else
-          local function _8_()
+          local function _7_()
             return (value == continue_value)
           end
-          if ((_7_ == "table") and _8_()) then
+          if ((_6_ == "table") and _7_()) then
             if request.canceled() then
               if on_cancel then
                 on_cancel()
@@ -588,7 +450,7 @@ local function schedule_producer(_4_)
               return nil
             end
           else
-            local _0 = _7_
+            local _0 = _6_
             if on_value then
               return on_value(value)
             end
@@ -598,21 +460,8 @@ local function schedule_producer(_4_)
         return stop()
       end
     end
-    return idle:start(_6_)
+    return idle:start(_5_)
   end
-end
-local function add_selected_highlight(bufnr, namespace, row)
-  return vim.api.nvim_buf_add_highlight(bufnr, namespace, "Comment", (row - 1), 0, -1)
-end
-local function add_positions_highlight(bufnr, namespace, row, positions)
-  local line = (row - 1)
-  for _, col in ipairs(positions) do
-    vim.api.nvim_buf_add_highlight(bufnr, namespace, "Search", line, (col - 1), col)
-  end
-  return nil
-end
-local function set_lines(bufnr, start, _end, lines)
-  return vim.api.nvim_buf_set_lines(bufnr, start, _end, false, lines)
 end
 local function create_request(config)
   assert((type(config.body) == "table"), "body must be a table")
@@ -663,7 +512,6 @@ do
       local buffers = {}
       local layout = (config.layout or (get("layout")).centered)
       local initial_filter = (config.initial_filter or "")
-      local namespace = vim.api.nvim_create_namespace("Snap")
       local original_winnr = vim.api.nvim_get_current_win()
       local prompt = string.format("%s> ", (config.prompt or "Find"))
       local selected = {}
@@ -706,7 +554,7 @@ do
           do
             local result_size = #results
             if (result_size == 0) then
-              set_lines(results_view.bufnr, 0, -1, {})
+              buffer["set-lines"](results_view.bufnr, 0, -1, {})
             else
               local max = (results_view.height + cursor_row)
               local partial_results = {}
@@ -714,14 +562,14 @@ do
                 if (max == #partial_results) then break end
                 table.insert(partial_results, tostring(result))
               end
-              set_lines(results_view.bufnr, 0, -1, partial_results)
+              buffer["set-lines"](results_view.bufnr, 0, -1, partial_results)
               for row, _ in pairs(partial_results) do
                 local result = results[row]
                 if has_meta(result, "positions") then
-                  add_positions_highlight(results_view.bufnr, namespace, row, result.positions)
+                  buffer["add-positions-highlight"](results_view.bufnr, row, result.positions)
                 end
                 if selected[tostring(result)] then
-                  add_selected_highlight(results_view.bufnr, namespace, row)
+                  buffer["add-selected-highlight"](results_view.bufnr, row)
                 end
               end
             end
@@ -733,36 +581,34 @@ do
           if (has_views and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
             if (selection == nil) then
-              local function _11_()
-                for _, _12_ in ipairs(views) do
-                  local _each_0_ = _12_
-                  local producer = _each_0_["producer"]
+              local function _10_()
+                for _, _11_ in ipairs(views) do
+                  local _each_0_ = _11_
                   local _each_1_ = _each_0_["view"]
                   local bufnr = _each_1_["bufnr"]
-                  local winnr = _each_1_["winnr"]
                   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
                 end
                 return nil
               end
-              return vim.schedule(_11_)
+              return vim.schedule(_10_)
             else
-              local function _11_()
-                for _, _12_ in ipairs(views) do
-                  local _each_0_ = _12_
+              local function _10_()
+                for _, _11_ in ipairs(views) do
+                  local _each_0_ = _11_
                   local producer = _each_0_["producer"]
                   local _each_1_ = _each_0_["view"]
                   local bufnr = _each_1_["bufnr"]
                   local winnr = _each_1_["winnr"]
                   local request
-                  local function _13_(request0)
+                  local function _12_(request0)
                     return (exit or (request0.selection ~= get_selection()))
                   end
-                  request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _13_})
+                  request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
                   schedule_producer({producer = producer, request = request})
                 end
                 return nil
               end
-              return vim.schedule(_11_)
+              return vim.schedule(_10_)
             end
           end
         end
@@ -781,27 +627,27 @@ do
         local config0 = {producer = config.producer, request = request}
         local function schedule_results_write(results0)
           has_rendered = true
-          local function _11_(...)
+          local function _10_(...)
             return write_results(results0, ...)
           end
-          return vim.schedule(_11_)
+          return vim.schedule(_10_)
         end
         local function render_loading_screen()
           loading_count = (loading_count + 1)
-          local function _11_()
+          local function _10_()
             if not request.canceled() then
               local loading = create_loading_screen(results_view.width, results_view.height, loading_count)
-              return set_lines(results_view.bufnr, 0, -1, loading)
+              return buffer["set-lines"](results_view.bufnr, 0, -1, loading)
             end
           end
-          return vim.schedule(_11_)
+          return vim.schedule(_10_)
         end
         config0["on-end"] = function()
-          if has_meta(tbl_first(results), "score") then
-            local function _11_(_241, _242)
+          if has_meta(tbl.first(results), "score") then
+            local function _10_(_241, _242)
               return (_241.score > _242.score)
             end
-            partial_quicksort(results, 1, #results, (results_view.height + cursor_row), _11_)
+            tbl["partial-quicksort"](results, 1, #results, (results_view.height + cursor_row), _10_)
           end
           last_results = results
           schedule_results_write(last_results)
@@ -811,8 +657,8 @@ do
         config0["on-value"] = function(value)
           assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
           local current_time = vim.loop.now()
-          accumulate(results, value)
-          if ((#last_results == 0) and (#results >= results_view.height) and not has_meta(tbl_first(results), "score")) then
+          tbl.accumulate(results, value)
+          if ((#last_results == 0) and (#results >= results_view.height) and not has_meta(tbl.first(results), "score")) then
             last_results = results
             schedule_results_write(results)
           end
@@ -831,17 +677,17 @@ do
         if (#selected_values == 0) then
           local selection = get_selection()
           if (selection ~= nil) then
-            local function _11_(...)
+            local function _10_(...)
               return config.select(selection, original_winnr, ...)
             end
-            return vim.schedule(_11_)
+            return vim.schedule(_10_)
           end
         else
           if config.multiselect then
-            local function _11_(...)
+            local function _10_(...)
               return config.multiselect(selected_values, original_winnr, ...)
             end
-            return vim.schedule(_11_)
+            return vim.schedule(_10_)
           end
         end
       end
@@ -881,28 +727,28 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_down()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_pageup()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local function on_pagedown()
-        local function _11_(_241)
+        local function _10_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_11_)
+        return on_key_direction(_10_)
       end
       local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, prompt = prompt})
       table.insert(buffers, input_view_info.bufnr)
