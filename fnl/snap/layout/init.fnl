@@ -23,21 +23,24 @@
   {:width (math.floor (* (columns) %width))
    :height (math.floor (* (lines) %height))})
 
-(fn %centered [%width %height]
+(defn %centered [%width %height]
+  "Defines a centered layout based on percent"
   (let [{: width : height} (size %width %height)]
     {: width
      : height
      :row (middle (lines) height)
      :col (middle (columns) width)}))
 
-(fn %bottom [%width %height]
+(defn %bottom [%width %height]
+  "Defines a bottom layout based on percent"
   (let [{: width : height} (size %width %height)]
     {: width
      : height
      :row (from-bottom height 8)
      :col (middle (columns) width)}))
 
-(fn %top [%width %height]
+(defn %top [%width %height]
+  "Defines a top layout based on percent"
   (let [{: width : height} (size %width %height)]
     {: width : height :row 5 :col (middle (columns) width)}))
 
@@ -47,7 +50,7 @@
   (%centered 0.9 0.7))
 
 (defn bottom []
-  (%bottom 0.8 0.5))
+  (%bottom 0.9 0.7))
 
 (defn top []
-  (%top 0.8 0.5))
+  (%top 0.9 0.7))

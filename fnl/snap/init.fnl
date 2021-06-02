@@ -22,7 +22,9 @@
 (module snap {require {tbl snap.common.tbl
                        register snap.common.register
                        buffer snap.common.buffer
-                       window snap.common.window}})
+                       input snap.view.input
+                       results snap.view.results
+                       view snap.view.view}})
 
 ;; Exposes register as a main API
 (def register register)
@@ -63,7 +65,6 @@
       (set reader nil)
       (values (resume reader request)))))
 
-
 ;; Metatable for a result, allows the representation of results as both strings
 ;; and tables with extra data
 (def meta-tbl {:__tostring #$1.result})
@@ -94,134 +95,6 @@
 (defn has_meta [result field]
   "Basic function for detecting metafield"
   (and (= (getmetatable result) meta-tbl) (not= (. result field) nil)))
-
-;; View Helpers
-
-;; Represents the bottom border
-(local border-size 1)
-
-;; Padding between ui elements
-(local padding-size 1)
-
-;; Percentage size that views should take up
-(local views-width 0.5)
-
-(fn create-input-layout [config]
-  "Creates the input layout"
-  (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.has-views (math.floor (* width views-width)) width)
-     :height 1
-     :row (- (+ row height) padding-size)
-     : col :focusable true}))
-
-(fn create-results-layout [config]
-  "Creates the results layout"
-  (let [{: width : height : row : col} (config.layout)]
-    {:width (if config.has-views (math.floor (* width views-width)) width)
-     :height (- height border-size border-size padding-size)
-     : row
-     : col
-     :focusable false}))
-
-(fn create-view-layout [config]
-  "Creates a view layout"
-  (let [{: width : height : row : col} (config.layout)
-        index (- config.index 1)
-        border (* index border-size)
-        padding (* index padding-size)
-        total-borders (* (- config.total-views 1) border-size)
-        total-paddings (* (- config.total-views 1) padding-size)
-        sizes (tbl.allocate (- height total-borders total-paddings) config.total-views)
-        height (. sizes config.index)
-        col-offset (math.floor (* width views-width))]
-    {:width (- width col-offset)
-     : height
-     :row (+ row (tbl.sum (tbl.take sizes index)) border padding)
-     :col (+ col col-offset (* border-size 2) padding-size)
-     :focusable false}))
-
-(fn create-results-view [config]
-  "Creates the results view"
-  (let [bufnr (buffer.create)
-        layout (create-results-layout config)
-        winnr (window.create bufnr layout)]
-    (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
-    (vim.api.nvim_buf_set_option bufnr :textwidth 0)
-    (vim.api.nvim_buf_set_option bufnr :wrapmargin 0)
-    (vim.api.nvim_win_set_option winnr :wrap false)
-    (vim.api.nvim_win_set_option winnr :cursorline true)
-    {: bufnr : winnr :height layout.height :width layout.width}))
-
-(fn create-view [config]
-  "Creates a view"
-  (let [bufnr (buffer.create)
-        layout (create-view-layout config)
-        winnr (window.create bufnr layout)]
-    (vim.api.nvim_win_set_option winnr :cursorline false)
-    (vim.api.nvim_win_set_option winnr :wrap false)
-    {: bufnr : winnr :height layout.height :width layout.width}))
-
-(fn create-input-view [config]
-  "Creates the input view"
-  (let [bufnr (buffer.create)
-        layout (create-input-layout config)
-        winnr (window.create bufnr layout)]
-    (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
-    (vim.fn.prompt_setprompt bufnr config.prompt)
-    (vim.api.nvim_command :startinsert)
-
-    (fn get-filter []
-      (let [contents (tbl.first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
-        (if contents (contents:sub (+ (length config.prompt) 1)) "")))
-
-    ;; Track exit
-    (var exited false)
-
-    (fn on-exit []
-      (when (not exited)
-        (set exited true)
-        (config.on-exit)))
-
-    (fn on-enter []
-      (config.on-enter)
-      (config.on-exit))
-
-    (fn on-tab []
-      (config.on-select-toggle)
-      (config.on-down))
-
-    (fn on-shifttab []
-      (config.on-select-toggle)
-      (config.on-up))
-
-    (fn on-ctrla []
-      (config.on-select-all-toggle))
-
-    (local on_lines (fn []
-      (config.on-update (get-filter))))
-
-    (fn on_detach [] 
-      (register.clean bufnr))
-
-    (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
-    (register.buf-map bufnr [:n :i] [:<Up> :<C-k> :<C-p>] config.on-up)
-    (register.buf-map bufnr [:n :i] [:<Down> :<C-j> :<C-n>] config.on-down)
-    (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
-    (register.buf-map bufnr [:n :i] [:<Tab>] on-tab)
-    (register.buf-map bufnr [:n :i] [:<S-Tab>] on-shifttab)
-    (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
-    (register.buf-map bufnr [:n :i] [:<C-d>] config.on-pagedown)
-    (register.buf-map bufnr [:n :i] [:<C-u>] config.on-pageup)
-
-    (vim.api.nvim_command
-      (string.format
-        "autocmd! WinLeave <buffer=%s> %s"
-        bufnr
-        (register.get-autocmd-call (tostring bufnr) on-exit)))
-
-    (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
-
-    {: bufnr : winnr}))
 
 (fn center-with-text-width [text text-width width]
   "Centers by using a text width"
@@ -457,12 +330,12 @@
   (local views [])
   (when has-views
     (each [index producer (ipairs config.views)]
-      (local view {:view (create-view {: layout : index : total-views}) : producer})
+      (local view {:view (view.create {: layout : index : total-views}) : producer})
       (table.insert views view)
       (table.insert buffers view.view.bufnr)))
 
   ;; Creates the results buffer and window and stores thier numbers
-  (local results-view (create-results-view {: layout : has-views}))
+  (local results-view (results.create {: layout : has-views}))
 
   ;; Register buffer for exiting
   (table.insert buffers results-view.bufnr)
@@ -678,7 +551,7 @@
     (on-key-direction #(+ $1 results-view.height)))
 
   ;; Initializes the input view
-  (local input-view-info (create-input-view
+  (local input-view-info (input.create
     {: has-views
      : layout
      : prompt

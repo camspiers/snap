@@ -54,23 +54,62 @@ end
 local function size(_25width, _25height)
   return {height = math.floor((lines() * _25height)), width = math.floor((columns() * _25width))}
 end
-local function _25centered(_25width, _25height)
-  local _let_0_ = size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = middle(columns(), width), height = height, row = middle(lines(), height), width = width}
+local _25centered
+do
+  local v_0_
+  do
+    local v_0_0
+    local function _25centered0(_25width, _25height)
+      local _let_0_ = size(_25width, _25height)
+      local height = _let_0_["height"]
+      local width = _let_0_["width"]
+      return {col = middle(columns(), width), height = height, row = middle(lines(), height), width = width}
+    end
+    v_0_0 = _25centered0
+    _0_["%centered"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["%centered"] = v_0_
+  _25centered = v_0_
 end
-local function _25bottom(_25width, _25height)
-  local _let_0_ = size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = middle(columns(), width), height = height, row = from_bottom(height, 8), width = width}
+local _25bottom
+do
+  local v_0_
+  do
+    local v_0_0
+    local function _25bottom0(_25width, _25height)
+      local _let_0_ = size(_25width, _25height)
+      local height = _let_0_["height"]
+      local width = _let_0_["width"]
+      return {col = middle(columns(), width), height = height, row = from_bottom(height, 8), width = width}
+    end
+    v_0_0 = _25bottom0
+    _0_["%bottom"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["%bottom"] = v_0_
+  _25bottom = v_0_
 end
-local function _25top(_25width, _25height)
-  local _let_0_ = size(_25width, _25height)
-  local height = _let_0_["height"]
-  local width = _let_0_["width"]
-  return {col = middle(columns(), width), height = height, row = 5, width = width}
+local _25top
+do
+  local v_0_
+  do
+    local v_0_0
+    local function _25top0(_25width, _25height)
+      local _let_0_ = size(_25width, _25height)
+      local height = _let_0_["height"]
+      local width = _let_0_["width"]
+      return {col = middle(columns(), width), height = height, row = 5, width = width}
+    end
+    v_0_0 = _25top0
+    _0_["%top"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["%top"] = v_0_
+  _25top = v_0_
 end
 local centered
 do
@@ -94,7 +133,7 @@ do
   do
     local v_0_0
     local function bottom0()
-      return _25bottom(0.8, 0.5)
+      return _25bottom(0.9, 0.7)
     end
     v_0_0 = bottom0
     _0_["bottom"] = v_0_0
@@ -110,7 +149,7 @@ do
   do
     local v_0_0
     local function top0()
-      return _25top(0.8, 0.5)
+      return _25top(0.9, 0.7)
     end
     v_0_0 = top0
     _0_["top"] = v_0_0
