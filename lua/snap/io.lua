@@ -108,29 +108,20 @@ do
     local function read0(path)
       local closed = false
       local canceled = false
+      local reading = true
       local databuffer = ""
       local fd = nil
       local stat = nil
       local current_offset = 0
       local function on_close(err)
-        return assert(not err, err)
-      end
-      local function close()
-        if not closed then
-          closed = true
-          return vim.loop.fs_close(fd, on_close)
-        end
-      end
-      local function cancel()
-        canceled = true
+        assert(not err, err)
+        closed = true
         return nil
       end
       local function on_read(err, data)
         assert(not err, err)
-        databuffer = (databuffer .. data)
-        if (canceled or (current_offset >= stat.size)) then
-          return close()
-        end
+        databuffer = data
+        return nil
       end
       local function on_stat(err, s)
         assert(not err, err)
@@ -143,15 +134,31 @@ do
         return vim.loop.fs_fstat(fd, on_stat)
       end
       vim.loop.fs_open(path, "r", 438, on_open)
+      local function close()
+        return vim.loop.fs_close(fd, on_close)
+      end
+      local function cancel()
+        canceled = true
+        return nil
+      end
       while not closed do
-        if ((databuffer == "") or not fd or not stat) then
+        if (not fd or not stat or (databuffer == "")) then
           coroutine.yield(cancel)
         else
           local data = databuffer
           databuffer = ""
+          if canceled then
+            close()
+          elseif reading then
+            current_offset = (current_offset + chunk_size)
+            if (current_offset < stat.size) then
+              vim.loop.fs_read(fd, chunk_size, current_offset, on_read)
+            else
+              reading = false
+              close()
+            end
+          end
           coroutine.yield(cancel, data)
-          vim.loop.fs_read(fd, chunk_size, current_offset, on_read)
-          current_offset = (current_offset + chunk_size)
         end
       end
       return nil

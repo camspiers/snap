@@ -37,31 +37,23 @@
 
 (local chunk-size 10000)
 
+
 (defn read [path]
   (var closed false)
   (var canceled false)
+  (var reading true)
   (var databuffer "")
   (var fd nil)
   (var stat nil)
   (var current-offset 0)
 
   (fn on-close [err]
-    (assert (not err) err))
-
-  (fn close []
-    (when (not closed)
-      (set closed true)
-      (vim.loop.fs_close fd on-close)))
-
-  (fn cancel []
-    (set canceled true))
+    (assert (not err) err)
+    (set closed true))
 
   (fn on-read [err data]
     (assert (not err) err)
-    (set databuffer (.. databuffer data))
-    (when
-      (or canceled (>= current-offset stat.size))
-      (close)))
+    (set databuffer data))
 
   (fn on-stat [err s]
     (assert (not err) err)
@@ -75,17 +67,33 @@
 
   (vim.loop.fs_open path "r" 438 on-open)
 
+  (fn close [] (vim.loop.fs_close fd on-close))
+
+  (fn cancel [] (set canceled true))
+
   (while
     (not closed)
     (if
-      (or (= databuffer "") (not fd) (not stat))
+      (or (not fd) (not stat) (= databuffer ""))
       (coroutine.yield cancel)
       (do
         (local data databuffer)
         (set databuffer "")
+        (if
+          canceled
+          (close)
+          reading
+          (do
+            (set current-offset (+ current-offset chunk-size))
+            (if
+              (< current-offset stat.size)
+              (vim.loop.fs_read fd chunk-size current-offset on-read)
+              (do
+                (set reading false)
+                (close)))))
+
         (coroutine.yield cancel data)
-        (vim.loop.fs_read fd chunk-size current-offset on-read)
-        (set current-offset (+ current-offset chunk-size))))))
-
-
-
+        
+        
+        
+        ))))

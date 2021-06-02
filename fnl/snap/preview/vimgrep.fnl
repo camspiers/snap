@@ -18,6 +18,10 @@
         (vim.api.nvim_buf_set_option request.bufnr "filetype" "")
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
+        ;; Try to set cursor to appropriate line
+        (when (<= selection.lnum preview-size)
+          ;; TODO Col highlighting isn't working
+          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)]))
         (set preview nil))))
     ;; Do file type detection
     (snap.sync (fn []
@@ -31,10 +35,6 @@
           (vim.api.nvim_command "filetype detect")))
         ;; For the moment kill ts as it is causing performance problems
         (local highlighter (. vim.treesitter.highlighter.active request.bufnr))
-        (when highlighter (highlighter:destroy))
-        ;; Try to set cursor to appropriate line
-        (when (<= selection.lnum preview-size)
-          ;; TODO Col highlighting isn't working
-          (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)])))))
+        (when highlighter (highlighter:destroy)))))
     
     (set preview nil)))

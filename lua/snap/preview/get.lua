@@ -29,7 +29,10 @@ local function _1_(path)
       end
       snap.continue(_3_)
     end
-    preview = vim.split(databuffer, "\n", true)
+    preview = {}
+    for line in databuffer:gmatch("([^\13\n]*)[\13\n]?") do
+      table.insert(preview, line)
+    end
     free()
   end
   return preview

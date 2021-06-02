@@ -20,6 +20,8 @@
           (when (not= data nil) (set databuffer (.. databuffer data)))
           ;; yield to main thread and cancel if needed
           (snap.continue (partial free cancel)))
-        (set preview (vim.split databuffer "\n" true))
+        (set preview [])
+        (each [line (databuffer:gmatch "([^\r\n]*)[\r\n]?")]
+          (table.insert preview line))
         (free)))
     preview))

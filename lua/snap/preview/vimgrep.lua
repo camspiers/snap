@@ -17,6 +17,9 @@ local function _1_(request)
       vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", true)
       vim.api.nvim_buf_set_option(request.bufnr, "filetype", "")
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
+      if (selection.lnum <= preview_size) then
+        vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
+      end
       preview = nil
       return nil
     end
@@ -32,10 +35,7 @@ local function _1_(request)
       vim.api.nvim_buf_call(request.bufnr, _5_)
       local highlighter = vim.treesitter.highlighter.active[request.bufnr]
       if highlighter then
-        highlighter:destroy()
-      end
-      if (selection.lnum <= preview_size) then
-        return vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
+        return highlighter:destroy()
       end
     end
   end

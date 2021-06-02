@@ -281,9 +281,11 @@
   (let [bufnr (create-buffer)
         layout (create-results-layout config)
         winnr (create-window bufnr layout)]
-    (vim.api.nvim_win_set_option winnr :cursorline true)
-    (vim.api.nvim_win_set_option winnr :wrap false)
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
+    (vim.api.nvim_buf_set_option bufnr :textwidth 0)
+    (vim.api.nvim_buf_set_option bufnr :wrapmargin 0)
+    (vim.api.nvim_win_set_option winnr :wrap false)
+    (vim.api.nvim_win_set_option winnr :cursorline true)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
 (fn create-view [config]
@@ -292,7 +294,6 @@
         winnr (create-window bufnr layout)]
     (vim.api.nvim_win_set_option winnr :cursorline false)
     (vim.api.nvim_win_set_option winnr :wrap false)
-    (vim.api.nvim_buf_set_option bufnr :filetype :on)
     {: bufnr : winnr :height layout.height :width layout.width}))
 
 ;; Creates the input buffer
@@ -305,10 +306,6 @@
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
-
-    (when (~= config.initial_filter "")
-      ;; We do it this way because prompts are broken in nvim
-      (vim.api.nvim_feedkeys config.initial_filter :n false))
 
     (fn get-filter []
       (let [contents (tbl-first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
@@ -826,8 +823,7 @@
 
   ;; Initializes the input view
   (local input-view-info (create-input-view
-    {: initial_filter
-     : has-views
+    {: has-views
      : layout
      : prompt
      : on-enter
@@ -842,6 +838,10 @@
 
   ;; Register buffer for exiting
   (table.insert buffers input-view-info.bufnr)
+
+  (when (not= initial_filter "")
+    ;; We do it this way because prompts are broken in nvim
+    (vim.api.nvim_feedkeys initial_filter :n false))
 
   nil)
 

@@ -5,4 +5,8 @@
         (request.canceled) (do (cancel) (coroutine.yield nil))
         (not= err "") (coroutine.yield nil)
         (= data "") (coroutine.yield [])
-        (coroutine.yield (vim.split data "\n" true))))))
+        (do
+          (local results [])
+          (each [line (data:gmatch "([^\r\n]*)[\r\n]?")]
+            (table.insert results line))
+          (coroutine.yield results))))))

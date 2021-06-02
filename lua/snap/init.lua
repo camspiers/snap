@@ -436,9 +436,11 @@ local function create_results_view(config)
   local bufnr = create_buffer()
   local layout = create_results_layout(config)
   local winnr = create_window(bufnr, layout)
-  vim.api.nvim_win_set_option(winnr, "cursorline", true)
-  vim.api.nvim_win_set_option(winnr, "wrap", false)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
+  vim.api.nvim_buf_set_option(bufnr, "textwidth", 0)
+  vim.api.nvim_buf_set_option(bufnr, "wrapmargin", 0)
+  vim.api.nvim_win_set_option(winnr, "wrap", false)
+  vim.api.nvim_win_set_option(winnr, "cursorline", true)
   return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
 end
 local function create_view(config)
@@ -447,7 +449,6 @@ local function create_view(config)
   local winnr = create_window(bufnr, layout)
   vim.api.nvim_win_set_option(winnr, "cursorline", false)
   vim.api.nvim_win_set_option(winnr, "wrap", false)
-  vim.api.nvim_buf_set_option(bufnr, "filetype", "on")
   return {bufnr = bufnr, height = layout.height, width = layout.width, winnr = winnr}
 end
 local function create_input_view(config)
@@ -457,9 +458,6 @@ local function create_input_view(config)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
-  if (config.initial_filter ~= "") then
-    vim.api.nvim_feedkeys(config.initial_filter, "n", false)
-  end
   local function get_filter()
     local contents = tbl_first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
     if contents then
@@ -491,10 +489,10 @@ local function create_input_view(config)
     return config["on-select-all-toggle"]()
   end
   local on_lines
-  local function _5_()
+  local function _4_()
     return config["on-update"](get_filter())
   end
-  on_lines = _5_
+  on_lines = _4_
   local function on_detach()
     return register.clean(bufnr)
   end
@@ -891,8 +889,11 @@ do
         end
         return on_key_direction(_11_)
       end
-      local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, initial_filter = initial_filter, layout = layout, prompt = prompt})
+      local input_view_info = create_input_view({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, prompt = prompt})
       table.insert(buffers, input_view_info.bufnr)
+      if (initial_filter ~= "") then
+        vim.api.nvim_feedkeys(initial_filter, "n", false)
+      end
       return nil
     end
     v_0_0 = run0

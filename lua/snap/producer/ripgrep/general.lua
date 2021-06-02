@@ -13,7 +13,11 @@ local function _2_(request, _1_)
     elseif (data == "") then
       coroutine.yield({})
     else
-      coroutine.yield(vim.split(data, "\n", true))
+      local results = {}
+      for line in data:gmatch("([^\13\n]*)[\13\n]?") do
+        table.insert(results, line)
+      end
+      coroutine.yield(results)
     end
   end
   return nil
