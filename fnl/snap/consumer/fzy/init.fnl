@@ -1,7 +1,5 @@
-(let [filter (require :snap.consumer.fzy.filter)
-      score (require :snap.consumer.fzy.score)
-      positions (require :snap.consumer.fzy.positions)
+(let [all (require :snap.consumer.fzy.all)
       cache (require :snap.consumer.cache)]
   (fn [producer]
-    (positions (score (filter (cache producer))))))
+    (all (cache producer))))
 
