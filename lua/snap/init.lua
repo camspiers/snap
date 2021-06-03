@@ -387,11 +387,11 @@ do
                   local height = _each_1_["height"]
                   local width = _each_1_["width"]
                   local winnr = _each_1_["winnr"]
-                  local request0
-                  local function _12_(request1)
-                    return (exit or (request1.selection ~= get_selection()))
+                  local function cancel(request0)
+                    return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
                   end
-                  request0 = request.create({body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}, cancel = _12_})
+                  local body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}
+                  local request0 = request.create({body = body, cancel = cancel})
                   create({producer = producer, request = request0})
                 end
                 return nil

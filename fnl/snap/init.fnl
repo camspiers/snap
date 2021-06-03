@@ -302,10 +302,10 @@
         (when (not= selection nil)
           (vim.schedule (fn []
             (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
-              (local request
-                (request.create
-                  {:body {: selection : bufnr : winnr : width : height}
-                   :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+              (fn cancel [request]
+                (or exit (not= (tostring request.selection) (tostring (get-selection)))))
+              (local body {: selection : bufnr : winnr : width : height})
+              (local request (request.create {: body : cancel}))
                ; TODO optimization, this should pass all the producers, not just one
                ; that way we can avoid creating multiple idle checkers
               (create {: producer : request}))))))))
