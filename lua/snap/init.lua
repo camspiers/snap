@@ -366,7 +366,7 @@ do
             end
           end
           local selection = get_selection()
-          if (has_views and (last_requested_selection ~= selection)) then
+          if (has_views and (tostring(last_requested_selection) ~= tostring(selection))) then
             last_requested_selection = selection
             for _, _10_ in ipairs(views) do
               local _each_0_ = _10_

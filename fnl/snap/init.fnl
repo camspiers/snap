@@ -290,7 +290,7 @@
       ;; When we are running views schedule them
       (local selection (get-selection))
       (when
-        (and has-views (not= last-requested-selection selection))
+        (and has-views (not= (tostring last-requested-selection) (tostring selection)))
         (set last-requested-selection selection)
         ;; Create new buffers
         (each [_ {: view} (ipairs views)]
