@@ -489,6 +489,10 @@ Fd based file producer.
 
 Fd based directory producer.
 
+#### `snap.producer.git.file`
+
+Git file producer.
+
 ### Consumers
 
 #### `snap.consumer.cache`
