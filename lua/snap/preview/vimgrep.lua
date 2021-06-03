@@ -1,6 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/vimgrep.fnl"
 local snap = require("snap")
-local get = snap.get("preview.get")
+local read_file = snap.get("preview.read-file")
 local parse = snap.get("common.vimgrep.parse")
 local function _1_(request)
   local selection = parse(tostring(request.selection))
@@ -9,7 +9,7 @@ local function _1_(request)
     return vim.fn.fnamemodify(selection.filename, ":p", ...)
   end
   path = snap.sync(_2_)
-  local preview = get(path)
+  local preview = read_file(path)
   local preview_size = #preview
   local function _3_()
     if not request.canceled() then

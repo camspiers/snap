@@ -1,6 +1,6 @@
 (let [snap (require :snap)
       snap-io (snap.get :common.io)]
-  (fn [path]
+  (fn [path on-resume]
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
     (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )
     (handle:close)
@@ -16,8 +16,11 @@
           (set databuffer "")
           (set reader nil))
         (while (not= (coroutine.status reader) :dead)
+          (when on-resume (on-resume))
           (local (_ cancel data) (coroutine.resume reader path))
-          (when (not= data nil) (set databuffer (.. databuffer data)))
+          (when
+            (not= data nil)
+            (set databuffer (.. databuffer data)))
           ;; yield to main thread and cancel if needed
           (snap.continue (partial free cancel)))
         (set preview [])

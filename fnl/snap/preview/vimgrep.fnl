@@ -1,12 +1,12 @@
 (let [snap (require :snap)
-      get (snap.get :preview.get)
+      read-file (snap.get :preview.read-file)
       parse (snap.get :common.vimgrep.parse)]
 
   (fn [request]
     (local selection (parse (tostring request.selection)))
     (local path (snap.sync (partial vim.fn.fnamemodify selection.filename ":p")))
     ;; Get the preview
-    (var preview (get path))
+    (var preview (read-file path))
     (local preview-size (length preview))
     ;; Write the preview to the buffer.
     (snap.sync (fn []
