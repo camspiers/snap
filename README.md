@@ -22,7 +22,7 @@ If you want to use the in-built support for `fzy`:
 use_rocks 'fzy'
 ```
 
-## Basic example
+## Basic Example
 
 The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
 
@@ -46,7 +46,157 @@ snap.run {
 }
 ```
 
-## Concepts
+## Usage
+
+`snap` comes with inbuilt producers and consumers to enable easy creation of finders.
+
+### Find Files
+
+Uses built in `fzy` filter + score, and `ripgrep` for file finding.
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Live Ripgrep
+
+```lua
+snap.run {
+  producer = snap.get'producer.ripgrep.vimgrep',
+  select = snap.get'select.vimgrep'.select,
+  multiselect = snap.get'select.vimgrep'.multiselect,
+  views = {snap.get'preview.vimgrep'}
+}
+```
+
+### Find Buffers
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Find Old Files
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Find Git Files
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.git.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Key Bindings
+
+#### Select
+
+When a single item is selected, calls the provided `select` function with the cursor result as the selection.
+
+- `<CR>`
+
+#### Exit
+
+Closes `snap`
+
+- `<Esc>`
+- `<C-c>`
+
+#### Next
+
+Move cursor to the next selection.
+
+- `<Down>`
+- `<C-n>`
+
+#### Previous
+
+Move cursor to the previous selection.
+
+- `<Up>`
+- `<C-p>`
+
+#### Multiselect (enabled when `multiselect` is provided)
+
+Add current cursor result to selection list.
+
+- `<Tab>`
+
+Remove current cursor result from selection list.
+
+- `<S-Tab>`
+
+Select all
+
+- `<C-a>`
+
+#### Results Page Down
+
+Moves the results cursor down a page.
+
+- `<C-b>`
+
+#### Results Page Up
+
+Moves the results cursor up a page.
+
+- `<C-f>`
+
+#### View Page Down
+
+Moves the cursor of the first view down a page (if more than one exists).
+
+- `<C-d>`
+
+#### View Page Up
+
+Moves the cursor of the first view up a page (if more than one exists).
+
+- `<C-u>`
+
+### Creating Mappings
+
+`snap` registers no mappings, autocmds, or commands, and never will.
+
+You can register your mappings in the following way:
+
+```lua
+local snap = require'snap'
+snap.register.map({"n"}, {"<Leader>f"}, function ()
+  snap.run {
+    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+    select = snap.get'select.file'.select,
+    multiselect = snap.get'select.file'.multiselect
+  }
+end)
+```
+
+An exmaple that configures a variety of in-built snaps is available here:
+
+https://gist.github.com/camspiers/686395ab3bda4a0d00684d72acc24c23
+
+
+## How Snap Works
 
 `snap` uses a non-blocking design to ensure the UI is always responsive to user input.
 
@@ -154,77 +304,6 @@ From the above we have seen the following distinct concepts of `snap`:
 - Using the `request.filter` value
 - Using the `request.cancel` signal to kill processes
 
-## Usage
-
-`snap` comes with inbuilt producers and consumers to enable easy creation of finders.
-
-### Find Files
-
-Uses built in `fzy` filter + score, and `ripgrep` for file finding.
-
-```lua
-snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-}
-```
-
-or with in-built `luv` producer:
-
-```lua
-snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.luv.file'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-}
-```
-
-### Live Ripgrep
-
-```lua
-snap.run {
-  producer = snap.get'producer.ripgrep.vimgrep',
-  select = snap.get'select.vimgrep'.select,
-  multiselect = snap.get'select.vimgrep'.multiselect,
-  views = {snap.get'preview.vimgrep'}
-}
-```
-
-### Find Buffers
-
-```lua
-snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-}
-```
-
-### Find Old Files
-
-```lua
-snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-}
-```
-
-### Find Git Files
-
-```lua
-snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.git.file'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-}
-```
 
 ## API
 
@@ -388,27 +467,6 @@ type ViewProducer = (request: ViewRequest) => yield<function | nil>;
   views?: table<ViewProducer>
 };
 ```
-
-## Creating Mappings
-
-`snap` registers no mappings, autocmds, or commands, and never will.
-
-You can register your mappings in the following way:
-
-```lua
-local snap = require'snap'
-snap.register.map({"n"}, {"<Leader>f"}, function ()
-  snap.run {
-    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-    select = snap.get'select.file'.select,
-    multiselect = snap.get'select.file'.multiselect
-  }
-end)
-```
-
-An exmaple that configures a variety of in-built snaps is available here:
-
-https://gist.github.com/camspiers/686395ab3bda4a0d00684d72acc24c23
 
 ## Advanced API (for developers)
 
