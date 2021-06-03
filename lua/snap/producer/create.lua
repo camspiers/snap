@@ -25,17 +25,18 @@ autoload = _1_
 local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _2_()
-    return {}
+    return {require("snap")}
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {}
+    _0_["aniseed/local-fns"] = {require = {snap = "snap"}}
     return val_0_
   else
     return print(val_0_)
   end
 end
 local _local_0_ = _2_(...)
+local snap = _local_0_[1]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.producer.create"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
@@ -83,7 +84,7 @@ local function _4_(_3_)
           return stop()
         else
           local function _6_()
-            return (value == continue_value)
+            return (value == snap.continue_value)
           end
           if ((_5_ == "table") and _6_()) then
             if request.canceled() then

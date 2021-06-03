@@ -1,9 +1,20 @@
 (let [snap (require :snap)
-      get (snap.get :preview.get)]
-
+      get (snap.get :preview.get)
+      loading (snap.get :loading)]
   (fn [request]
+    ;; Display loading
+    (snap.sync (fn []
+      (vim.api.nvim_buf_set_lines
+        request.bufnr
+        0
+        -1
+        false 
+        (loading request.width request.height 4))))
+
     (local path (snap.sync (partial vim.fn.fnamemodify (tostring request.selection) ":p")))
+
     ;; Get the preview
+    ;; TODO an optimization here would be to update the loader
     (var preview (get path))
 
     ;; Write the preview to the buffer.

@@ -298,10 +298,10 @@
             (each [_ {:view { : bufnr}} (ipairs views)]
               (vim.api.nvim_buf_set_lines bufnr 0 -1 false []))))
           (vim.schedule (fn []
-            (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
+            (each [_ {:view { : bufnr : winnr : width : height} : producer} (ipairs views)]
               (local request
                 (request.create
-                  {:body {: selection : bufnr : winnr}
+                  {:body {: selection : bufnr : winnr : width : height}
                    :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
               ;; TODO optimization, this should pass all the producers, not just one
               ;; that way we can avoid creating multiple idle checkers

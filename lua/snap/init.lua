@@ -386,12 +386,14 @@ do
                   local producer = _each_0_["producer"]
                   local _each_1_ = _each_0_["view"]
                   local bufnr = _each_1_["bufnr"]
+                  local height = _each_1_["height"]
+                  local width = _each_1_["width"]
                   local winnr = _each_1_["winnr"]
                   local request0
                   local function _12_(request1)
                     return (exit or (request1.selection ~= get_selection()))
                   end
-                  request0 = request.create({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
+                  request0 = request.create({body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}, cancel = _12_})
                   create({producer = producer, request = request0})
                 end
                 return nil

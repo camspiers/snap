@@ -1,4 +1,4 @@
-(module snap.producer.create)
+(module snap.producer.create {require {snap snap}})
 
 (fn create-slow-api []
   "Creates an api for handling slow values"
@@ -48,7 +48,7 @@
               ;; We have a function so schedule it to be computed
               :function (slow-api.schedule value)
               :nil (stop)
-              (where :table (= value continue_value))
+              (where :table (= value snap.continue_value))
                 (if
                   (request.canceled)
                   (do
