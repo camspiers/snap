@@ -1,6 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/get.fnl"
 local snap = require("snap")
-local snap_io = snap.get("io")
+local snap_io = snap.get("common.io")
 local function _1_(path)
   local handle = io.popen(string.format("file -n -b --mime-encoding %s", path))
   local encoding = string.gsub(handle:read("*a"), "^%s*(.-)%s*$", "%1")

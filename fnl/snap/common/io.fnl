@@ -1,7 +1,7 @@
-(module snap.io {require {snap snap}})
+(module snap.common.io {require {snap snap}})
 
-;; fnlfmt: skip
 (defn spawn [cmd args cwd]
+  "Spawns a command and returns a command iterator"
   (var stdinbuffer "")
   (var stderrbuffer "")
   (let [stdout (vim.loop.new_pipe false)
@@ -37,8 +37,8 @@
 
 (local chunk-size 10000)
 
-
 (defn read [path]
+  "Reads a file and yields contents"
   (var closed false)
   (var canceled false)
   (var reading true)

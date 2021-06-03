@@ -1,5 +1,5 @@
 (let [snap (require :snap)
-      snap-io (snap.get :io)]
+      snap-io (snap.get :common.io)]
   (fn [path]
     (local handle (io.popen (string.format "file -n -b --mime-encoding %s" path)))
     (local encoding (string.gsub (handle:read "*a") "^%s*(.-)%s*$" "%1") )

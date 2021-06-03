@@ -1,4 +1,4 @@
-(let [io (require :snap.io)]
+(let [io (require :snap.common.io)]
   (fn [request {: args : cwd}]
     (each [data err cancel (io.spawn :rg args cwd)]
       (if

@@ -1,5 +1,5 @@
 local _2afile_2a = "fnl/snap/producer/fd/general.fnl"
-local io = require("snap.io")
+local io = require("snap.common.io")
 local function _2_(request, _1_)
   local _arg_0_ = _1_
   local args = _arg_0_["args"]

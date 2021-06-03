@@ -1,7 +1,7 @@
-local _2afile_2a = "fnl/snap/io.fnl"
+local _2afile_2a = "fnl/snap/common/io.fnl"
 local _0_
 do
-  local name_0_ = "snap.io"
+  local name_0_ = "snap.common.io"
   local module_0_
   do
     local x_0_ = package.loaded[name_0_]
@@ -38,7 +38,7 @@ end
 local _local_0_ = _2_(...)
 local snap = _local_0_[1]
 local _2amodule_2a = _0_
-local _2amodule_name_2a = "snap.io"
+local _2amodule_name_2a = "snap.common.io"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
 local spawn
 do
