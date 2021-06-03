@@ -55,15 +55,24 @@
     (fn on_detach [] 
       (register.clean bufnr))
 
+    ;; Enter and exit
     (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
-    (register.buf-map bufnr [:n :i] [:<Up> :<C-k> :<C-p>] config.on-up)
-    (register.buf-map bufnr [:n :i] [:<Down> :<C-j> :<C-n>] config.on-down)
     (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
+
+    ;; Selection
     (register.buf-map bufnr [:n :i] [:<Tab>] on-tab)
     (register.buf-map bufnr [:n :i] [:<S-Tab>] on-shifttab)
     (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
-    (register.buf-map bufnr [:n :i] [:<C-d>] config.on-pagedown)
-    (register.buf-map bufnr [:n :i] [:<C-u>] config.on-pageup)
+
+    ;; Up & down
+    (register.buf-map bufnr [:n :i] [:<Up> :<C-p>] config.on-up)
+    (register.buf-map bufnr [:n :i] [:<Down> :<C-n>] config.on-down)
+    (register.buf-map bufnr [:n :i] [:<C-b>] config.on-pagedown)
+    (register.buf-map bufnr [:n :i] [:<C-f>] config.on-pageup)
+
+    ;; Views
+    (register.buf-map bufnr [:n :i] [:<C-d>] config.on-viewpagedown)
+    (register.buf-map bufnr [:n :i] [:<C-u>] config.on-viewpageup)
 
     (vim.api.nvim_command
       (string.format

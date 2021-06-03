@@ -452,6 +452,25 @@
   (fn on-pagedown []
     (on-key-direction #(+ $1 results-view.height)))
 
+  ;; Moves the view position
+  (fn set-next-view-row [next-index]
+    (when has-views
+      (local {:view {: winnr : bufnr : height}} (tbl.first views))
+      (let [line-count (vim.api.nvim_buf_line_count bufnr)
+            [row] (vim.api.nvim_win_get_cursor winnr)
+            index (math.max 1 (math.min line-count (next-index row height)))]
+        (vim.api.nvim_win_set_cursor winnr [index 0]))))
+
+  ;; View page up handler
+  (fn on-viewpageup []
+    (when has-views
+      (set-next-view-row #(- $1 $2))))
+
+  ;; View page down handler
+  (fn on-viewpagedown []
+    (when has-views
+      (set-next-view-row #(+ $1 $2))))
+
   ;; Initializes the input view
   (local input-view-info (input.create
     {: has-views
@@ -463,6 +482,8 @@
      : on-down
      : on-pageup
      : on-pagedown
+     : on-viewpageup
+     : on-viewpagedown
      : on-select-toggle
      : on-select-all-toggle
      : on-update}))

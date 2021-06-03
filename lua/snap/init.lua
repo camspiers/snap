@@ -538,7 +538,37 @@ do
         end
         return on_key_direction(_10_)
       end
-      local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, layout = layout, prompt = prompt})
+      local function set_next_view_row(next_index)
+        if has_views then
+          local _local_1_ = tbl.first(views)
+          local _local_2_ = _local_1_["view"]
+          local bufnr = _local_2_["bufnr"]
+          local height = _local_2_["height"]
+          local winnr = _local_2_["winnr"]
+          local line_count = vim.api.nvim_buf_line_count(bufnr)
+          local _let_0_ = vim.api.nvim_win_get_cursor(winnr)
+          local row = _let_0_[1]
+          local index = math.max(1, math.min(line_count, next_index(row, height)))
+          return vim.api.nvim_win_set_cursor(winnr, {index, 0})
+        end
+      end
+      local function on_viewpageup()
+        if has_views then
+          local function _10_(_241, _242)
+            return (_241 - _242)
+          end
+          return set_next_view_row(_10_)
+        end
+      end
+      local function on_viewpagedown()
+        if has_views then
+          local function _10_(_241, _242)
+            return (_241 + _242)
+          end
+          return set_next_view_row(_10_)
+        end
+      end
+      local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt})
       table.insert(buffers, input_view_info.bufnr)
       if (initial_filter ~= "") then
         vim.api.nvim_feedkeys(initial_filter, "n", false)
