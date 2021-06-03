@@ -312,7 +312,7 @@ do
         vim.api.nvim_set_current_win(original_winnr)
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then
-            vim.api.nvim_buf_delete(bufnr, {force = true})
+            buffer.delete(bufnr, {force = true})
           end
         end
         return vim.api.nvim_command("stopinsert")
@@ -368,18 +368,16 @@ do
           local selection = get_selection()
           if (has_views and (last_requested_selection ~= selection)) then
             last_requested_selection = selection
-            if (selection == nil) then
-              local function _10_()
-                for _, _11_ in ipairs(views) do
-                  local _each_0_ = _11_
-                  local _each_1_ = _each_0_["view"]
-                  local bufnr = _each_1_["bufnr"]
-                  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
-                end
-                return nil
-              end
-              return vim.schedule(_10_)
-            else
+            for _, _10_ in ipairs(views) do
+              local _each_0_ = _10_
+              local view0 = _each_0_["view"]
+              local bufnr = buffer.create()
+              table.insert(buffers, bufnr)
+              vim.api.nvim_win_set_buf(view0.winnr, bufnr)
+              buffer.delete(view0.bufnr, {force = true})
+              do end (view0)["bufnr"] = bufnr
+            end
+            if (selection ~= nil) then
               local function _10_()
                 for _, _11_ in ipairs(views) do
                   local _each_0_ = _11_

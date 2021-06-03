@@ -227,7 +227,7 @@
     ;; Delete each open buffer
     (each [_ bufnr (ipairs buffers)]
       (when (vim.api.nvim_buf_is_valid bufnr)
-        (vim.api.nvim_buf_delete bufnr {:force true})))
+        (buffer.delete bufnr {:force true})))
 
     ;; Return back from insert mode
     (vim.api.nvim_command :stopinsert))
@@ -292,20 +292,23 @@
       (when
         (and has-views (not= last-requested-selection selection))
         (set last-requested-selection selection)
-        (if
-          (= selection nil)
+        ;; Create new buffers
+        (each [_ {: view} (ipairs views)]
+          (local bufnr (buffer.create))
+          (table.insert buffers bufnr)
+          (vim.api.nvim_win_set_buf view.winnr bufnr)
+          (buffer.delete view.bufnr {:force true})
+          (tset view :bufnr bufnr))
+        (when (not= selection nil)
           (vim.schedule (fn []
-            (each [_ {:view { : bufnr}} (ipairs views)]
-              (vim.api.nvim_buf_set_lines bufnr 0 -1 false []))))
-          (vim.schedule (fn []
-            (each [_ {:view { : bufnr : winnr : width : height} : producer} (ipairs views)]
-              (local request
-                (request.create
-                  {:body {: selection : bufnr : winnr : width : height}
-                   :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
-              ;; TODO optimization, this should pass all the producers, not just one
-              ;; that way we can avoid creating multiple idle checkers
-              (create {: producer : request}))))))))
+              (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
+                (local request
+                  (request.create
+                    {:body {: selection : bufnr : winnr : width : height}
+                     :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+                 ; TODO optimization, this should pass all the producers, not just one
+                 ; that way we can avoid creating multiple idle checkers
+                (create {: producer : request}))))))))
 
   ;; On input update
   (fn on-update [filter]

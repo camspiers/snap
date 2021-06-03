@@ -21,3 +21,7 @@
   "Creates a scratch buffer"
   (vim.api.nvim_create_buf false true))
 
+(defn delete [bufnr]
+  "Deletes a scratch buffer"
+  (vim.api.nvim_buf_delete bufnr {:force true}))
+

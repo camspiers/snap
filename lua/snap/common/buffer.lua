@@ -108,4 +108,20 @@ do
   t_0_["create"] = v_0_
   create = v_0_
 end
+local delete
+do
+  local v_0_
+  do
+    local v_0_0
+    local function delete0(bufnr)
+      return vim.api.nvim_buf_delete(bufnr, {force = true})
+    end
+    v_0_0 = delete0
+    _0_["delete"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["delete"] = v_0_
+  delete = v_0_
+end
 return nil
