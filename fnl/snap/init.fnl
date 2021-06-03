@@ -24,7 +24,9 @@
                        buffer   snap.common.buffer
                        input    snap.view.input
                        results  snap.view.results
-                       view     snap.view.view}})
+                       view     snap.view.view
+                       request  snap.producer.request
+                       create   snap.producer.create}})
 
 ;; Exposes register as a main API
 (def register register)
@@ -39,10 +41,11 @@
     result))
 
 ;; Represents a request to yield for other processing
-(local continue-value {:continue true})
+(def continue_value {:continue true})
+
 (defn continue [on-cancel]
   "Yields for other processing or cancels if needed"
-  (coroutine.yield continue-value on-cancel))
+  (coroutine.yield continue_value on-cancel))
 
 (defn resume [thread request value]
   "Transfers sync values allowing the yielding of functions with non fast-api access"
@@ -67,16 +70,16 @@
 
 ;; Metatable for a result, allows the representation of results as both strings
 ;; and tables with extra data
-(def meta-tbl {:__tostring #$1.result})
+(def meta_tbl {:__tostring #$1.result})
 
 (defn meta_result [result]
   "Turns a result into a meta result"
   (match (type result)
     :string (let [meta-result {: result}]
-              (setmetatable meta-result meta-tbl)
+              (setmetatable meta-result meta_tbl)
               meta-result)
     :table (do
-             (assert (= (getmetatable result) meta-tbl))
+             (assert (= (getmetatable result) meta_tbl))
              result)))
 
 (defn with_meta [result field value]
@@ -94,112 +97,7 @@
 
 (defn has_meta [result field]
   "Basic function for detecting metafield"
-  (and (= (getmetatable result) meta-tbl) (not= (. result field) nil)))
-
-(fn center-with-text-width [text text-width width]
-  "Centers by using a text width"
-  (let [space (string.rep " " (/ (- width text-width) 2))]
-    (.. space text space)))
-
-(fn center [text width]
-  "Center text for loading screen"
-  (center-with-text-width text (string.len text) width))
-
-(fn create-loading-screen [width height counter]
-  "Create a basic loading screen"
-  (local dots (string.rep "." (% counter 5)))
-  (local space (string.rep " " (- 5 (string.len dots))))
-  (local loading-with-dots (.. "│" space dots " Loading " dots space "│")) 
-  (local text-width (string.len loading-with-dots))
-  (local loading [])
-
-  (for [_ 1 (/ height 2)]
-    (table.insert loading ""))
-
-  (table.insert loading
-    (center-with-text-width (.. "╭" (string.rep "─" 19) "╮") text-width width))
-  (table.insert loading (center loading-with-dots width))
-  (table.insert loading
-    (center-with-text-width (.. "╰" (string.rep "─" 19) "╯") text-width width))
-  loading)
-
-(fn create-slow-api []
-  "Creates an api for handling slow values"
-  (local slow-api {:pending false :value nil})
-  (fn slow-api.schedule [fnc]
-    (tset slow-api :pending true)
-    (vim.schedule (fn []
-      (tset slow-api :value (fnc))
-      (tset slow-api :pending false))))
-  slow-api)
-
-(fn schedule-producer [{: producer
-                        : request
-                        : on-end
-                        : on-value}]
-  "Schedules a view for generation"
-  ;; By the time the routine runs, we might be able to avoid it
-  (when (not (request.canceled))
-    ;; Create the idle loop
-    (var idle (vim.loop.new_idle))
-    ;; Create the producer
-    (var thread (coroutine.create producer))
-    ;; Tracks the requests of slow nvim calls
-    (var slow-api (create-slow-api))
-    ;; Handle ending the idle loop and optionally calling on end
-    (fn stop []
-      (idle:stop)
-      (set idle nil)
-      (set thread nil)
-      (set slow-api nil)
-      (when on-end (on-end)))
-    ;; This runs on each idle check
-    (fn start []
-      (if
-        ;; Only run when we aren't waiting for a slow-api call
-        slow-api.pending
-        ;; Return nil
-        nil
-        ;; When the thread is not dead
-        (not= (coroutine.status thread) :dead)
-        ;; Run the resume
-        (do
-          ;; Fetches results be also sends cancel signal
-          (let [(_ value on-cancel) (coroutine.resume thread request slow-api.value)]
-            ;; Match each type
-            (match (type value)
-              ;; We have a function so schedule it to be computed
-              :function (slow-api.schedule value)
-              :nil (stop)
-              (where :table (= value continue-value))
-                (if
-                  (request.canceled)
-                  (do
-                    (when on-cancel (on-cancel))
-                    (stop))
-                  nil)
-              _ (when on-value (on-value value)))))
-        ;; When the coroutine is dead then stop the loop
-        (stop)))
-
-    ;; Start the checker after each IO poll
-    (idle:start start)))
-
-(fn create-request [config]
-  "Creates a producer request"
-  ;; Config validation
-  (assert (= (type config.body) :table) "body must be a table")
-  (assert (= (type config.cancel) :function) "cancel must be a function")
-  ;; Set up the request
-  (local request {:is-canceled false})
-  ;; Copy each value
-  (each [key value (pairs config.body)]
-    (tset request key value))
-  ;; Cancels the request
-  (fn request.cancel [] (tset request :is-canceled true))
-  ;; Checkes if request is canceled
-  (fn request.canceled [] (or request.is-canceled (config.cancel request)))
-  request)
+  (and (= (getmetatable result) meta_tbl) (not= (. result field) nil)))
 
 ;; Run docs:
 ;;
@@ -226,6 +124,9 @@
 ;;
 ;;   "An option table of additional views"
 ;;   :?views table<(request: SelectionRequest) => yiela<Yieldable>>
+;;
+;;   "An option function for creating loading screens"
+;;   :?loading (width height counter) => table<string>
 ;; }
 (defn run [config]
   "The main entry point for running snaps"
@@ -267,6 +168,10 @@
       (assert
         (= (type view) "function")
         "snap.run each view in 'views' must be a function")))
+  (when config.loading
+    (assert
+      (= (type config.loading) "function")
+      "snap.run 'loading' must be a function"))
 
   ;; Store the last results
   (var last-results [])
@@ -287,8 +192,11 @@
   ;; Default to the bottom layout
   (local layout (or config.layout (. (get :layout) :centered)))
 
+  ;; Default to loading creator
+  (local loading (or config.loading (get :loading)))
+
   ;; Store the initial filter
-  (local initial_filter (or config.initial_filter ""))
+  (local initial-filter (or config.initial_filter ""))
 
   ;; Stores the original window to so we can pass it back to the select function
   (local original-winnr (vim.api.nvim_get_current_win))
@@ -392,12 +300,12 @@
           (vim.schedule (fn []
             (each [_ {:view { : bufnr : winnr} : producer} (ipairs views)]
               (local request
-                (create-request
+                (request.create
                   {:body {: selection : bufnr : winnr}
                    :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
               ;; TODO optimization, this should pass all the producers, not just one
               ;; that way we can avoid creating multiple idle checkers
-              (schedule-producer {: producer : request}))))))))
+              (create {: producer : request}))))))))
 
   ;; On input update
   (fn on-update [filter]
@@ -422,7 +330,7 @@
     (local body {: filter :height results-view.height :winnr original-winnr})
 
     ;; Prepare the request
-    (local request (create-request {: body : cancel}))
+    (local request (request.create {: body : cancel}))
 
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
@@ -433,12 +341,13 @@
       (set has-rendered true)
       (vim.schedule (partial write-results results)))
 
-    (fn render-loading-screen []
+    ;; Schedules a loading screen write
+    (fn schedule-loading-write []
       (set loading-count (+ loading-count 1))
       (vim.schedule (fn []
         (when (not (request.canceled))
-          (local loading (create-loading-screen results-view.width results-view.height loading-count))
-          (buffer.set-lines results-view.bufnr 0 -1 loading)))))
+          (local loading-screen (loading results-view.width results-view.height loading-count))
+          (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))))
 
     ;; Add on end handler
     (fn config.on-end []
@@ -483,17 +392,17 @@
           (not has-rendered)
           (= loading-count 0)
           (> (length results) 0))
-        (render-loading-screen))
+        (schedule-loading-write))
       ;; Render a basic loading screen based on time
       (when
         (and
           (not has-rendered)
           (> (- current-time last-time) 500))
         (set last-time current-time)
-        (render-loading-screen)))
+        (schedule-loading-write)))
 
     ;; And off we go!
-    (schedule-producer config))
+    (create config))
 
   ;; Handles entering
   (fn on-enter []
@@ -527,9 +436,10 @@
             (tset selected value true))))))
 
   ;; On key helper
-  (fn on-key-direction [get-next-index]
+  (fn on-key-direction [next-index]
     (let [line-count (vim.api.nvim_buf_line_count results-view.bufnr)
-          index (math.max 1 (math.min line-count (get-next-index cursor-row)))]
+          ;; Ensures cursor stays in results
+          index (math.max 1 (math.min line-count (next-index cursor-row)))]
       (vim.api.nvim_win_set_cursor results-view.winnr [index 0])
       (set cursor-row index)
       (write-results last-results)))
@@ -569,9 +479,9 @@
   (table.insert buffers input-view-info.bufnr)
 
   ;; Feed the initial filer to the input
-  (when (not= initial_filter "")
+  (when (not= initial-filter "")
     ;; We do it this way because prompts are broken in nvim
-    (vim.api.nvim_feedkeys initial_filter :n false))
+    (vim.api.nvim_feedkeys initial-filter :n false))
 
   nil)
 

@@ -25,11 +25,11 @@ autoload = _1_
 local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _2_()
-    return {require("snap.common.buffer"), require("snap.view.input"), require("snap.common.register"), require("snap.view.results"), require("snap.common.tbl"), require("snap.view.view")}
+    return {require("snap.common.buffer"), require("snap.producer.create"), require("snap.view.input"), require("snap.common.register"), require("snap.producer.request"), require("snap.view.results"), require("snap.common.tbl"), require("snap.view.view")}
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", input = "snap.view.input", register = "snap.common.register", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view"}}
+    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", create = "snap.producer.create", input = "snap.view.input", register = "snap.common.register", request = "snap.producer.request", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view"}}
     return val_0_
   else
     return print(val_0_)
@@ -37,11 +37,13 @@ local function _2_(...)
 end
 local _local_0_ = _2_(...)
 local buffer = _local_0_[1]
-local input = _local_0_[2]
-local register = _local_0_[3]
-local results = _local_0_[4]
-local tbl = _local_0_[5]
-local view = _local_0_[6]
+local create = _local_0_[2]
+local input = _local_0_[3]
+local register = _local_0_[4]
+local request = _local_0_[5]
+local results = _local_0_[6]
+local tbl = _local_0_[7]
+local view = _local_0_[8]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
@@ -90,7 +92,18 @@ do
   t_0_["sync"] = v_0_
   sync = v_0_
 end
-local continue_value = {continue = true}
+local continue_value
+do
+  local v_0_
+  do
+    local v_0_0 = {continue = true}
+    _0_["continue_value"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["continue_value"] = v_0_
+  continue_value = v_0_
+end
 local continue
 do
   local v_0_
@@ -112,12 +125,12 @@ do
   local v_0_
   do
     local v_0_0
-    local function resume0(thread, request, value)
-      local _, result = coroutine.resume(thread, request, value)
-      if request.canceled() then
+    local function resume0(thread, request0, value)
+      local _, result = coroutine.resume(thread, request0, value)
+      if request0.canceled() then
         return nil
       elseif (type(result) == "function") then
-        return resume0(thread, request, sync(result))
+        return resume0(thread, request0, sync(result))
       else
         return result
       end
@@ -135,14 +148,14 @@ do
   local v_0_
   do
     local v_0_0
-    local function consume0(producer, request)
+    local function consume0(producer, request0)
       local reader = coroutine.create(producer)
       local function _3_()
         if (coroutine.status(reader) == "dead") then
           reader = nil
           return nil
         else
-          return resume(reader, request)
+          return resume(reader, request0)
         end
       end
       return _3_
@@ -164,11 +177,11 @@ do
       return _241.result
     end
     v_0_0 = {__tostring = _3_}
-    _0_["meta-tbl"] = v_0_0
+    _0_["meta_tbl"] = v_0_0
     v_0_ = v_0_0
   end
   local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["meta-tbl"] = v_0_
+  t_0_["meta_tbl"] = v_0_
   meta_tbl = v_0_
 end
 local meta_result
@@ -249,112 +262,6 @@ do
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
 end
-local function center_with_text_width(text, text_width, width)
-  local space = string.rep(" ", ((width - text_width) / 2))
-  return (space .. text .. space)
-end
-local function center(text, width)
-  return center_with_text_width(text, string.len(text), width)
-end
-local function create_loading_screen(width, height, counter)
-  local dots = string.rep(".", (counter % 5))
-  local space = string.rep(" ", (5 - string.len(dots)))
-  local loading_with_dots = ("\226\148\130" .. space .. dots .. " Loading " .. dots .. space .. "\226\148\130")
-  local text_width = string.len(loading_with_dots)
-  local loading = {}
-  for _ = 1, (height / 2) do
-    table.insert(loading, "")
-  end
-  table.insert(loading, center_with_text_width(("\226\149\173" .. string.rep("\226\148\128", 19) .. "\226\149\174"), text_width, width))
-  table.insert(loading, center(loading_with_dots, width))
-  table.insert(loading, center_with_text_width(("\226\149\176" .. string.rep("\226\148\128", 19) .. "\226\149\175"), text_width, width))
-  return loading
-end
-local function create_slow_api()
-  local slow_api = {pending = false, value = nil}
-  slow_api.schedule = function(fnc)
-    slow_api["pending"] = true
-    local function _3_()
-      slow_api["value"] = fnc()
-      do end (slow_api)["pending"] = false
-      return nil
-    end
-    return vim.schedule(_3_)
-  end
-  return slow_api
-end
-local function schedule_producer(_3_)
-  local _arg_0_ = _3_
-  local on_end = _arg_0_["on-end"]
-  local on_value = _arg_0_["on-value"]
-  local producer = _arg_0_["producer"]
-  local request = _arg_0_["request"]
-  if not request.canceled() then
-    local idle = vim.loop.new_idle()
-    local thread = coroutine.create(producer)
-    local slow_api = create_slow_api()
-    local function stop()
-      idle:stop()
-      idle = nil
-      thread = nil
-      slow_api = nil
-      if on_end then
-        return on_end()
-      end
-    end
-    local function start()
-      if slow_api.pending then
-        return nil
-      elseif (coroutine.status(thread) ~= "dead") then
-        local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
-        local _4_ = type(value)
-        if (_4_ == "function") then
-          return slow_api.schedule(value)
-        elseif (_4_ == "nil") then
-          return stop()
-        else
-          local function _5_()
-            return (value == continue_value)
-          end
-          if ((_4_ == "table") and _5_()) then
-            if request.canceled() then
-              if on_cancel then
-                on_cancel()
-              end
-              return stop()
-            else
-              return nil
-            end
-          else
-            local _0 = _4_
-            if on_value then
-              return on_value(value)
-            end
-          end
-        end
-      else
-        return stop()
-      end
-    end
-    return idle:start(start)
-  end
-end
-local function create_request(config)
-  assert((type(config.body) == "table"), "body must be a table")
-  assert((type(config.cancel) == "function"), "cancel must be a function")
-  local request = {["is-canceled"] = false}
-  for key, value in pairs(config.body) do
-    request[key] = value
-  end
-  request.cancel = function()
-    request["is-canceled"] = true
-    return nil
-  end
-  request.canceled = function()
-    return (request["is-canceled"] or config.cancel(request))
-  end
-  return request
-end
 local run
 do
   local v_0_
@@ -381,12 +288,16 @@ do
           assert((type(view0) == "function"), "snap.run each view in 'views' must be a function")
         end
       end
+      if config.loading then
+        assert((type(config.loading) == "function"), "snap.run 'loading' must be a function")
+      end
       local last_results = {}
       local last_requested_filter = ""
       local last_requested_selection = nil
       local exit = false
       local buffers = {}
       local layout = (config.layout or (get("layout")).centered)
+      local loading = (config.loading or get("loading"))
       local initial_filter = (config.initial_filter or "")
       local original_winnr = vim.api.nvim_get_current_win()
       local prompt = string.format("%s> ", (config.prompt or "Find"))
@@ -476,12 +387,12 @@ do
                   local _each_1_ = _each_0_["view"]
                   local bufnr = _each_1_["bufnr"]
                   local winnr = _each_1_["winnr"]
-                  local request
-                  local function _12_(request0)
-                    return (exit or (request0.selection ~= get_selection()))
+                  local request0
+                  local function _12_(request1)
+                    return (exit or (request1.selection ~= get_selection()))
                   end
-                  request = create_request({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
-                  schedule_producer({producer = producer, request = request})
+                  request0 = request.create({body = {bufnr = bufnr, selection = selection, winnr = winnr}, cancel = _12_})
+                  create({producer = producer, request = request0})
                 end
                 return nil
               end
@@ -496,12 +407,12 @@ do
         local loading_count = 0
         local last_time = vim.loop.now()
         local results0 = {}
-        local function cancel(request)
-          return (exit or (request.filter ~= last_requested_filter))
+        local function cancel(request0)
+          return (exit or (request0.filter ~= last_requested_filter))
         end
         local body = {filter = filter, height = results_view.height, winnr = original_winnr}
-        local request = create_request({body = body, cancel = cancel})
-        local config0 = {producer = config.producer, request = request}
+        local request0 = request.create({body = body, cancel = cancel})
+        local config0 = {producer = config.producer, request = request0}
         local function schedule_results_write(results1)
           has_rendered = true
           local function _10_(...)
@@ -509,12 +420,12 @@ do
           end
           return vim.schedule(_10_)
         end
-        local function render_loading_screen()
+        local function schedule_loading_write()
           loading_count = (loading_count + 1)
           local function _10_()
-            if not request.canceled() then
-              local loading = create_loading_screen(results_view.width, results_view.height, loading_count)
-              return buffer["set-lines"](results_view.bufnr, 0, -1, loading)
+            if not request0.canceled() then
+              local loading_screen = loading(results_view.width, results_view.height, loading_count)
+              return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
             end
           end
           return vim.schedule(_10_)
@@ -540,14 +451,14 @@ do
             schedule_results_write(results0)
           end
           if (not has_rendered and (loading_count == 0) and (#results0 > 0)) then
-            render_loading_screen()
+            schedule_loading_write()
           end
           if (not has_rendered and ((current_time - last_time) > 500)) then
             last_time = current_time
-            return render_loading_screen()
+            return schedule_loading_write()
           end
         end
-        return schedule_producer(config0)
+        return create(config0)
       end
       local function on_enter()
         local selected_values = vim.tbl_keys(selected)
@@ -596,9 +507,9 @@ do
           end
         end
       end
-      local function on_key_direction(get_next_index)
+      local function on_key_direction(next_index)
         local line_count = vim.api.nvim_buf_line_count(results_view.bufnr)
-        local index = math.max(1, math.min(line_count, get_next_index(cursor_row)))
+        local index = math.max(1, math.min(line_count, next_index(cursor_row)))
         vim.api.nvim_win_set_cursor(results_view.winnr, {index, 0})
         cursor_row = index
         return write_results(last_results)

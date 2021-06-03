@@ -565,10 +565,10 @@ make compile
 
 - [x] Lua file producer
 - [x] Preview system
+- [x] More configurable layout system, including arbitrary windows
+- [x] Configurable loading screen
 - [ ] More producers for vim concepts
 - [ ] FZF score/filter consumer
 - [ ] Lua filter consumer
-- [x] More configurable layout system, including arbitrary windows
 - [ ] Tests
-- [ ] Configurable loading screens
 
