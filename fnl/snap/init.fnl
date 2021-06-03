@@ -301,49 +301,39 @@
           (tset view :bufnr bufnr))
         (when (not= selection nil)
           (vim.schedule (fn []
-              (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
-                (local request
-                  (request.create
-                    {:body {: selection : bufnr : winnr : width : height}
-                     :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
-                 ; TODO optimization, this should pass all the producers, not just one
-                 ; that way we can avoid creating multiple idle checkers
-                (create {: producer : request}))))))))
+            (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
+              (local request
+                (request.create
+                  {:body {: selection : bufnr : winnr : width : height}
+                   :cancel (fn [request] (or exit (not= request.selection (get-selection))))}))
+               ; TODO optimization, this should pass all the producers, not just one
+               ; that way we can avoid creating multiple idle checkers
+              (create {: producer : request}))))))))
 
   ;; On input update
   (fn on-update [filter]
     (set last-requested-filter filter)
-
     ;; Tracks if any results have rendered
     (var has-rendered false)
-
     ;; Store the number of times the loading screen has displayed
     (var loading-count 0)
-
     ;; Store the first time
     (var last-time (vim.loop.now))
-
     ;; Accumulate results
     (var results [])
-
     ;; Create the cancel function
     (fn cancel [request] (or exit (not= request.filter last-requested-filter)))
-
     ;; Create the request body
     (local body {: filter :height results-view.height :winnr original-winnr})
-
     ;; Prepare the request
     (local request (request.create {: body : cancel}))
-
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
-
     ;; Schedules a write, this can be partial results
     (fn schedule-results-write [results]
       ;; Update that we have rendered
       (set has-rendered true)
       (vim.schedule (partial write-results results)))
-
     ;; Schedules a loading screen write
     (fn schedule-loading-write []
       (set loading-count (+ loading-count 1))
@@ -351,7 +341,6 @@
         (when (not (request.canceled))
           (local loading-screen (loading results-view.width results-view.height loading-count))
           (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))))
-
     ;; Add on end handler
     (fn config.on-end []
       ;; When we have scores attached then sort
