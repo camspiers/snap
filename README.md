@@ -199,7 +199,8 @@ snap.run {
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.buffer'),
   select = snap.get'select.file'.select,
-  views = {snap.get'preview.vimgrep'}
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
 }
 ```
 
@@ -209,7 +210,19 @@ snap.run {
 snap.run {
   producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
   select = snap.get'select.file'.select,
-  views = {snap.get'preview.vimgrep'}
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Find Git Files
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.git.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
 }
 ```
 
