@@ -11,3 +11,6 @@
                           :anchor :NW
                           :style :minimal
                           :border ["╭" "─" "╮" "│" "╯" "─" "╰" "│"]}))
+
+(defn close [winnr]
+  (vim.api.nvim_win_close winnr true))

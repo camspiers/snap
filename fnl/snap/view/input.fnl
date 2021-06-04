@@ -56,6 +56,8 @@
       (register.clean bufnr))
 
     ;; Enter and exit
+    ;; TODO Need to think about other methods of selection
+    ;; e.g. we want to support opening in splits etc
     (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
     (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
 

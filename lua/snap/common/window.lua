@@ -61,4 +61,20 @@ do
   t_0_["create"] = v_0_
   create = v_0_
 end
+local close
+do
+  local v_0_
+  do
+    local v_0_0
+    local function close0(winnr)
+      return vim.api.nvim_win_close(winnr, true)
+    end
+    v_0_0 = close0
+    _0_["close"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["close"] = v_0_
+  close = v_0_
+end
 return nil

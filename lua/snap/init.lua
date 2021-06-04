@@ -25,11 +25,11 @@ autoload = _1_
 local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _2_()
-    return {require("snap.common.buffer"), require("snap.producer.create"), require("snap.view.input"), require("snap.common.register"), require("snap.producer.request"), require("snap.view.results"), require("snap.common.tbl"), require("snap.view.view")}
+    return {require("snap.common.buffer"), require("snap.producer.create"), require("snap.view.input"), require("snap.common.register"), require("snap.producer.request"), require("snap.view.results"), require("snap.common.tbl"), require("snap.view.view"), require("snap.common.window")}
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", create = "snap.producer.create", input = "snap.view.input", register = "snap.common.register", request = "snap.producer.request", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view"}}
+    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", create = "snap.producer.create", input = "snap.view.input", register = "snap.common.register", request = "snap.producer.request", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view", window = "snap.common.window"}}
     return val_0_
   else
     return print(val_0_)
@@ -44,6 +44,7 @@ local request = _local_0_[5]
 local results = _local_0_[6]
 local tbl = _local_0_[7]
 local view = _local_0_[8]
+local window = _local_0_[9]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
@@ -296,6 +297,7 @@ do
       local last_requested_selection = nil
       local exit = false
       local buffers = {}
+      local windows = {}
       local layout = (config.layout or (get("layout")).centered)
       local loading = (config.loading or get("loading"))
       local initial_filter = (config.initial_filter or "")
@@ -310,6 +312,11 @@ do
         config["producer"] = nil
         config["views"] = nil
         vim.api.nvim_set_current_win(original_winnr)
+        for _, winnr in ipairs(windows) do
+          if vim.api.nvim_win_is_valid(winnr) then
+            window.close(winnr)
+          end
+        end
         for _, bufnr in ipairs(buffers) do
           if vim.api.nvim_buf_is_valid(bufnr) then
             buffer.delete(bufnr, {force = true})
@@ -330,6 +337,7 @@ do
           local view0 = {producer = producer, view = view.create({["total-views"] = total_views, index = index, layout = layout})}
           table.insert(views, view0)
           table.insert(buffers, view0.view.bufnr)
+          table.insert(windows, view0.view.winnr)
         end
       end
       local results_view = results.create({["has-views"] = has_views, layout = layout})

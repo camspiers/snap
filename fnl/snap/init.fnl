@@ -22,6 +22,7 @@
 (module snap {require {tbl      snap.common.tbl
                        register snap.common.register
                        buffer   snap.common.buffer
+                       window   snap.common.window
                        input    snap.view.input
                        results  snap.view.results
                        view     snap.view.view
@@ -189,6 +190,9 @@
   ;; Store buffers for exiting
   (local buffers [])
 
+  ;; Store windows for closing
+  (local windows [])
+
   ;; Default to the bottom layout
   (local layout (or config.layout (. (get :layout) :centered)))
 
@@ -224,6 +228,10 @@
     ;; Return back to original window
     (vim.api.nvim_set_current_win original-winnr)
 
+    (each [_ winnr (ipairs windows)]
+      (when (vim.api.nvim_win_is_valid winnr)
+        (window.close winnr)))
+
     ;; Delete each open buffer
     (each [_ bufnr (ipairs buffers)]
       (when (vim.api.nvim_buf_is_valid bufnr)
@@ -240,7 +248,8 @@
     (each [index producer (ipairs config.views)]
       (local view {:view (view.create {: layout : index : total-views}) : producer})
       (table.insert views view)
-      (table.insert buffers view.view.bufnr)))
+      (table.insert buffers view.view.bufnr)
+      (table.insert windows view.view.winnr)))
 
   ;; Creates the results buffer and window and stores thier numbers
   (local results-view (results.create {: layout : has-views}))
