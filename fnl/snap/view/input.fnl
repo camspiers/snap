@@ -69,8 +69,8 @@
     ;; Up & down
     (register.buf-map bufnr [:n :i] [:<Up> :<C-p>] config.on-up)
     (register.buf-map bufnr [:n :i] [:<Down> :<C-n>] config.on-down)
-    (register.buf-map bufnr [:n :i] [:<C-b>] config.on-pagedown)
-    (register.buf-map bufnr [:n :i] [:<C-f>] config.on-pageup)
+    (register.buf-map bufnr [:n :i] [:<C-f> :<PageUp>] config.on-pageup)
+    (register.buf-map bufnr [:n :i] [:<C-b> :<PageDown>] config.on-pagedown)
 
     ;; Views
     (register.buf-map bufnr [:n :i] [:<C-d>] config.on-viewpagedown)
