@@ -2,4 +2,4 @@
       general (snap.get :producer.ripgrep.general)]
   (fn [request]
     (let [cwd (snap.sync vim.fn.getcwd)]
-      (general request {:args [:--files] : cwd}))))
+      (general request {:args [:--line-buffered :--files] : cwd}))))

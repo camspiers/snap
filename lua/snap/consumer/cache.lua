@@ -6,8 +6,12 @@ local function _1_(producer)
   local function _2_(request)
     if (#cache == 0) then
       for results in snap.consume(producer, request) do
-        tbl.accumulate(cache, results)
-        coroutine.yield(results)
+        if (#results > 0) then
+          tbl.accumulate(cache, results)
+          coroutine.yield(results)
+        else
+          snap.continue()
+        end
       end
       return nil
     else

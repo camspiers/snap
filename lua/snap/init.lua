@@ -445,7 +445,9 @@ do
         config0["on-value"] = function(value)
           assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
           local current_time = vim.loop.now()
-          tbl.accumulate(results0, value)
+          if (#value > 0) then
+            tbl.accumulate(results0, value)
+          end
           if ((#last_results == 0) and (#results0 >= results_view.height) and not has_meta(tbl.first(results0), "score")) then
             last_results = results0
             schedule_results_write(results0)

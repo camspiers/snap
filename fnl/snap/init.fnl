@@ -366,7 +366,8 @@
       ;; Store the current time
       (local current-time (vim.loop.now))
       ;; Accumulate the results
-      (tbl.accumulate results value)
+      (when (> (length value) 0)
+        (tbl.accumulate results value))
       ;; This is an optimization to begin writing unscored results
       ;; as early as we can
       (when (and
@@ -472,6 +473,7 @@
       (set-next-view-row #(+ $1 $2))))
 
   ;; Initializes the input view
+  ;; This is where all the key bindings happen
   (local input-view-info (input.create
     {: has-views
      : layout

@@ -1,4 +1,5 @@
 local _2afile_2a = "fnl/snap/producer/ripgrep/general.fnl"
+local snap = require("snap")
 local io = require("snap.common.io")
 local function _2_(request, _1_)
   local _arg_0_ = _1_
@@ -11,7 +12,7 @@ local function _2_(request, _1_)
     elseif (err ~= "") then
       coroutine.yield(nil)
     elseif (data == "") then
-      coroutine.yield({})
+      snap.continue()
     else
       coroutine.yield(vim.split(data, "\n", true))
     end

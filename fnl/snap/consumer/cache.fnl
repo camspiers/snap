@@ -6,7 +6,11 @@
     (fn [request]
       (if (= (length cache) 0)
         (each [results (snap.consume producer request)]
-          (tbl.accumulate cache results)
-          (coroutine.yield results))
+          (if
+            (> (length results) 0)
+            (do
+              (tbl.accumulate cache results)
+              (coroutine.yield results))
+            (snap.continue)))
         cache))))
 
