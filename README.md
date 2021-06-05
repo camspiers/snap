@@ -15,13 +15,11 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 ### With Packer
 
 ```
-use 'camspiers/snap.nvim'
+use { 'camspiers/snap.nvim', as = 'snap', rocks = {'fzy'}}
 ```
 
-If you want to use the in-built support for `fzy`:
-
 ```
-use_rocks 'fzy'
+NOTE: the 'as' snap configuration here appears needed otherwise there is an unexplained slowdown.
 ```
 
 ## Basic Example
@@ -637,6 +635,8 @@ NOTE: Experimental, and relies on `file` program in path.
 ```
 
 # Contributing
+
+Snap is written in fennel, a language that compiles to Lua. See https://fennel-lang.org/
 
 To install build dependencies:
 
