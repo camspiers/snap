@@ -594,7 +594,7 @@ A component piece of fzy that only attaches score meta data.
 
 #### `snap.consumer.fzy.positions`
 
-A componentn piece of fzy that only attaches position meta data.
+A component piece of fzy that only attaches position meta data.
 
 ### Selectors
 
