@@ -4,9 +4,11 @@ A fast finder system for neovim >0.5.
 
 ## Demo
 
-The following shows grepping in the large `gcc` codebase.
+The following shows finding files and grepping in the large `gcc` codebase.
 
-https://user-images.githubusercontent.com/51294/119935513-bb891b80-bfdb-11eb-9f67-24cdcdaa6c70.mov
+
+https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-9730-deefd39fb36e.mov
+
 
 ## Installation
 
