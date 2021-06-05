@@ -29,7 +29,7 @@ local function _2_(...)
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", create = "snap.producer.create", input = "snap.view.input", register = "snap.common.register", request = "snap.producer.request", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view", window = "snap.common.window"}}
+    _0_["aniseed/local-fns"] = {["require-macros"] = {["snap.macros"] = true}, require = {buffer = "snap.common.buffer", create = "snap.producer.create", input = "snap.view.input", register = "snap.common.register", request = "snap.producer.request", results = "snap.view.results", tbl = "snap.common.tbl", view = "snap.view.view", window = "snap.common.window"}}
     return val_0_
   else
     return print(val_0_)
@@ -47,7 +47,7 @@ local view = _local_0_[8]
 local window = _local_0_[9]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap"
-do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
+do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
 local register0
 do
   local v_0_
@@ -197,7 +197,7 @@ do
         setmetatable(meta_result1, meta_tbl)
         return meta_result1
       elseif (_3_ == "table") then
-        assert((getmetatable(result) == meta_tbl))
+        assert((getmetatable(result) == metatable))
         return result
       end
     end
@@ -270,9 +270,7 @@ do
     local v_0_0
     local function run0(config)
       assert((type(config) == "table"), "snap.run config must be a table")
-      assert(config.producer, "snap.run config must have a producer")
       assert((type(config.producer) == "function"), "snap.run 'producer' must be a function")
-      assert(config.select, "snap.run config must have a select")
       assert((type(config.select) == "function"), "snap.run 'select' must be a function")
       if config.multiselect then
         assert((type(config.multiselect) == "function"), "snap.run 'multiselect' must be a function")
@@ -285,6 +283,8 @@ do
       end
       if config.views then
         assert((type(config.views) == "table"), "snap.run 'views' must be a table")
+      end
+      if config.views then
         for _, view0 in ipairs(config.views) do
           assert((type(view0) == "function"), "snap.run each view in 'views' must be a function")
         end
@@ -345,7 +345,28 @@ do
       local function get_selection()
         return last_results[cursor_row]
       end
-      local function write_results(results0)
+      local update_views
+      local function _11_(selection)
+        for _, _12_ in ipairs(views) do
+          local _each_0_ = _12_
+          local producer = _each_0_["producer"]
+          local _each_1_ = _each_0_["view"]
+          local bufnr = _each_1_["bufnr"]
+          local height = _each_1_["height"]
+          local width = _each_1_["width"]
+          local winnr = _each_1_["winnr"]
+          local function cancel(request0)
+            return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
+          end
+          local body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}
+          local request0 = request.create({body = body, cancel = cancel})
+          create({producer = producer, request = request0})
+        end
+        return nil
+      end
+      update_views = vim.schedule_wrap(_11_)
+      local write_results
+      local function _12_(results0)
         if not exit then
           do
             local result_size = #results0
@@ -376,8 +397,8 @@ do
           local selection = get_selection()
           if (has_views and (tostring(last_requested_selection) ~= tostring(selection))) then
             last_requested_selection = selection
-            for _, _10_ in ipairs(views) do
-              local _each_0_ = _10_
+            for _, _13_ in ipairs(views) do
+              local _each_0_ = _13_
               local view0 = _each_0_["view"]
               local bufnr = buffer.create()
               table.insert(buffers, bufnr)
@@ -386,29 +407,12 @@ do
               do end (view0)["bufnr"] = bufnr
             end
             if (selection ~= nil) then
-              local function _10_()
-                for _, _11_ in ipairs(views) do
-                  local _each_0_ = _11_
-                  local producer = _each_0_["producer"]
-                  local _each_1_ = _each_0_["view"]
-                  local bufnr = _each_1_["bufnr"]
-                  local height = _each_1_["height"]
-                  local width = _each_1_["width"]
-                  local winnr = _each_1_["winnr"]
-                  local function cancel(request0)
-                    return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
-                  end
-                  local body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}
-                  local request0 = request.create({body = body, cancel = cancel})
-                  create({producer = producer, request = request0})
-                end
-                return nil
-              end
-              return vim.schedule(_10_)
+              return update_views(selection)
             end
           end
         end
       end
+      write_results = vim.schedule_wrap(_12_)
       local function on_update(filter)
         last_requested_filter = filter
         local has_rendered = false
@@ -423,27 +427,24 @@ do
         local config0 = {producer = config.producer, request = request0}
         local function schedule_results_write(results1)
           has_rendered = true
-          local function _10_(...)
-            return write_results(results1, ...)
-          end
-          return vim.schedule(_10_)
+          return write_results(results1)
         end
         local function schedule_loading_write()
           loading_count = (loading_count + 1)
-          local function _10_()
+          local function _13_()
             if not request0.canceled() then
               local loading_screen = loading(results_view.width, results_view.height, loading_count)
               return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
             end
           end
-          return vim.schedule(_10_)
+          return vim.schedule(_13_)
         end
         config0["on-end"] = function()
           if has_meta(tbl.first(results0), "score") then
-            local function _10_(_241, _242)
+            local function _13_(_241, _242)
               return (_241.score > _242.score)
             end
-            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _10_)
+            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _13_)
           end
           last_results = results0
           schedule_results_write(last_results)
@@ -475,17 +476,17 @@ do
         if (#selected_values == 0) then
           local selection = get_selection()
           if (selection ~= nil) then
-            local function _10_(...)
+            local function _13_(...)
               return config.select(selection, original_winnr, ...)
             end
-            return vim.schedule(_10_)
+            return vim.schedule(_13_)
           end
         else
           if config.multiselect then
-            local function _10_(...)
+            local function _13_(...)
               return config.multiselect(selected_values, original_winnr, ...)
             end
-            return vim.schedule(_10_)
+            return vim.schedule(_13_)
           end
         end
       end
@@ -525,28 +526,28 @@ do
         return write_results(last_results)
       end
       local function on_up()
-        local function _10_(_241)
+        local function _13_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_13_)
       end
       local function on_down()
-        local function _10_(_241)
+        local function _13_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_13_)
       end
       local function on_pageup()
-        local function _10_(_241)
+        local function _13_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_13_)
       end
       local function on_pagedown()
-        local function _10_(_241)
+        local function _13_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_10_)
+        return on_key_direction(_13_)
       end
       local function set_next_view_row(next_index)
         if has_views then
@@ -564,18 +565,18 @@ do
       end
       local function on_viewpageup()
         if has_views then
-          local function _10_(_241, _242)
+          local function _13_(_241, _242)
             return (_241 - _242)
           end
-          return set_next_view_row(_10_)
+          return set_next_view_row(_13_)
         end
       end
       local function on_viewpagedown()
         if has_views then
-          local function _10_(_241, _242)
+          local function _13_(_241, _242)
             return (_241 + _242)
           end
-          return set_next_view_row(_10_)
+          return set_next_view_row(_13_)
         end
       end
       local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt})

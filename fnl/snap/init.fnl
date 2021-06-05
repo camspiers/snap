@@ -27,7 +27,8 @@
                        results  snap.view.results
                        view     snap.view.view
                        request  snap.producer.request
-                       create   snap.producer.create}})
+                       create   snap.producer.create}
+              require-macros [snap.macros]})
 
 ;; Exposes register as a main API
 (def register register)
@@ -80,7 +81,7 @@
               (setmetatable meta-result meta_tbl)
               meta-result)
     :table (do
-             (assert (= (getmetatable result) meta_tbl))
+             (assertmetatable result meta_tbl)
              result)))
 
 (defn with_meta [result field value]
@@ -132,47 +133,19 @@
 (defn run [config]
   "The main entry point for running snaps"
   ;; Required values
-  (assert
-    (= (type config) "table")
-    "snap.run config must be a table")
-  (assert
-    config.producer
-    "snap.run config must have a producer")
-  (assert
-    (= (type config.producer) "function")
-    "snap.run 'producer' must be a function")
-  (assert
-    config.select
-    "snap.run config must have a select")
-  (assert
-    (= (type config.select) "function")
-    "snap.run 'select' must be a function")
+  (asserttable config "snap.run config must be a table")
+  (assertfunction config.producer "snap.run 'producer' must be a function")
+  (assertfunction config.select "snap.run 'select' must be a function")
 
   ;; Optional values
-  (when config.multiselect
-    (assert
-      (= (type config.multiselect) "function")
-      "snap.run 'multiselect' must be a function"))
-  (when config.prompt
-    (assert
-      (= (type config.prompt) "string")
-      "snap.run 'prompt' must be a string"))
-  (when config.layout
-    (assert
-      (= (type config.layout) "function")
-      "snap.run 'layout' must be a function"))
+  (assertfunction? config.multiselect "snap.run 'multiselect' must be a function")
+  (assertstring? config.prompt "snap.run 'prompt' must be a string")
+  (assertfunction? config.layout "snap.run 'layout' must be a function")
+  (asserttable? config.views "snap.run 'views' must be a table")
   (when config.views
-    (assert
-      (= (type config.views) "table")
-      "snap.run 'views' must be a table")
     (each [_ view (ipairs config.views)]
-      (assert
-        (= (type view) "function")
-        "snap.run each view in 'views' must be a function")))
-  (when config.loading
-    (assert
-      (= (type config.loading) "function")
-      "snap.run 'loading' must be a function"))
+      (assertfunction view "snap.run each view in 'views' must be a function")))
+  (assertfunction? config.loading "snap.run 'loading' must be a function")
 
   ;; Store the last results
   (var last-results [])
@@ -260,8 +233,19 @@
   ;; Helper function for getting the line under the cursor
   (fn get-selection [] (. last-results cursor-row))
 
+  ;; Updates the views based on selection
+  (safefn update-views [selection]
+    (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
+      (fn cancel [request]
+        (or exit (not= (tostring request.selection) (tostring (get-selection)))))
+      (local body {: selection : bufnr : winnr : width : height})
+      (local request (request.create {: body : cancel}))
+       ; TODO optimization, this should pass all the producers, not just one
+       ; that way we can avoid creating multiple idle checkers
+      (create {: producer : request})))
+
   ;; Only write what results are needed
-  (fn write-results [results]
+  (safefn write-results [results]
     (when (not exit)
       (let [result-size (length results)]
         (if (= result-size 0)
@@ -302,6 +286,10 @@
         (and has-views (not= (tostring last-requested-selection) (tostring selection)))
         (set last-requested-selection selection)
         ;; Create new buffers
+        ;; Each view gets a new buffer each selection change
+        ;; Reusing buffers doesn't work well because it leads to strange performance problems
+        ;; e.g. with treesitter, changing the filetype from one to another appears to cause pathological
+        ;; performance issues
         (each [_ {: view} (ipairs views)]
           (local bufnr (buffer.create))
           (table.insert buffers bufnr)
@@ -309,15 +297,7 @@
           (buffer.delete view.bufnr {:force true})
           (tset view :bufnr bufnr))
         (when (not= selection nil)
-          (vim.schedule (fn []
-            (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
-              (fn cancel [request]
-                (or exit (not= (tostring request.selection) (tostring (get-selection)))))
-              (local body {: selection : bufnr : winnr : width : height})
-              (local request (request.create {: body : cancel}))
-               ; TODO optimization, this should pass all the producers, not just one
-               ; that way we can avoid creating multiple idle checkers
-              (create {: producer : request}))))))))
+          (update-views selection)))))
 
   ;; On input update
   (fn on-update [filter]
@@ -342,7 +322,7 @@
     (fn schedule-results-write [results]
       ;; Update that we have rendered
       (set has-rendered true)
-      (vim.schedule (partial write-results results)))
+      (write-results results))
     ;; Schedules a loading screen write
     (fn schedule-loading-write []
       (set loading-count (+ loading-count 1))
@@ -371,7 +351,7 @@
     ;; Add on value handler
     (fn config.on-value [value]
       ;; Check the type
-      (assert (= (type value) :table) "Main producer yielded a non-yieldable value")
+      (asserttable value "Main producer yielded a non-yieldable value")
       ;; Store the current time
       (local current-time (vim.loop.now))
       ;; Accumulate the results

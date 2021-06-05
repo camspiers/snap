@@ -1,10 +1,10 @@
-(module snap.producer.request)
+(module snap.producer.request {require-macros [snap.macros]})
 
 (defn create [config]
   "Creates a producer request"
   ;; Config validation
-  (assert (= (type config.body) :table) "body must be a table")
-  (assert (= (type config.cancel) :function) "cancel must be a function")
+  (asserttable config.body "body must be a table")
+  (assertfunction config.cancel "cancel must be a function")
   ;; Set up the request
   (local request {:is-canceled false})
   ;; Copy each value

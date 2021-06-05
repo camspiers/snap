@@ -29,7 +29,7 @@ local function _2_(...)
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {}
+    _0_["aniseed/local-fns"] = {["require-macros"] = {["snap.macros"] = true}}
     return val_0_
   else
     return print(val_0_)
@@ -38,7 +38,7 @@ end
 local _local_0_ = _2_(...)
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.producer.request"
-do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
+do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
 local create
 do
   local v_0_

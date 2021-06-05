@@ -228,7 +228,7 @@ local function producer (request)
   for data, err, kill in io.spawn("ls", {}, cwd) do
     -- If the filter updates while the command is still running
     -- then we kill the process and yield nil
-    if request.cancel then
+    if request.canceled() then
       kill()
       coroutine.yield(nil)
     -- If there is an error we yield nil
@@ -302,7 +302,7 @@ From the above we have seen the following distinct concepts of `snap`:
 - Using `snap.sync` to run slow-mode nvim functions
 - Using `snap.consume` to consume another producer
 - Using the `request.filter` value
-- Using the `request.cancel` signal to kill processes
+- Using the `request.canceled()` signal to kill processes
 
 
 ## API
