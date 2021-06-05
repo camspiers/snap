@@ -15,7 +15,7 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 ### With Packer
 
 ```
-use { 'camspiers/snap.nvim', as = 'snap', rocks = {'fzy'}}
+use { 'camspiers/snap', rocks = {'fzy'}}
 ```
 
 ```
