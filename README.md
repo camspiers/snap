@@ -218,7 +218,7 @@ In the following `producer`, we run the `ls` command and progressively `yield` i
 
 ```lua
 local snap = require'snap'
-local io = snap.get'io'
+local io = snap.get'common.io'
 
 -- Runs ls and yields lua tables containing each line
 local function producer (request)
@@ -504,7 +504,7 @@ TODO
 
 Yield a slow-mode function and get it's result.
 
-```
+```typescript
 (fnc: () => T) => T
 ```
 
@@ -512,7 +512,7 @@ Yield a slow-mode function and get it's result.
 
 Consumes a producer providing an iterator of its yielded results
 
-```
+```typescript
 (producer: Producer, request: Request) => iterator<Yieldable>
 ```
 
@@ -536,13 +536,17 @@ Produces vim oldfiles.
 
 Luv (`vim.loop`) based file producer.
 
+```
 NOTE: Requires no external dependencies.
+```
 
 #### `snap.producer.luv.directory`
 
 Luv (`vim.loop`) based directory producer.
 
+```
 NOTE: Requires no external dependencies.
+```
 
 #### `snap.producer.ripgrep.file`
 
@@ -598,7 +602,9 @@ A componentn piece of fzy that only attaches position meta data.
 
 Opens a file in a buffer in the last used window.
 
+```
 NOTE: Provides both `select` and `multiselect`.
+```
 
 #### `snap.select.vimgrep`
 
@@ -606,13 +612,17 @@ If a single file is selected then simply opens the file at appropriate position.
 
 If multiple files are selected then it adds them to the quickfix list, and opens the first.
 
+```
 NOTE: Provides both `select` and `multiselect`.
+```
 
 #### `snap.select.cwd`
 
 Changes directory in response to selection. 
 
+```
 NOTE: Only provides `select`.
+```
 
 ### Previewers
 
@@ -620,7 +630,9 @@ NOTE: Only provides `select`.
 
 Creates a basic file previewer.
 
+```
 NOTE: Experimental, and relies on `file` program in path.
+```
 
 # Contributing
 

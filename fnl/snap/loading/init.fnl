@@ -3,7 +3,7 @@
 (fn center-with-text-width [text text-width width]
   "Centers by using a text width"
   (let [space (string.rep " " (/ (- width text-width) 2))]
-    (.. space text space)))
+    (.. space text)))
 
 (fn center [text width]
   "Center text for loading screen"
@@ -17,7 +17,7 @@
   (local text-width (string.len loading-with-dots))
   (local loading [])
 
-  (for [_ 1 (/ height 2)]
+  (for [_ 1 (- (math.floor (/ height 2)) 1)]
     (table.insert loading ""))
 
   (table.insert loading

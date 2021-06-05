@@ -41,7 +41,7 @@ local _2amodule_name_2a = "snap.loading"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
 local function center_with_text_width(text, text_width, width)
   local space = string.rep(" ", ((width - text_width) / 2))
-  return (space .. text .. space)
+  return (space .. text)
 end
 local function center(text, width)
   return center_with_text_width(text, string.len(text), width)
@@ -52,7 +52,7 @@ local function _3_(width, height, counter)
   local loading_with_dots = ("\226\148\130" .. space .. dots .. " Loading " .. dots .. space .. "\226\148\130")
   local text_width = string.len(loading_with_dots)
   local loading = {}
-  for _ = 1, (height / 2) do
+  for _ = 1, (math.floor((height / 2)) - 1) do
     table.insert(loading, "")
   end
   table.insert(loading, center_with_text_width(("\226\149\173" .. string.rep("\226\148\128", 19) .. "\226\149\174"), text_width, width))
