@@ -6,7 +6,6 @@ A fast finder system for neovim >0.5.
 
 The following shows finding files and grepping in the large `gcc` codebase.
 
-
 https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-9730-deefd39fb36e.mov
 
 
@@ -16,10 +15,6 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 
 ```
 use { 'camspiers/snap', rocks = {'fzy'}}
-```
-
-```
-NOTE: the 'as' snap configuration here appears needed otherwise there is an unexplained slowdown.
 ```
 
 ## Basic Example
