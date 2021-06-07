@@ -187,6 +187,9 @@
   ;; Store the cursor row
   (var cursor-row 1)
 
+  ;; Helper function for getting the line under the cursor
+  (fn get-selection [] (. last-results cursor-row))
+
   ;; Handles exiting
   (fn on-exit []
     ;; Send the signal to exit to all potentially running processes in coroutines
@@ -228,10 +231,8 @@
   (local results-view (results.create {: layout : has-views}))
 
   ;; Register buffer for exiting
+  ;; TODO make registering buffer a standard pattern
   (table.insert buffers results-view.bufnr)
-
-  ;; Helper function for getting the line under the cursor
-  (fn get-selection [] (. last-results cursor-row))
 
   ;; Updates the views based on selection
   (safefn update-views [selection]
@@ -303,7 +304,7 @@
   (fn on-update [filter]
     (set last-requested-filter filter)
     ;; Tracks if any results have rendered
-    (var has-rendered false)
+    (var early-write false)
     ;; Store the number of times the loading screen has displayed
     (var loading-count 0)
     ;; Store the first time
@@ -318,18 +319,11 @@
     (local request (request.create {: body : cancel}))
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
-    ;; Schedules a write, this can be partial results
-    (fn schedule-results-write [results]
-      ;; Update that we have rendered
-      (set has-rendered true)
-      (write-results results))
     ;; Schedules a loading screen write
-    (fn schedule-loading-write []
-      (set loading-count (+ loading-count 1))
-      (vim.schedule (fn []
-        (when (not (request.canceled))
-          (local loading-screen (loading results-view.width results-view.height loading-count))
-          (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))))
+    (safefn schedule-loading-write []
+      (when (not (request.canceled))
+        (local loading-screen (loading results-view.width results-view.height loading-count))
+        (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))
     ;; Add on end handler
     (fn config.on-end []
       ;; When we have scores attached then sort
@@ -344,16 +338,28 @@
       ;; Store the last written results
       (set last-results results)
       ;; Schedule the write
-      (schedule-results-write last-results)
+      (write-results last-results)
       ;; Free the results
       (set results []))
+
+    (fn config.on-tick []
+      ;; Store the current time
+      (local current-time (vim.loop.now))
+      (when (not early-write)
+        ;; Render first loading screen if no render has occured
+        (when (= loading-count 0)
+          (set loading-count (+ loading-count 1))
+          (schedule-loading-write))
+        ;; Render a basic loading screen based on time
+        (when (> (- current-time last-time) 500)
+          (set loading-count (+ loading-count 1))
+          (set last-time current-time)
+          (schedule-loading-write))))
 
     ;; Add on value handler
     (fn config.on-value [value]
       ;; Check the type
       (asserttable value "Main producer yielded a non-yieldable value")
-      ;; Store the current time
-      (local current-time (vim.loop.now))
       ;; Accumulate the results
       (when (> (length value) 0)
         (tbl.accumulate results value))
@@ -366,22 +372,8 @@
         ;; Set the results to enable cursor
         (set last-results results)
         ;; Early write
-        (schedule-results-write results))
-      ;; Render first loading screen if no render has occured, we have results
-      ;; and no time based loading screen has rendered
-      (when
-        (and
-          (not has-rendered)
-          (= loading-count 0)
-          (> (length results) 0))
-        (schedule-loading-write))
-      ;; Render a basic loading screen based on time
-      (when
-        (and
-          (not has-rendered)
-          (> (- current-time last-time) 500))
-        (set last-time current-time)
-        (schedule-loading-write)))
+        (set early-write true)
+        (write-results results)))
 
     ;; And off we go!
     (create config))

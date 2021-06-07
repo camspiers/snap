@@ -13,7 +13,8 @@
 (fn [{: producer
       : request
       : on-end
-      : on-value}]
+      : on-value
+      : on-tick}]
   "Schedules a view for generation"
   ;; By the time the routine runs, we might be able to avoid it
   (when (not (request.canceled))
@@ -53,9 +54,9 @@
                   (request.canceled)
                   (do
                     (when on-cancel (on-cancel))
-                    (stop))
-                  nil)
-              _ (when on-value (on-value value)))))
+                    (stop)))
+              _ (when on-value (on-value value)))
+          (when on-tick (on-tick))))
         ;; When the coroutine is dead then stop the loop
         (stop)))
 

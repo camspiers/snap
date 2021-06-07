@@ -9,7 +9,10 @@
 
 (defn take [tbl num]
   "Takes the first n values from tbl"
-  [(unpack tbl 1 num)])
+  (local partial-tbl [])
+  (each [_ value (ipairs tbl) :until (= num (length partial-tbl))]
+    (table.insert partial-tbl value))
+  partial-tbl)
 
 (defn sum [tbl]
   "Sums table"

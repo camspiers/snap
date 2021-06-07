@@ -68,7 +68,12 @@ do
   do
     local v_0_0
     local function take0(tbl, num)
-      return {unpack(tbl, 1, num)}
+      local partial_tbl = {}
+      for _, value in ipairs(tbl) do
+        if (num == #partial_tbl) then break end
+        table.insert(partial_tbl, value)
+      end
+      return partial_tbl
     end
     v_0_0 = take0
     _0_["take"] = v_0_0

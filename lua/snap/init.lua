@@ -305,6 +305,9 @@ do
       local prompt = string.format("%s> ", (config.prompt or "Find"))
       local selected = {}
       local cursor_row = 1
+      local function get_selection()
+        return last_results[cursor_row]
+      end
       local function on_exit()
         exit = true
         last_results = {}
@@ -342,9 +345,6 @@ do
       end
       local results_view = results.create({["has-views"] = has_views, layout = layout})
       table.insert(buffers, results_view.bufnr)
-      local function get_selection()
-        return last_results[cursor_row]
-      end
       local update_views
       local function _11_(selection)
         for _, _12_ in ipairs(views) do
@@ -415,7 +415,7 @@ do
       write_results = vim.schedule_wrap(_12_)
       local function on_update(filter)
         last_requested_filter = filter
-        local has_rendered = false
+        local early_write = false
         local loading_count = 0
         local last_time = vim.loop.now()
         local results0 = {}
@@ -425,48 +425,49 @@ do
         local body = {filter = filter, height = results_view.height, winnr = original_winnr}
         local request0 = request.create({body = body, cancel = cancel})
         local config0 = {producer = config.producer, request = request0}
-        local function schedule_results_write(results1)
-          has_rendered = true
-          return write_results(results1)
-        end
-        local function schedule_loading_write()
-          loading_count = (loading_count + 1)
-          local function _13_()
-            if not request0.canceled() then
-              local loading_screen = loading(results_view.width, results_view.height, loading_count)
-              return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
-            end
+        local schedule_loading_write
+        local function _13_()
+          if not request0.canceled() then
+            local loading_screen = loading(results_view.width, results_view.height, loading_count)
+            return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
           end
-          return vim.schedule(_13_)
         end
+        schedule_loading_write = vim.schedule_wrap(_13_)
         config0["on-end"] = function()
           if has_meta(tbl.first(results0), "score") then
-            local function _13_(_241, _242)
+            local function _14_(_241, _242)
               return (_241.score > _242.score)
             end
-            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _13_)
+            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _14_)
           end
           last_results = results0
-          schedule_results_write(last_results)
+          write_results(last_results)
           results0 = {}
           return nil
         end
+        config0["on-tick"] = function()
+          local current_time = vim.loop.now()
+          if not early_write then
+            if (loading_count == 0) then
+              loading_count = (loading_count + 1)
+              schedule_loading_write()
+            end
+            if ((current_time - last_time) > 500) then
+              loading_count = (loading_count + 1)
+              last_time = current_time
+              return schedule_loading_write()
+            end
+          end
+        end
         config0["on-value"] = function(value)
           assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
-          local current_time = vim.loop.now()
           if (#value > 0) then
             tbl.accumulate(results0, value)
           end
           if ((#last_results == 0) and (#results0 >= results_view.height) and not has_meta(tbl.first(results0), "score")) then
             last_results = results0
-            schedule_results_write(results0)
-          end
-          if (not has_rendered and (loading_count == 0) and (#results0 > 0)) then
-            schedule_loading_write()
-          end
-          if (not has_rendered and ((current_time - last_time) > 500)) then
-            last_time = current_time
-            return schedule_loading_write()
+            early_write = true
+            return write_results(results0)
           end
         end
         return create(config0)

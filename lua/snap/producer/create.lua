@@ -56,6 +56,7 @@ end
 local function _4_(_3_)
   local _arg_0_ = _3_
   local on_end = _arg_0_["on-end"]
+  local on_tick = _arg_0_["on-tick"]
   local on_value = _arg_0_["on-value"]
   local producer = _arg_0_["producer"]
   local request = _arg_0_["request"]
@@ -77,30 +78,33 @@ local function _4_(_3_)
         return nil
       elseif (coroutine.status(thread) ~= "dead") then
         local _, value, on_cancel = coroutine.resume(thread, request, slow_api.value)
-        local _5_ = type(value)
-        if (_5_ == "function") then
-          return slow_api.schedule(value)
-        elseif (_5_ == "nil") then
-          return stop()
-        else
-          local function _6_()
-            return (value == snap.continue_value)
-          end
-          if ((_5_ == "table") and _6_()) then
-            if request.canceled() then
-              if on_cancel then
-                on_cancel()
-              end
-              return stop()
-            else
-              return nil
-            end
+        do
+          local _5_ = type(value)
+          if (_5_ == "function") then
+            slow_api.schedule(value)
+          elseif (_5_ == "nil") then
+            stop()
           else
-            local _0 = _5_
-            if on_value then
-              return on_value(value)
+            local function _6_()
+              return (value == snap.continue_value)
+            end
+            if ((_5_ == "table") and _6_()) then
+              if request.canceled() then
+                if on_cancel then
+                  on_cancel()
+                end
+                stop()
+              end
+            else
+              local _0 = _5_
+              if on_value then
+                on_value(value)
+              end
             end
           end
+        end
+        if on_tick then
+          return on_tick()
         end
       else
         return stop()
