@@ -47,7 +47,7 @@ do
     local function accumulate0(tbl, vals)
       if (vals ~= nil) then
         for _, value in ipairs(vals) do
-          if (value ~= "") then
+          if (tostring(value) ~= "") then
             table.insert(tbl, value)
           end
         end

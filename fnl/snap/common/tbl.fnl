@@ -4,7 +4,7 @@
   "Accumulates non nil values"
   (when (not= vals nil)
     (each [_ value (ipairs vals)]
-      (when (not= value "")
+      (when (not= (tostring value) "")
         (table.insert tbl value)))))
 
 (defn take [tbl num]

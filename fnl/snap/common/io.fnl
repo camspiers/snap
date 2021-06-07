@@ -1,22 +1,25 @@
 (module snap.common.io {require {snap snap}})
 
-(defn spawn [cmd args cwd]
+(defn spawn [cmd args cwd stdin]
   "Spawns a command and returns a command iterator"
-  (var stdinbuffer "")
+  (var stdoutbuffer "")
   (var stderrbuffer "")
   (let [stdout (vim.loop.new_pipe false)
         stderr (vim.loop.new_pipe false)
-        handle (vim.loop.spawn cmd {: args :stdio [nil stdout stderr] : cwd}
+        handle (vim.loop.spawn cmd {: args :stdio [stdin stdout stderr] : cwd}
                                (fn [code signal]
                                  (stdout:read_stop)
                                  (stderr:read_stop)
                                  (stdout:close)
                                  (stderr:close)
+                                 (when stdin
+                                   (stdin:read_stop)
+                                   (stdin:close))
                                  (handle:close)))]
     (stdout:read_start (fn [err data]
                          (assert (not err))
                          (when data
-                           (set stdinbuffer (.. stdinbuffer data)))))
+                           (set stdoutbuffer (.. stdoutbuffer data)))))
     (stderr:read_start (fn [err data]
                          (assert (not err))
                          (when data
@@ -28,11 +31,11 @@
     (fn []
       (if
         (and handle (handle:is_active))
-        (let [stdin stdinbuffer
+        (let [stdout stdoutbuffer
               stderr stderrbuffer]
-          (set stdinbuffer "")
+          (set stdoutbuffer "")
           (set stderrbuffer "")
-          (values stdin stderr kill))
+          (values stdout stderr kill))
         nil))))
 
 (local chunk-size 10000)

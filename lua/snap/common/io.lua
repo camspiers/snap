@@ -45,8 +45,8 @@ do
   local v_0_
   do
     local v_0_0
-    local function spawn0(cmd, args, cwd)
-      local stdinbuffer = ""
+    local function spawn0(cmd, args, cwd, stdin)
+      local stdoutbuffer = ""
       local stderrbuffer = ""
       local stdout = vim.loop.new_pipe(false)
       local stderr = vim.loop.new_pipe(false)
@@ -56,13 +56,17 @@ do
         stderr:read_stop()
         stdout:close()
         stderr:close()
+        if stdin then
+          stdin:read_stop()
+          stdin:close()
+        end
         return handle:close()
       end
-      handle = vim.loop.spawn(cmd, {args = args, cwd = cwd, stdio = {nil, stdout, stderr}}, _3_)
+      handle = vim.loop.spawn(cmd, {args = args, cwd = cwd, stdio = {stdin, stdout, stderr}}, _3_)
       local function _4_(err, data)
         assert(not err)
         if data then
-          stdinbuffer = (stdinbuffer .. data)
+          stdoutbuffer = (stdoutbuffer .. data)
           return nil
         end
       end
@@ -80,11 +84,11 @@ do
       end
       local function _6_()
         if (handle and handle:is_active()) then
-          local stdin = stdinbuffer
+          local stdout0 = stdoutbuffer
           local stderr0 = stderrbuffer
-          stdinbuffer = ""
+          stdoutbuffer = ""
           stderrbuffer = ""
-          return stdin, stderr0, kill
+          return stdout0, stderr0, kill
         else
           return nil
         end
