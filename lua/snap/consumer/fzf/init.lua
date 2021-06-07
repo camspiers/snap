@@ -2,6 +2,7 @@ local _2afile_2a = "fnl/snap/consumer/fzf/init.fnl"
 local snap = require("snap")
 local io = snap.get("common.io")
 local cache = snap.get("consumer.cache")
+local positions = snap.get("consumer.positions")
 local tbl = snap.get("common.tbl")
 local function _1_(producer)
   local cached_producer = cache(producer)
@@ -37,6 +38,6 @@ local function _1_(producer)
       return nil
     end
   end
-  return _2_
+  return positions(_2_)
 end
 return _1_

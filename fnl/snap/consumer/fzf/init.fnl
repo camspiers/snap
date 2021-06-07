@@ -1,10 +1,11 @@
 (let [snap (require :snap)
       io (snap.get :common.io)
       cache (snap.get :consumer.cache)
+      positions (snap.get :consumer.positions)
       tbl (snap.get :common.tbl)]
   (fn [producer]
     (local cached-producer (cache producer))
-    (fn [request]
+    (positions (fn [request]
       (var sent false)
       (local files [])
       (each [data (snap.consume cached-producer request)]
@@ -29,4 +30,4 @@
               (= data "")
               (snap.continue)
               (coroutine.yield (vim.split data "\n" true))))
-          nil)))))
+          nil))))))
