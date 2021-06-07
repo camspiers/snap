@@ -25,7 +25,7 @@ use { 'camspiers/snap', rocks = {'fzy'}}
 
 #### Semi-Optional Dependencies
 
-To use the following `snap` components you need the specified dependencies, however not all coponents are needed, for example, the you should probably choose between `fzy` and `fzf` as your primary consumer.
+To use the following `snap` components you need the specified dependencies, however not all coponents are needed, for example you should probably choose between `fzy` and `fzf` as your primary consumer.
 
 | Component            | Dependency                        |
 | -------------------- | --------------------------------- |
