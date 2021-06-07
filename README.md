@@ -14,8 +14,25 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 ### With Packer
 
 ```
+use { 'camspiers/snap' }
+```
+
+or with `fzy`
+
+```
 use { 'camspiers/snap', rocks = {'fzy'}}
 ```
+
+#### Semi-Optional Dependencies
+
+- To use `consumer.fzy` you need `fzy` via luarocks
+- To use `consumer.fzf` you need `fzf` available on command line
+- To use `producer.ripgrep.file` or `producer.ripgrep.vimgrep` you need `rg` available on commmand line
+- To use `producer.fd.file` or `producer.fd.director` you need `fd` available on commmand line
+- To use `producer.git.file` you need `git` available on commmand line
+- To use `producer.preview.*` you need `file` available on commmand line
+
+They are semi-optional because you can mix and match them depending on which technology you want to use.
 
 ## Basic Example
 
