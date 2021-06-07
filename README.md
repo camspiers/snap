@@ -25,12 +25,16 @@ use { 'camspiers/snap', rocks = {'fzy'}}
 
 #### Semi-Optional Dependencies
 
-- To use `consumer.fzy` you need `fzy` via luarocks
-- To use `consumer.fzf` you need `fzf` available on command line
-- To use `producer.ripgrep.file` or `producer.ripgrep.vimgrep` you need `rg` available on commmand line
-- To use `producer.fd.file` or `producer.fd.director` you need `fd` available on commmand line
-- To use `producer.git.file` you need `git` available on commmand line
-- To use `producer.preview.*` you need `file` available on commmand line
+To use the following `snap` components you need the specified dependencies, however not all coponents are needed, for example, the you should probably choose between `fzy` and `fzf` as your primary consumer.
+
+| Component            | Dependency                        |
+| -------------------- | --------------------------------- |
+| `consumer.fzy`       | `fzy` via luarocks                |
+| `consumer.fzf`       | `fzf` available on command line   |
+| `producer.ripgrep.*` | `rg` available on commmand line   |
+| `producer.fd.*`      | `fd` available on commmand line   |
+| `producer.git.file`  | `git` available on commmand line  |
+| `preview.*`          | `file` available on commmand line |
 
 They are semi-optional because you can mix and match them depending on which technology you want to use.
 
