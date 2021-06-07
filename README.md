@@ -58,6 +58,17 @@ snap.run {
 }
 ```
 
+or using fzf:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzz'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
 ### Live Ripgrep
 
 ```lua
@@ -591,6 +602,10 @@ A component piece of fzy that only attaches score meta data.
 
 A component piece of fzy that only attaches position meta data.
 
+#### `snap.consumer.fzf`
+
+Runs filtering through fzf, only supports basic positions highlighting for now.
+
 ### Selectors
 
 #### `snap.select.file`
@@ -651,8 +666,8 @@ make compile
 - [x] Preview system
 - [x] More configurable layout system, including arbitrary windows
 - [x] Configurable loading screen
+- [x] FZF score/filter consumer
 - [ ] More producers for vim concepts
-- [ ] FZF score/filter consumer
 - [ ] Lua filter consumer
 - [ ] Tests
 
