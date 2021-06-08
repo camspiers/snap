@@ -457,7 +457,10 @@ do
         end
         write_loading = vim.schedule_wrap(_13_)
         config0["on-end"] = function()
-          if has_meta(tbl.first(results0), "score") then
+          if (#results0 == 0) then
+            last_results = results0
+            write_results(last_results, request0.filter)
+          elseif has_meta(tbl.first(results0), "score") then
             local function _14_(_241, _242)
               return (_241.score > _242.score)
             end
@@ -487,9 +490,9 @@ do
           if (#value > 0) then
             tbl.accumulate(results0, value)
             if not has_meta(tbl.first(results0), "score") then
-              last_results = results0
               early_write = true
-              return write_results(results0, request0.filter)
+              last_results = results0
+              return write_results(last_results, request0.filter)
             end
           end
         end

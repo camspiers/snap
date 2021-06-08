@@ -335,19 +335,25 @@
         (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))
     ;; Add on end handler
     (fn config.on-end []
-      ;; When we have scores attached then sort
-      (when (has_meta (tbl.first results) :score)
+      (if
+        (= (length results) 0)
+        (do
+          (set last-results results)
+          (write-results last-results request.filter))
+        ;; When we have scores attached then sort
+        (has_meta (tbl.first results) :score)
         ;; Sort the table as far as we need to display results
-        (tbl.partial-quicksort
-          results
-          1
-          (length results)
-          (+ results-view.height cursor-row)
-          #(> $1.score $2.score))
-        ;; Store the last written results
-        (set last-results results)
-        ;; Schedule the write
-        (write-results last-results request.filter))
+        (do
+          (tbl.partial-quicksort
+            results
+            1
+            (length results)
+            (+ results-view.height cursor-row)
+            #(> $1.score $2.score))
+          ;; Store the last written results
+          (set last-results results)
+          ;; Schedule the write
+          (write-results last-results request.filter)))
       ;; Free the results
       (set results []))
     ;; Runs on each tick to check if loading screen is needed
@@ -374,12 +380,12 @@
         ;; This is an optimization to begin writing unscored results
         ;; as early as we can
         (when (not (has_meta (tbl.first results) :score))
-          ;; Set the results to enable cursor
-          (set last-results results)
           ;; Early write
           (set early-write true)
+          ;; Set the results to enable cursor
+          (set last-results results)
           ;; Schedule write
-          (write-results results request.filter))))
+          (write-results last-results request.filter))))
     ;; And off we go!
     (create config))
 
