@@ -462,9 +462,9 @@ do
               return (_241.score > _242.score)
             end
             tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _14_)
+            last_results = results0
+            write_results(last_results, request0.filter)
           end
-          last_results = results0
-          write_results(last_results, request0.filter)
           results0 = {}
           return nil
         end
@@ -486,11 +486,11 @@ do
           assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
           if (#value > 0) then
             tbl.accumulate(results0, value)
-          end
-          if ((#last_results == 0) and (#results0 >= results_view.height) and not has_meta(tbl.first(results0), "score")) then
-            last_results = results0
-            early_write = true
-            return write_results(results0, request0.filter)
+            if not has_meta(tbl.first(results0), "score") then
+              last_results = results0
+              early_write = true
+              return write_results(results0, request0.filter)
+            end
           end
         end
         return create(config0)

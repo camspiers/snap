@@ -337,19 +337,19 @@
     (fn config.on-end []
       ;; When we have scores attached then sort
       (when (has_meta (tbl.first results) :score)
+        ;; Sort the table as far as we need to display results
         (tbl.partial-quicksort
           results
           1
           (length results)
           (+ results-view.height cursor-row)
-          #(> $1.score $2.score)))
-      ;; Store the last written results
-      (set last-results results)
-      ;; Schedule the write
-      (write-results last-results request.filter)
+          #(> $1.score $2.score))
+        ;; Store the last written results
+        (set last-results results)
+        ;; Schedule the write
+        (write-results last-results request.filter))
       ;; Free the results
       (set results []))
-
     ;; Runs on each tick to check if loading screen is needed
     (fn config.on-tick []
       ;; Store the current time
@@ -370,19 +370,16 @@
       (asserttable value "Main producer yielded a non-yieldable value")
       ;; Accumulate the results
       (when (> (length value) 0)
-        (tbl.accumulate results value))
-      ;; This is an optimization to begin writing unscored results
-      ;; as early as we can
-      (when (and
-              (= (length last-results) 0)
-              (>= (length results) results-view.height)
-              (not (has_meta (tbl.first results) :score)))
-        ;; Set the results to enable cursor
-        (set last-results results)
-        ;; Early write
-        (set early-write true)
-        (write-results results request.filter)))
-
+        (tbl.accumulate results value)
+        ;; This is an optimization to begin writing unscored results
+        ;; as early as we can
+        (when (not (has_meta (tbl.first results) :score))
+          ;; Set the results to enable cursor
+          (set last-results results)
+          ;; Early write
+          (set early-write true)
+          ;; Schedule write
+          (write-results results request.filter))))
     ;; And off we go!
     (create config))
 
