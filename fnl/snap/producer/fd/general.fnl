@@ -6,4 +6,4 @@
                            (coroutine.yield nil))
           (not= err "") (coroutine.yield nil)
           (= data "") (coroutine.yield [])
-          (coroutine.yield (vim.split data "\n" true))))))
+          (coroutine.yield (vim.split (data:sub 1 -2) "\n" true))))))

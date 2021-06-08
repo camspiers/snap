@@ -1,6 +1,9 @@
 (fn safefn [name ...]
   `(local ,name (vim.schedule_wrap (fn ,...))))
 
+(fn safecall [fnc ...]
+  `((vim.schedule_wrap ,fnc) ,...))
+
 (fn assertfunction [value msg]
   `(assert (= (type ,value) :function) ,msg))
 
@@ -22,11 +25,16 @@
 (fn assertmetatable [value metatable msg]
   `(assert (= (getmetatable ,value) metatable) ,msg))
 
+(fn assertthread [value msg]
+  `(assert (= (type ,value) :thread) ,msg))
+
 {: safefn
+ : safecall
  : assertfunction
  : assertfunction?
  : asserttable
  : asserttable?
  : assertstring
  : assertstring?
- : assertmetatable}
+ : assertmetatable
+ : assertthread}

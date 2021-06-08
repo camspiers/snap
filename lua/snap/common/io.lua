@@ -83,7 +83,7 @@ do
         return handle:kill(vim.loop.constants.SIGTERM)
       end
       local function _6_()
-        if (handle and handle:is_active()) then
+        if ((handle and handle:is_active()) or (stdoutbuffer ~= "")) then
           local stdout0 = stdoutbuffer
           local stderr0 = stderrbuffer
           stdoutbuffer = ""

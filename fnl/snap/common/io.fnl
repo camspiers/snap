@@ -30,7 +30,7 @@
 
     (fn []
       (if
-        (and handle (handle:is_active))
+        (or (and handle (handle:is_active)) (not= stdoutbuffer ""))
         (let [stdout stdoutbuffer
               stderr stderrbuffer]
           (set stdoutbuffer "")

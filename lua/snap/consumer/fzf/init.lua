@@ -8,6 +8,7 @@ local function _1_(producer)
   local cached_producer = cache(producer)
   local function _2_(request)
     local files = {}
+    local files_string = nil
     for data in snap.consume(cached_producer, request) do
       tbl.accumulate(files, data)
       snap.continue()
@@ -15,14 +16,17 @@ local function _1_(producer)
     if (request.filter == "") then
       return coroutine.yield(files)
     else
-      local sent = false
+      local needsdata = true
       local cwd = snap.sync(vim.fn.getcwd)
       local stdout = vim.loop.new_pipe(false)
       for data, err, cancel in io.spawn("fzf", {"-f", request.filter}, cwd, stdout) do
-        if not sent then
-          stdout:write(table.concat(files, "\n"))
+        if needsdata then
+          if (files_string == nil) then
+            files_string = table.concat(files, "\n")
+          end
+          stdout:write(files_string)
           stdout:shutdown()
-          sent = true
+          needsdata = false
         end
         if request.canceled() then
           cancel()
@@ -32,7 +36,7 @@ local function _1_(producer)
         elseif (data == "") then
           snap.continue()
         else
-          coroutine.yield(vim.split(data, "\n", true))
+          coroutine.yield(vim.split(data:sub(1, -2), "\n", true))
         end
       end
       return nil

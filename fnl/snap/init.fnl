@@ -39,30 +39,33 @@
 
 (defn sync [value]
   "Basic wrapper around coroutine.yield that returns first result"
-  (let [(_ result) (coroutine.yield value)]
-    result))
+  (assertfunction value "value passed to snap.sync must be a function")
+  (select 2 (coroutine.yield value)))
 
 ;; Represents a request to yield for other processing
 (def continue_value {:continue true})
 
 (defn continue [on-cancel]
   "Yields for other processing or cancels if needed"
+  (assertfunction? on-cancel "on-cancel provided to snap.continue must be a function")
   (coroutine.yield continue_value on-cancel))
 
 (defn resume [thread request value]
   "Transfers sync values allowing the yielding of functions with non fast-api access"
+  (assertthread thread "thread passed to snap.resume must be a thread")
   (let [(_ result) (coroutine.resume thread request value)]
     (if
       ;; If we are cancelling then return nil
       (request.canceled) nil
-      ;; When we have a function, we want to yield it
-      ;; get the value then continue
+      ;; When we have a function, we want to yield it get the value then continue
       (= (type result) :function) (resume thread request (sync result))
       ;; If we aren't canceling then return result
       result)))
 
 (defn consume [producer request]
   "Returns an iterator that consumes a producer"
+  (assertfunction producer "producer passed to snap.consume must be a function")
+  (asserttable request "request passed to snap.consume must be a table")
   (var reader (coroutine.create producer))
   (fn []
     (if
@@ -82,23 +85,27 @@
               meta-result)
     :table (do
              (assertmetatable result meta_tbl)
-             result)))
+             result)
+    _ (assert false "result passed to snap.meta_result must be a string or meta result")))
 
 (defn with_meta [result field value]
-  "Sets a meta field like score"
+  "Sets a meta field, e.g. score, positions"
+  (assertstring field "field passed to snap.with_meta must be a string")
   (let [meta-result (meta_result result)]
     (tset meta-result field value)
     meta-result))
 
-(defn with_metas [result data]
+(defn with_metas [result metas]
   "Sets multiple meta values"
+  (asserttable metas "metas passed to snap.with_metas must be a table")
   (let [meta-result (meta_result result)]
-    (each [field value (pairs data)]
+    (each [field value (pairs metas)]
       (tset meta-result field value))
     meta-result))
 
 (defn has_meta [result field]
-  "Basic function for detecting metafield"
+  "Determines whether a result has a meta field"
+  (assertstring field "field passed to snap.has_meta must be a string")
   (and (= (getmetatable result) meta_tbl) (not= (. result field) nil)))
 
 ;; Run docs:
@@ -204,6 +211,7 @@
     ;; Return back to original window
     (vim.api.nvim_set_current_win original-winnr)
 
+    ;; Close each open window
     (each [_ winnr (ipairs windows)]
       (when (vim.api.nvim_win_is_valid winnr)
         (window.close winnr)))
@@ -246,7 +254,7 @@
       (create {: producer : request})))
 
   ;; Only write what results are needed
-  (safefn write-results [results]
+  (safefn write-results [results filter]
     (when (not exit)
       (let [result-size (length results)]
         (if (= result-size 0)
@@ -263,7 +271,7 @@
             ;; Set the lines, but make sure tables are converted to strings
             (buffer.set-lines results-view.bufnr 0 -1 partial-results)
             ;; Update highlights
-            (each [row _ (pairs partial-results)]
+            (each [row (pairs partial-results)]
               (local result (. results row))
               ;; Add positions highlighting
               (when
@@ -321,15 +329,14 @@
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
     ;; Schedules a loading screen write
-    (safefn schedule-loading-write []
+    (safefn write-loading []
       (when (not (request.canceled))
         (local loading-screen (loading results-view.width results-view.height loading-count))
         (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))
     ;; Add on end handler
     (fn config.on-end []
       ;; When we have scores attached then sort
-      (when
-        (has_meta (tbl.first results) :score)
+      (when (has_meta (tbl.first results) :score)
         (tbl.partial-quicksort
           results
           1
@@ -339,25 +346,25 @@
       ;; Store the last written results
       (set last-results results)
       ;; Schedule the write
-      (write-results last-results)
+      (write-results last-results request.filter)
       ;; Free the results
       (set results []))
 
+    ;; Runs on each tick to check if loading screen is needed
     (fn config.on-tick []
       ;; Store the current time
       (when (not early-write)
         ;; Render first loading screen if no render has occured
         (when (= loading-count 0)
           (set loading-count (+ loading-count 1))
-          (schedule-loading-write))
+          (write-loading))
         ;; Render a basic loading screen based on time
         (local current-time (vim.loop.now))
         (when (> (- current-time last-time) 500)
           (set loading-count (+ loading-count 1))
           (set last-time current-time)
-          (schedule-loading-write))))
-
-    ;; Add on value handler
+          (write-loading))))
+    ;; Collects results progressively and renders early if possible
     (fn config.on-value [value]
       ;; Check the type
       (asserttable value "Main producer yielded a non-yieldable value")
@@ -374,21 +381,21 @@
         (set last-results results)
         ;; Early write
         (set early-write true)
-        (write-results results)))
+        (write-results results request.filter)))
 
     ;; And off we go!
     (create config))
 
   ;; Handles entering
   (fn on-enter []
-    (local selected-values (vim.tbl_keys selected))
-    (if (= (length selected-values) 0)
+    (local selections (vim.tbl_keys selected))
+    (if
+      (= (length selections) 0)
+      ;; Single select case
       (let [selection (get-selection)]
-        (when (not= selection nil)
-          (vim.schedule (partial config.select selection original-winnr))))
-      (when
-        config.multiselect
-        (vim.schedule (partial config.multiselect selected-values original-winnr)))))
+        (when (not= selection nil) (safecall config.select selection original-winnr)))
+      ;; Multiselect case
+      (when config.multiselect (safecall config.multiselect selections original-winnr))))
 
   ;; Handles select all in the multiselect case
   (fn on-select-all-toggle []
@@ -420,20 +427,16 @@
       (write-results last-results)))
 
   ;; On up handler
-  (fn on-up []
-    (on-key-direction #(- $1 1)))
+  (fn on-up [] (on-key-direction #(- $1 1)))
 
   ;; On down handler
-  (fn on-down []
-    (on-key-direction #(+ $1 1)))
+  (fn on-down [] (on-key-direction #(+ $1 1)))
  
   ;; Page up handler
-  (fn on-pageup []
-    (on-key-direction #(- $1 results-view.height)))
+  (fn on-pageup [] (on-key-direction #(- $1 results-view.height)))
 
   ;; Page down handler
-  (fn on-pagedown []
-    (on-key-direction #(+ $1 results-view.height)))
+  (fn on-pagedown [] (on-key-direction #(+ $1 results-view.height)))
 
   ;; Moves the view position
   (fn set-next-view-row [next-index]
@@ -445,14 +448,10 @@
         (vim.api.nvim_win_set_cursor winnr [index 0]))))
 
   ;; View page up handler
-  (fn on-viewpageup []
-    (when has-views
-      (set-next-view-row #(- $1 $2))))
+  (fn on-viewpageup [] (when has-views (set-next-view-row #(- $1 $2))))
 
   ;; View page down handler
-  (fn on-viewpagedown []
-    (when has-views
-      (set-next-view-row #(+ $1 $2))))
+  (fn on-viewpagedown [] (when has-views (set-next-view-row #(+ $1 $2))))
 
   ;; Initializes the input view
   ;; This is where all the key bindings happen

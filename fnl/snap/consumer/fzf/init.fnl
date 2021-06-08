@@ -7,6 +7,7 @@
     (local cached-producer (cache producer))
     (positions (fn [request]
       (local files [])
+      (var files-string nil)
       (each [data (snap.consume cached-producer request)]
         (tbl.accumulate files data)
         (snap.continue))
@@ -14,14 +15,16 @@
         (= request.filter "")
         (coroutine.yield files)
         (do
-          (var sent false)
+          (var needsdata true)
           (local cwd (snap.sync vim.fn.getcwd))
           (local stdout (vim.loop.new_pipe false))
           (each [data err cancel (io.spawn :fzf [:-f request.filter] cwd stdout)]
-            (when (not sent)
-              (stdout:write (table.concat files "\n"))
+            (when needsdata
+              (when (= files-string nil)
+                (set files-string (table.concat files "\n")))
+              (stdout:write files-string)
               (stdout:shutdown)
-              (set sent true))
+              (set needsdata false))
             (if
               (request.canceled)
               (do (cancel) (coroutine.yield nil))
@@ -29,5 +32,5 @@
               (coroutine.yield nil)
               (= data "")
               (snap.continue)
-              (coroutine.yield (vim.split data "\n" true))))
+              (coroutine.yield (vim.split (data:sub 1 -2) "\n" true))))
           nil))))))

@@ -82,8 +82,8 @@ do
   do
     local v_0_0
     local function sync0(value)
-      local _, result = coroutine.yield(value)
-      return result
+      assert((type(value) == "function"), "value passed to snap.sync must be a function")
+      return select(2, coroutine.yield(value))
     end
     v_0_0 = sync0
     _0_["sync"] = v_0_0
@@ -111,6 +111,9 @@ do
   do
     local v_0_0
     local function continue0(on_cancel)
+      if on_cancel then
+        assert((type(on_cancel) == "function"), "on-cancel provided to snap.continue must be a function")
+      end
       return coroutine.yield(continue_value, on_cancel)
     end
     v_0_0 = continue0
@@ -127,6 +130,7 @@ do
   do
     local v_0_0
     local function resume0(thread, request0, value)
+      assert((type(thread) == "thread"), "thread passed to snap.resume must be a thread")
       local _, result = coroutine.resume(thread, request0, value)
       if request0.canceled() then
         return nil
@@ -150,6 +154,8 @@ do
   do
     local v_0_0
     local function consume0(producer, request0)
+      assert((type(producer) == "function"), "producer passed to snap.consume must be a function")
+      assert((type(request0) == "table"), "request passed to snap.consume must be a table")
       local reader = coroutine.create(producer)
       local function _3_()
         if (coroutine.status(reader) == "dead") then
@@ -199,6 +205,9 @@ do
       elseif (_3_ == "table") then
         assert((getmetatable(result) == metatable))
         return result
+      else
+        local _ = _3_
+        return assert(false, "result passed to snap.meta_result must be a string or meta result")
       end
     end
     v_0_0 = meta_result0
@@ -215,6 +224,7 @@ do
   do
     local v_0_0
     local function with_meta0(result, field, value)
+      assert((type(field) == "string"), "field passed to snap.with_meta must be a string")
       local meta_result0 = meta_result(result)
       do end (meta_result0)[field] = value
       return meta_result0
@@ -232,9 +242,10 @@ do
   local v_0_
   do
     local v_0_0
-    local function with_metas0(result, data)
+    local function with_metas0(result, metas)
+      assert((type(metas) == "table"), "metas passed to snap.with_metas must be a table")
       local meta_result0 = meta_result(result)
-      for field, value in pairs(data) do
+      for field, value in pairs(metas) do
         meta_result0[field] = value
       end
       return meta_result0
@@ -253,6 +264,7 @@ do
   do
     local v_0_0
     local function has_meta0(result, field)
+      assert((type(field) == "string"), "field passed to snap.has_meta must be a string")
       return ((getmetatable(result) == meta_tbl) and (result[field] ~= nil))
     end
     v_0_0 = has_meta0
@@ -366,7 +378,7 @@ do
       end
       update_views = vim.schedule_wrap(_11_)
       local write_results
-      local function _12_(results0)
+      local function _12_(results0, filter)
         if not exit then
           do
             local result_size = #results0
@@ -380,7 +392,7 @@ do
                 table.insert(partial_results, tostring(result))
               end
               buffer["set-lines"](results_view.bufnr, 0, -1, partial_results)
-              for row, _ in pairs(partial_results) do
+              for row in pairs(partial_results) do
                 local result = (results0)[row]
                 if has_meta(result, "positions") then
                   local function _14_()
@@ -390,7 +402,7 @@ do
                     elseif (_13_ == "function") then
                       return result:positions()
                     else
-                      local _0 = _13_
+                      local _ = _13_
                       return assert(false, "result positions must be a table or function")
                     end
                   end
@@ -436,14 +448,14 @@ do
         local body = {filter = filter, height = results_view.height, winnr = original_winnr}
         local request0 = request.create({body = body, cancel = cancel})
         local config0 = {producer = config.producer, request = request0}
-        local schedule_loading_write
+        local write_loading
         local function _13_()
           if not request0.canceled() then
             local loading_screen = loading(results_view.width, results_view.height, loading_count)
             return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
           end
         end
-        schedule_loading_write = vim.schedule_wrap(_13_)
+        write_loading = vim.schedule_wrap(_13_)
         config0["on-end"] = function()
           if has_meta(tbl.first(results0), "score") then
             local function _14_(_241, _242)
@@ -452,7 +464,7 @@ do
             tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _14_)
           end
           last_results = results0
-          write_results(last_results)
+          write_results(last_results, request0.filter)
           results0 = {}
           return nil
         end
@@ -460,13 +472,13 @@ do
           if not early_write then
             if (loading_count == 0) then
               loading_count = (loading_count + 1)
-              schedule_loading_write()
+              write_loading()
             end
             local current_time = vim.loop.now()
             if ((current_time - last_time) > 500) then
               loading_count = (loading_count + 1)
               last_time = current_time
-              return schedule_loading_write()
+              return write_loading()
             end
           end
         end
@@ -478,27 +490,21 @@ do
           if ((#last_results == 0) and (#results0 >= results_view.height) and not has_meta(tbl.first(results0), "score")) then
             last_results = results0
             early_write = true
-            return write_results(results0)
+            return write_results(results0, request0.filter)
           end
         end
         return create(config0)
       end
       local function on_enter()
-        local selected_values = vim.tbl_keys(selected)
-        if (#selected_values == 0) then
+        local selections = vim.tbl_keys(selected)
+        if (#selections == 0) then
           local selection = get_selection()
           if (selection ~= nil) then
-            local function _13_(...)
-              return config.select(selection, original_winnr, ...)
-            end
-            return vim.schedule(_13_)
+            return vim.schedule_wrap(config.select)(selection, original_winnr)
           end
         else
           if config.multiselect then
-            local function _13_(...)
-              return config.multiselect(selected_values, original_winnr, ...)
-            end
-            return vim.schedule(_13_)
+            return vim.schedule_wrap(config.multiselect)(selections, original_winnr)
           end
         end
       end

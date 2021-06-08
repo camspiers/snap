@@ -13,7 +13,7 @@ local function _2_(request, _1_)
     elseif (data == "") then
       coroutine.yield({})
     else
-      coroutine.yield(vim.split(data, "\n", true))
+      coroutine.yield(vim.split(data:sub(1, -2), "\n", true))
     end
   end
   return nil
