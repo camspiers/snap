@@ -17,7 +17,7 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 use { 'camspiers/snap' }
 ```
 
-or with `fzy`
+or with `fzy`:
 
 ```
 use { 'camspiers/snap', rocks = {'fzy'}}
@@ -79,7 +79,7 @@ snap.run {
 }
 ```
 
-or using fzf:
+or using `fzf`:
 
 ```lua
 snap.run {

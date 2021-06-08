@@ -1,6 +1,6 @@
 local _2afile_2a = "fnl/snap/consumer/positions.fnl"
 local snap = require("snap")
-local function get_positions(result, filter)
+local function get_positions(filter, result)
   if (filter == "") then
     return {}
   else
@@ -30,10 +30,15 @@ local function _1_(producer)
         if (#data == 0) then
           snap.continue()
         else
-          local function _4_(_241)
-            return snap.with_meta(_241, "positions", get_positions(_241, request.filter))
+          local function positions(result)
+            return get_positions(request.filter, result)
           end
-          coroutine.yield(vim.tbl_map(_4_, data))
+          if positions then
+            local function _4_(_241)
+              return snap.with_meta(_241, "positions", positions)
+            end
+            coroutine.yield(vim.tbl_map(_4_, data))
+          end
         end
       elseif (_3_ == "nil") then
         coroutine.yield(nil)

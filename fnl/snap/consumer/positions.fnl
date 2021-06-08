@@ -1,5 +1,5 @@
 (let [snap (require :snap)]
-  (fn get-positions [result filter]
+  (fn get-positions [filter result]
     (if
       (= filter "")
       []
@@ -26,8 +26,10 @@
           :table (if
                    (= (length data) 0)
                    (snap.continue)
+                   (fn positions [result]
+                     (get-positions request.filter result))
                    (coroutine.yield
                      (vim.tbl_map
-                       #(snap.with_meta $1 :positions (get-positions $1 request.filter))
+                       #(snap.with_meta $1 :positions positions)
                        data)))
           :nil (coroutine.yield nil))))))

@@ -271,13 +271,14 @@
                 (buffer.add-positions-highlight
                   results-view.bufnr
                   row
-                  result.positions))
+                  (match (type result.positions)
+                    :table result.positions
+                    :function (result:positions)
+                    _ (assert false "result positions must be a table or function"))))
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (buffer.add-selected-highlight
-                  results-view.bufnr
-                  row)))))
+                (buffer.add-selected-highlight results-view.bufnr row)))))
         ;; Make sure cursor stays in view
         (when (> cursor-row result-size) (set cursor-row (math.max 1 result-size))))
 
@@ -344,13 +345,13 @@
 
     (fn config.on-tick []
       ;; Store the current time
-      (local current-time (vim.loop.now))
       (when (not early-write)
         ;; Render first loading screen if no render has occured
         (when (= loading-count 0)
           (set loading-count (+ loading-count 1))
           (schedule-loading-write))
         ;; Render a basic loading screen based on time
+        (local current-time (vim.loop.now))
         (when (> (- current-time last-time) 500)
           (set loading-count (+ loading-count 1))
           (set last-time current-time)

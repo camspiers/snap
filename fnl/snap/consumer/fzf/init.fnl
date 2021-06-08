@@ -6,7 +6,6 @@
   (fn [producer]
     (local cached-producer (cache producer))
     (positions (fn [request]
-      (var sent false)
       (local files [])
       (each [data (snap.consume cached-producer request)]
         (tbl.accumulate files data)
@@ -15,6 +14,7 @@
         (= request.filter "")
         (coroutine.yield files)
         (do
+          (var sent false)
           (local cwd (snap.sync vim.fn.getcwd))
           (local stdout (vim.loop.new_pipe false))
           (each [data err cancel (io.spawn :fzf [:-f request.filter] cwd stdout)]

@@ -383,7 +383,18 @@ do
               for row, _ in pairs(partial_results) do
                 local result = (results0)[row]
                 if has_meta(result, "positions") then
-                  buffer["add-positions-highlight"](results_view.bufnr, row, result.positions)
+                  local function _14_()
+                    local _13_ = type(result.positions)
+                    if (_13_ == "table") then
+                      return result.positions
+                    elseif (_13_ == "function") then
+                      return result:positions()
+                    else
+                      local _0 = _13_
+                      return assert(false, "result positions must be a table or function")
+                    end
+                  end
+                  buffer["add-positions-highlight"](results_view.bufnr, row, _14_())
                 end
                 if selected[tostring(result)] then
                   buffer["add-selected-highlight"](results_view.bufnr, row)
@@ -446,12 +457,12 @@ do
           return nil
         end
         config0["on-tick"] = function()
-          local current_time = vim.loop.now()
           if not early_write then
             if (loading_count == 0) then
               loading_count = (loading_count + 1)
               schedule_loading_write()
             end
+            local current_time = vim.loop.now()
             if ((current_time - last_time) > 500) then
               loading_count = (loading_count + 1)
               last_time = current_time
