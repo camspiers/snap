@@ -13,13 +13,13 @@ local function get_positions(filter, result)
         local index = result0:find(c, last_index, true)
         if (index ~= nil) then
           last_index = (index + 1)
-          table.insert(positions, index)
+          do end (positions)[index] = true
         else
           break
         end
       end
     end
-    return positions
+    return vim.tbl_keys(positions)
   end
 end
 local function _1_(producer)

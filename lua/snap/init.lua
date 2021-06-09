@@ -356,86 +356,129 @@ do
         end
       end
       local results_view = results.create({["has-views"] = has_views, layout = layout})
+      local function update_cursor()
+        return vim.api.nvim_win_set_cursor(results_view.winnr, {cursor_row, 0})
+      end
       table.insert(buffers, results_view.bufnr)
       local update_views
-      local function _11_(selection)
-        for _, _12_ in ipairs(views) do
-          local _each_0_ = _12_
-          local producer = _each_0_["producer"]
-          local _each_1_ = _each_0_["view"]
-          local bufnr = _each_1_["bufnr"]
-          local height = _each_1_["height"]
-          local width = _each_1_["width"]
-          local winnr = _each_1_["winnr"]
-          local function cancel(request0)
-            return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
+      do
+        local body_0_
+        local function _11_(selection)
+          for _, _12_ in ipairs(views) do
+            local _each_0_ = _12_
+            local producer = _each_0_["producer"]
+            local _each_1_ = _each_0_["view"]
+            local bufnr = _each_1_["bufnr"]
+            local height = _each_1_["height"]
+            local width = _each_1_["width"]
+            local winnr = _each_1_["winnr"]
+            local function cancel(request0)
+              return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
+            end
+            local body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}
+            local request0 = request.create({body = body, cancel = cancel})
+            create({producer = producer, request = request0})
           end
-          local body = {bufnr = bufnr, height = height, selection = selection, width = width, winnr = winnr}
-          local request0 = request.create({body = body, cancel = cancel})
-          create({producer = producer, request = request0})
+          return nil
         end
-        return nil
+        body_0_ = _11_
+        local args_0_ = nil
+        local function _12_(...)
+          if (args_0_ == nil) then
+            args_0_ = {...}
+            local function _13_()
+              local actual_args_0_ = args_0_
+              args_0_ = nil
+              return body_0_(unpack(actual_args_0_))
+            end
+            return vim.schedule(_13_)
+          else
+            args_0_ = {...}
+            return nil
+          end
+        end
+        update_views = _12_
       end
-      update_views = vim.schedule_wrap(_11_)
       local write_results
-      local function _12_(results0, filter)
-        if not exit then
-          do
-            local result_size = #results0
-            if (result_size == 0) then
-              buffer["set-lines"](results_view.bufnr, 0, -1, {})
-            else
-              local max = (results_view.height + cursor_row)
-              local partial_results = {}
-              for _, result in ipairs(results0) do
-                if (max == #partial_results) then break end
-                table.insert(partial_results, tostring(result))
+      do
+        local body_0_
+        local function _11_(results0, filter)
+          if not exit then
+            do
+              local result_size = #results0
+              if (cursor_row > result_size) then
+                cursor_row = math.max(1, result_size)
               end
-              buffer["set-lines"](results_view.bufnr, 0, -1, partial_results)
-              for row in pairs(partial_results) do
-                local result = (results0)[row]
-                if has_meta(result, "positions") then
-                  local function _14_()
-                    local _13_ = type(result.positions)
-                    if (_13_ == "table") then
-                      return result.positions
-                    elseif (_13_ == "function") then
-                      return result:positions()
-                    else
-                      local _ = _13_
-                      return assert(false, "result positions must be a table or function")
+              if (result_size == 0) then
+                buffer["set-lines"](results_view.bufnr, 0, -1, {})
+                update_cursor()
+              else
+                local max = (results_view.height + cursor_row)
+                local partial_results = {}
+                for _, result in ipairs(results0) do
+                  if (max == #partial_results) then break end
+                  table.insert(partial_results, tostring(result))
+                end
+                buffer["set-lines"](results_view.bufnr, 0, -1, partial_results)
+                update_cursor()
+                for row in pairs(partial_results) do
+                  local result = (results0)[row]
+                  if has_meta(result, "positions") then
+                    local function _14_()
+                      local _13_ = type(result.positions)
+                      if (_13_ == "table") then
+                        return result.positions
+                      elseif (_13_ == "function") then
+                        return result:positions()
+                      else
+                        local _ = _13_
+                        return assert(false, "result positions must be a table or function")
+                      end
                     end
+                    buffer["add-positions-highlight"](results_view.bufnr, row, _14_())
                   end
-                  buffer["add-positions-highlight"](results_view.bufnr, row, _14_())
-                end
-                if selected[tostring(result)] then
-                  buffer["add-selected-highlight"](results_view.bufnr, row)
+                  if selected[tostring(result)] then
+                    buffer["add-selected-highlight"](results_view.bufnr, row)
+                  end
                 end
               end
             end
-            if (cursor_row > result_size) then
-              cursor_row = math.max(1, result_size)
-            end
-          end
-          local selection = get_selection()
-          if (has_views and (tostring(last_requested_selection) ~= tostring(selection))) then
-            last_requested_selection = selection
-            for _, _13_ in ipairs(views) do
-              local _each_0_ = _13_
-              local view0 = _each_0_["view"]
-              local bufnr = buffer.create()
-              table.insert(buffers, bufnr)
-              vim.api.nvim_win_set_buf(view0.winnr, bufnr)
-              buffer.delete(view0.bufnr, {force = true})
-              do end (view0)["bufnr"] = bufnr
-            end
-            if (selection ~= nil) then
-              return update_views(selection)
+            local selection = get_selection()
+            if (has_views and (tostring(last_requested_selection) ~= tostring(selection))) then
+              last_requested_selection = selection
+              for _, _12_ in ipairs(views) do
+                local _each_0_ = _12_
+                local view0 = _each_0_["view"]
+                local bufnr = buffer.create()
+                table.insert(buffers, bufnr)
+                vim.api.nvim_win_set_buf(view0.winnr, bufnr)
+                buffer.delete(view0.bufnr, {force = true})
+                do end (view0)["bufnr"] = bufnr
+              end
+              if (selection ~= nil) then
+                return update_views(selection)
+              end
             end
           end
         end
+        body_0_ = _11_
+        local args_0_ = nil
+        local function _12_(...)
+          if (args_0_ == nil) then
+            args_0_ = {...}
+            local function _13_()
+              local actual_args_0_ = args_0_
+              args_0_ = nil
+              return body_0_(unpack(actual_args_0_))
+            end
+            return vim.schedule(_13_)
+          else
+            args_0_ = {...}
+            return nil
+          end
+        end
+        write_results = _12_
       end
-      write_results = vim.schedule_wrap(_12_)
       local function on_update(filter)
         last_requested_filter = filter
         local early_write = false
@@ -449,22 +492,41 @@ do
         local request0 = request.create({body = body, cancel = cancel})
         local config0 = {producer = config.producer, request = request0}
         local write_loading
-        local function _13_()
-          if not request0.canceled() then
-            local loading_screen = loading(results_view.width, results_view.height, loading_count)
-            return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
+        do
+          local body_0_
+          local function _11_()
+            if not request0.canceled() then
+              local loading_screen = loading(results_view.width, results_view.height, loading_count)
+              return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
+            end
           end
+          body_0_ = _11_
+          local args_0_ = nil
+          local function _12_(...)
+            if (args_0_ == nil) then
+              args_0_ = {...}
+              local function _13_()
+                local actual_args_0_ = args_0_
+                args_0_ = nil
+                return body_0_(unpack(actual_args_0_))
+              end
+              return vim.schedule(_13_)
+            else
+              args_0_ = {...}
+              return nil
+            end
+          end
+          write_loading = _12_
         end
-        write_loading = vim.schedule_wrap(_13_)
         config0["on-end"] = function()
           if (#results0 == 0) then
             last_results = results0
             write_results(last_results, request0.filter)
           elseif has_meta(tbl.first(results0), "score") then
-            local function _14_(_241, _242)
+            local function _11_(_241, _242)
               return (_241.score > _242.score)
             end
-            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _14_)
+            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _11_)
             last_results = results0
             write_results(last_results, request0.filter)
           end
@@ -505,10 +567,8 @@ do
           if (selection ~= nil) then
             return vim.schedule_wrap(config.select)(selection, original_winnr)
           end
-        else
-          if config.multiselect then
-            return vim.schedule_wrap(config.multiselect)(selections, original_winnr)
-          end
+        elseif config.multiselect then
+          return vim.schedule_wrap(config.multiselect)(selections, original_winnr)
         end
       end
       local function on_select_all_toggle()
@@ -542,33 +602,33 @@ do
       local function on_key_direction(next_index)
         local line_count = vim.api.nvim_buf_line_count(results_view.bufnr)
         local index = math.max(1, math.min(line_count, next_index(cursor_row)))
-        vim.api.nvim_win_set_cursor(results_view.winnr, {index, 0})
         cursor_row = index
+        update_cursor()
         return write_results(last_results)
       end
       local function on_up()
-        local function _13_(_241)
+        local function _11_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_13_)
+        return on_key_direction(_11_)
       end
       local function on_down()
-        local function _13_(_241)
+        local function _11_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_13_)
+        return on_key_direction(_11_)
       end
       local function on_pageup()
-        local function _13_(_241)
+        local function _11_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_13_)
+        return on_key_direction(_11_)
       end
       local function on_pagedown()
-        local function _13_(_241)
+        local function _11_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_13_)
+        return on_key_direction(_11_)
       end
       local function set_next_view_row(next_index)
         if has_views then
@@ -586,18 +646,18 @@ do
       end
       local function on_viewpageup()
         if has_views then
-          local function _13_(_241, _242)
+          local function _11_(_241, _242)
             return (_241 - _242)
           end
-          return set_next_view_row(_13_)
+          return set_next_view_row(_11_)
         end
       end
       local function on_viewpagedown()
         if has_views then
-          local function _13_(_241, _242)
+          local function _11_(_241, _242)
             return (_241 + _242)
           end
-          return set_next_view_row(_13_)
+          return set_next_view_row(_11_)
         end
       end
       local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt})

@@ -238,12 +238,16 @@
   ;; Creates the results buffer and window and stores thier numbers
   (local results-view (results.create {: layout : has-views}))
 
+  ;; Helper to update cursor
+  (fn update-cursor []
+    (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0]))
+
   ;; Register buffer for exiting
   ;; TODO make registering buffer a standard pattern
   (table.insert buffers results-view.bufnr)
 
   ;; Updates the views based on selection
-  (safefn update-views [selection]
+  (safedebounced update-views [selection]
     (each [_ {:view {: bufnr : winnr : width : height} : producer} (ipairs views)]
       (fn cancel [request]
         (or exit (not= (tostring request.selection) (tostring (get-selection)))))
@@ -254,12 +258,16 @@
       (create {: producer : request})))
 
   ;; Only write what results are needed
-  (safefn write-results [results filter]
+  (safedebounced write-results [results filter]
     (when (not exit)
       (let [result-size (length results)]
+        ;; Make sure cursor stays in view
+        (when (> cursor-row result-size) (set cursor-row (math.max 1 result-size)))
         (if (= result-size 0)
           ;; If there are no results then clear
-          (buffer.set-lines results-view.bufnr 0 -1 [])
+          (do
+           (buffer.set-lines results-view.bufnr 0 -1 [])
+           (update-cursor))
           ;; Otherwise render partial results
           ;; Don't render more than we need to
           ;; this is getting only the height plus the cursor
@@ -270,6 +278,8 @@
               (table.insert partial-results (tostring result)))
             ;; Set the lines, but make sure tables are converted to strings
             (buffer.set-lines results-view.bufnr 0 -1 partial-results)
+            ;; Make sure the cursor is always updated
+            (update-cursor)
             ;; Update highlights
             (each [row (pairs partial-results)]
               (local result (. results row))
@@ -286,9 +296,7 @@
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (buffer.add-selected-highlight results-view.bufnr row)))))
-        ;; Make sure cursor stays in view
-        (when (> cursor-row result-size) (set cursor-row (math.max 1 result-size))))
+                (buffer.add-selected-highlight results-view.bufnr row))))))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
@@ -329,7 +337,7 @@
     ;; Prepare the scheduler config
     (local config {:producer config.producer : request})
     ;; Schedules a loading screen write
-    (safefn write-loading []
+    (safedebounced write-loading []
       (when (not (request.canceled))
         (local loading-screen (loading results-view.width results-view.height loading-count))
         (buffer.set-lines results-view.bufnr 0 -1 loading-screen)))
@@ -398,7 +406,7 @@
       (let [selection (get-selection)]
         (when (not= selection nil) (safecall config.select selection original-winnr)))
       ;; Multiselect case
-      (when config.multiselect (safecall config.multiselect selections original-winnr))))
+      config.multiselect (safecall config.multiselect selections original-winnr)))
 
   ;; Handles select all in the multiselect case
   (fn on-select-all-toggle []
@@ -425,8 +433,8 @@
     (let [line-count (vim.api.nvim_buf_line_count results-view.bufnr)
           ;; Ensures cursor stays in results
           index (math.max 1 (math.min line-count (next-index cursor-row)))]
-      (vim.api.nvim_win_set_cursor results-view.winnr [index 0])
       (set cursor-row index)
+      (update-cursor)
       (write-results last-results)))
 
   ;; On up handler

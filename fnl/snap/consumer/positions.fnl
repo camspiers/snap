@@ -4,7 +4,7 @@
       (= filter "")
       []
       (do
-        (local positions [])
+        (local positions {})
         (local filter (string.upper filter))
         (local result (string.upper (tostring result)))
         (each [c (filter:gmatch ".")]
@@ -15,9 +15,9 @@
               (not= index nil)
               (do
                 (set last-index (+ index 1))
-                (table.insert positions index))
+                (tset positions index true))
               (lua "break"))))
-        positions)))
+        (vim.tbl_keys positions))))
 
   (fn [producer]
     (fn [request]
