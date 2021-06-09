@@ -332,7 +332,9 @@
     ;; Store the number of times the loading screen has displayed
     (var loading-count 0)
     ;; Store the first time
-    (var last-time (vim.loop.now))
+    (local first-time (vim.loop.now))
+    ;; Store a last-time time that updates on each loading screen render
+    (var last-time first-time)
     ;; Accumulate results
     (var results [])
     ;; Create the cancel function
@@ -375,16 +377,17 @@
     (fn config.on-tick []
       ;; Store the current time
       (when (not early-write)
-        ;; Render first loading screen if no render has occured
-        (when (= loading-count 0)
-          (set loading-count (+ loading-count 1))
-          (write-loading))
         ;; Render a basic loading screen based on time
         (local current-time (vim.loop.now))
-        (when (> (- current-time last-time) 500)
-          (set loading-count (+ loading-count 1))
-          (set last-time current-time)
-          (write-loading))))
+        ;; Render first loading screen if no render has occured
+        (when
+          (or
+            (and (= loading-count 0) (> (- current-time first-time) 100))
+            (> (- current-time last-time) 500))
+          (do
+            (set loading-count (+ loading-count 1))
+            (set last-time current-time)
+            (write-loading)))))
     ;; Collects results progressively and renders early if possible
     (fn config.on-value [value]
       ;; Check the type

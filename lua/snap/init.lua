@@ -506,7 +506,8 @@ do
         last_requested_filter = filter
         local early_write = false
         local loading_count = 0
-        local last_time = vim.loop.now()
+        local first_time = vim.loop.now()
+        local last_time = first_time
         local results0 = {}
         local function cancel(request0)
           return (exit or (request0.filter ~= last_requested_filter))
@@ -558,12 +559,8 @@ do
         end
         config0["on-tick"] = function()
           if not early_write then
-            if (loading_count == 0) then
-              loading_count = (loading_count + 1)
-              write_loading()
-            end
             local current_time = vim.loop.now()
-            if ((current_time - last_time) > 500) then
+            if (((loading_count == 0) and ((current_time - first_time) > 100)) or ((current_time - last_time) > 500)) then
               loading_count = (loading_count + 1)
               last_time = current_time
               return write_loading()
