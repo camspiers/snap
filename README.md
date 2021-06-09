@@ -140,7 +140,15 @@ snap.run {
 
 When a single item is selected, calls the provided `select` function with the cursor result as the selection.
 
+When multiple items are selection, calls the provider `multiselect` function.
+
 - `<CR>`
+
+Alternatives:
+
+- `<C-x>` opens in new split
+- `<C-v>` opens in new vsplit
+- `<C-t>` opens in new tab
 
 #### Exit
 
