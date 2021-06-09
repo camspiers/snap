@@ -398,13 +398,13 @@
     (create config))
 
   ;; Handles entering
-  (fn on-enter []
+  (fn on-enter [type]
     (local selections (vim.tbl_keys selected))
     (if
       (= (length selections) 0)
       ;; Single select case
       (let [selection (get-selection)]
-        (when (not= selection nil) (safecall config.select selection original-winnr)))
+        (when (not= selection nil) (safecall config.select selection original-winnr type)))
       ;; Multiselect case
       config.multiselect (safecall config.multiselect selections original-winnr)))
 

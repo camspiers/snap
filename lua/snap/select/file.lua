@@ -44,11 +44,23 @@ do
   local v_0_
   do
     local v_0_0
-    local function select0(selection, winnr)
+    local function select0(selection, winnr, type)
       local buffer = vim.fn.bufnr(tostring(selection), true)
       vim.api.nvim_buf_set_option(buffer, "buflisted", true)
-      if (winnr ~= false) then
-        return vim.api.nvim_win_set_buf(winnr, buffer)
+      local _3_ = type
+      if (_3_ == nil) then
+        if (winnr ~= false) then
+          return vim.api.nvim_win_set_buf(winnr, buffer)
+        end
+      elseif (_3_ == "vsplit") then
+        vim.api.nvim_command("vsplit")
+        return vim.api.nvim_win_set_buf(0, buffer)
+      elseif (_3_ == "split") then
+        vim.api.nvim_command("split")
+        return vim.api.nvim_win_set_buf(0, buffer)
+      elseif (_3_ == "tab") then
+        vim.api.nvim_command("tabnew")
+        return vim.api.nvim_win_set_buf(0, buffer)
       end
     end
     v_0_0 = select0

@@ -85,8 +85,8 @@ do
           return config["on-exit"]()
         end
       end
-      local function on_enter()
-        config["on-enter"]()
+      local function on_enter(type)
+        config["on-enter"](type)
         return config["on-exit"]()
       end
       local function on_tab()
@@ -109,6 +109,18 @@ do
         return register.clean(bufnr)
       end
       register["buf-map"](bufnr, {"n", "i"}, {"<CR>"}, on_enter)
+      local function _4_(...)
+        return on_enter("split", ...)
+      end
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-x>"}, _4_)
+      local function _5_(...)
+        return on_enter("vsplit", ...)
+      end
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-v>"}, _5_)
+      local function _6_(...)
+        return on_enter("tab", ...)
+      end
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-t>"}, _6_)
       register["buf-map"](bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
       register["buf-map"](bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
       register["buf-map"](bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)

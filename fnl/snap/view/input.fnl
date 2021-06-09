@@ -34,8 +34,8 @@
         (set exited true)
         (config.on-exit)))
 
-    (fn on-enter []
-      (config.on-enter)
+    (fn on-enter [type]
+      (config.on-enter type)
       (config.on-exit))
 
     (fn on-tab []
@@ -59,6 +59,9 @@
     ;; TODO Need to think about other methods of selection
     ;; e.g. we want to support opening in splits etc
     (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
+    (register.buf-map bufnr [:n :i] [:<C-x>] (partial on-enter "split"))
+    (register.buf-map bufnr [:n :i] [:<C-v>] (partial on-enter "vsplit"))
+    (register.buf-map bufnr [:n :i] [:<C-t>] (partial on-enter "tab"))
     (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
 
     ;; Selection

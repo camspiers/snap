@@ -1,10 +1,21 @@
 (module snap.select.file)
 
-(defn select [selection winnr]
+(defn select [selection winnr type]
   (let [buffer (vim.fn.bufnr (tostring selection) true)]
     (vim.api.nvim_buf_set_option buffer :buflisted true)
-    (when (not= winnr false)
-      (vim.api.nvim_win_set_buf winnr buffer))))
+    (match type
+      nil (when (not= winnr false)
+        (vim.api.nvim_win_set_buf winnr buffer))
+      :vsplit (do
+        (vim.api.nvim_command "vsplit")
+        (vim.api.nvim_win_set_buf 0 buffer))
+      :split (do
+        (vim.api.nvim_command "split")
+        (vim.api.nvim_win_set_buf 0 buffer))
+      :tab (do
+        (vim.api.nvim_command "tabnew")
+        (vim.api.nvim_win_set_buf 0 buffer)))))
+
 
 (defn multiselect [selections winnr]
   (each [index selection (ipairs selections)]

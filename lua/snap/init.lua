@@ -560,12 +560,12 @@ do
         end
         return create(config0)
       end
-      local function on_enter()
+      local function on_enter(type)
         local selections = vim.tbl_keys(selected)
         if (#selections == 0) then
           local selection = get_selection()
           if (selection ~= nil) then
-            return vim.schedule_wrap(config.select)(selection, original_winnr)
+            return vim.schedule_wrap(config.select)(selection, original_winnr, type)
           end
         elseif config.multiselect then
           return vim.schedule_wrap(config.multiselect)(selections, original_winnr)
