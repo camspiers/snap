@@ -33,6 +33,12 @@
 ;; Exposes register as a main API
 (def register register)
 
+(defn get_producer [producer]
+  "When a producer is a table, pull the default function out of it"
+  (match (type producer)
+    :table producer.default
+    _ producer))
+
 (defn get [mod]
   "Provides easy access to submodules"
   (require (string.format "snap.%s" mod)))
@@ -64,6 +70,7 @@
 
 (defn consume [producer request]
   "Returns an iterator that consumes a producer"
+  (local producer (get_producer producer))
   (assertfunction producer "producer passed to snap.consume must be a function")
   (asserttable request "request passed to snap.consume must be a table")
   (var reader (coroutine.create producer))
@@ -141,7 +148,7 @@
   "The main entry point for running snaps"
   ;; Required values
   (asserttable config "snap.run config must be a table")
-  (assertfunction config.producer "snap.run 'producer' must be a function")
+  (assertfunction (get_producer config.producer) "snap.run 'producer' must be a function or a table with a default function")
   (assertfunction config.select "snap.run 'select' must be a function")
 
   ;; Optional values
@@ -335,7 +342,7 @@
     ;; Prepare the request
     (local request (request.create {: body : cancel}))
     ;; Prepare the scheduler config
-    (local config {:producer config.producer : request})
+    (local config {:producer (get_producer config.producer) : request})
     ;; Schedules a loading screen write
     (safedebounced write-loading []
       (when (not (request.canceled))

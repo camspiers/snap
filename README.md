@@ -459,6 +459,16 @@ type ViewRequest = {
 type Producer = (request: Request) => yield<Yieldable>;
 ```
 
+The full type of producer is actually:
+
+```typescript
+type ProducerWithDefault = {default: Producer} | Producer;
+```
+
+Because we support passing a table if it has a `default` field that is a producer. This enables producer modules to export a default producer, while also making orther related producers available, e.g. ones with additional configuration.
+
+See: https://github.com/camspiers/snap/blob/main/fnl/snap/producer/ripgrep/file.fnl
+
 ### Consumer
 
 ```typescript

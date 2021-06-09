@@ -7,6 +7,13 @@
       (when (not= (tostring value) "")
         (table.insert tbl value)))))
 
+(defn concat [tbl-a tbl-b]
+  "Concatenates tables"
+  (let [tbl []]
+    (accumulate tbl tbl-a)
+    (accumulate tbl tbl-b)
+    tbl))
+
 (defn take [tbl num]
   "Takes the first n values from tbl"
   (local partial-tbl [])

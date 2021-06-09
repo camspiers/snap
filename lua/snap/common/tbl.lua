@@ -62,6 +62,25 @@ do
   t_0_["accumulate"] = v_0_
   accumulate = v_0_
 end
+local concat
+do
+  local v_0_
+  do
+    local v_0_0
+    local function concat0(tbl_a, tbl_b)
+      local tbl = {}
+      accumulate(tbl, tbl_a)
+      accumulate(tbl, tbl_b)
+      return tbl
+    end
+    v_0_0 = concat0
+    _0_["concat"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["concat"] = v_0_
+  concat = v_0_
+end
 local take
 do
   local v_0_

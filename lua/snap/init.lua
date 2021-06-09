@@ -60,6 +60,28 @@ do
   t_0_["register"] = v_0_
   register0 = v_0_
 end
+local get_producer
+do
+  local v_0_
+  do
+    local v_0_0
+    local function get_producer0(producer)
+      local _3_ = type(producer)
+      if (_3_ == "table") then
+        return producer.default
+      else
+        local _ = _3_
+        return producer
+      end
+    end
+    v_0_0 = get_producer0
+    _0_["get_producer"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["get_producer"] = v_0_
+  get_producer = v_0_
+end
 local get
 do
   local v_0_
@@ -154,9 +176,10 @@ do
   do
     local v_0_0
     local function consume0(producer, request0)
-      assert((type(producer) == "function"), "producer passed to snap.consume must be a function")
+      local producer0 = get_producer(producer)
+      assert((type(producer0) == "function"), "producer passed to snap.consume must be a function")
       assert((type(request0) == "table"), "request passed to snap.consume must be a table")
-      local reader = coroutine.create(producer)
+      local reader = coroutine.create(producer0)
       local function _3_()
         if (coroutine.status(reader) == "dead") then
           reader = nil
@@ -282,7 +305,7 @@ do
     local v_0_0
     local function run0(config)
       assert((type(config) == "table"), "snap.run config must be a table")
-      assert((type(config.producer) == "function"), "snap.run 'producer' must be a function")
+      assert((type(get_producer(config.producer)) == "function"), "snap.run 'producer' must be a function or a table with a default function")
       assert((type(config.select) == "function"), "snap.run 'select' must be a function")
       if config.multiselect then
         assert((type(config.multiselect) == "function"), "snap.run 'multiselect' must be a function")
@@ -490,7 +513,7 @@ do
         end
         local body = {filter = filter, height = results_view.height, winnr = original_winnr}
         local request0 = request.create({body = body, cancel = cancel})
-        local config0 = {producer = config.producer, request = request0}
+        local config0 = {producer = get_producer(config.producer), request = request0}
         local write_loading
         do
           local body_0_
