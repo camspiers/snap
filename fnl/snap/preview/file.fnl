@@ -1,6 +1,9 @@
 (let [snap (require :snap)
       read-file (snap.get :preview.read-file)
-      loading (snap.get :loading)]
+      loading (snap.get :loading)
+      has-treesitter (pcall require :nvim-treesitter)
+      (_ highlight) (pcall require :nvim-treesitter.highlight)
+      (_ parsers) (pcall require :nvim-treesitter.parsers)]
   (fn [request]
     ;; Display loading
     (var load-counter 0)
@@ -41,7 +44,22 @@
         ;; Detect filetype
         (vim.api.nvim_buf_call request.bufnr (fn []
           ;; Use the fake path to enable ftdetection
-          (vim.api.nvim_command "filetype detect")))
+          (local eventignore (vim.api.nvim_get_option "eventignore"))
+          (vim.api.nvim_set_option "eventignore" "FileType")
+          (vim.api.nvim_command "filetype detect")
+          (vim.api.nvim_set_option "eventignore" eventignore)))
+        ;; Add syntax highlighting
+        (local filetype (vim.api.nvim_buf_get_option request.bufnr "filetype"))
+        (when
+          (not= filetype "")
+          (if
+            has-treesitter
+            (let [lang (parsers.ft_to_lang filetype)]
+              (if
+                (parsers.has_parser lang)
+                (highlight.attach request.bufnr lang)
+                (vim.api.nvim_buf_set_option request.bufnr "syntax" filetype)))
+            (vim.api.nvim_buf_set_option request.bufnr "syntax" filetype)))
         (set preview nil))))
 
     ;; Free memory

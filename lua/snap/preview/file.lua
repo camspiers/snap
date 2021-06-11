@@ -2,6 +2,9 @@ local _2afile_2a = "fnl/snap/preview/file.fnl"
 local snap = require("snap")
 local read_file = snap.get("preview.read-file")
 local loading = snap.get("loading")
+local has_treesitter = pcall(require, "nvim-treesitter")
+local _, highlight = pcall(require, "nvim-treesitter.highlight")
+local _0, parsers = pcall(require, "nvim-treesitter.parsers")
 local function _1_(request)
   local load_counter = 0
   local last_time = vim.loop.now()
@@ -31,9 +34,25 @@ local function _1_(request)
       local fake_path = (vim.fn.tempname() .. "/" .. vim.fn.fnamemodify(tostring(request.selection), ":t"))
       vim.api.nvim_buf_set_name(request.bufnr, fake_path)
       local function _4_()
-        return vim.api.nvim_command("filetype detect")
+        local eventignore = vim.api.nvim_get_option("eventignore")
+        vim.api.nvim_set_option("eventignore", "FileType")
+        vim.api.nvim_command("filetype detect")
+        return vim.api.nvim_set_option("eventignore", eventignore)
       end
       vim.api.nvim_buf_call(request.bufnr, _4_)
+      local filetype = vim.api.nvim_buf_get_option(request.bufnr, "filetype")
+      if (filetype ~= "") then
+        if has_treesitter then
+          local lang = parsers.ft_to_lang(filetype)
+          if parsers.has_parser(lang) then
+            highlight.attach(request.bufnr, lang)
+          else
+            vim.api.nvim_buf_set_option(request.bufnr, "syntax", filetype)
+          end
+        else
+          vim.api.nvim_buf_set_option(request.bufnr, "syntax", filetype)
+        end
+      end
       preview = nil
       return nil
     end
