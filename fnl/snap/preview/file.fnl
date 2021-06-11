@@ -4,7 +4,7 @@
   (fn [request]
     ;; Display loading
     (var load-counter 0)
-    (var last-time 0)
+    (var last-time (vim.loop.now))
 
     ;; Progressively renders loader
     (fn render-loader []

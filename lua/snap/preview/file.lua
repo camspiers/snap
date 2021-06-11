@@ -4,7 +4,7 @@ local read_file = snap.get("preview.read-file")
 local loading = snap.get("loading")
 local function _1_(request)
   local load_counter = 0
-  local last_time = 0
+  local last_time = vim.loop.now()
   local function render_loader()
     if ((vim.loop.now() - last_time) > 500) then
       local function _2_()
