@@ -3,6 +3,7 @@ local snap = require("snap")
 local loading = snap.get("loading")
 local read_file = snap.get("preview.read-file")
 local parse = snap.get("common.vimgrep.parse")
+local syntax = snap.get("preview.syntax")
 local function _1_(request)
   local load_counter = 0
   local last_time = 0
@@ -34,14 +35,7 @@ local function _1_(request)
       if (selection.lnum <= preview_size) then
         vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
       end
-      local fake_path = (vim.fn.tempname() .. "/" .. vim.fn.fnamemodify(selection.filename, ":t"))
-      vim.api.nvim_buf_set_name(request.bufnr, fake_path)
-      local function _5_()
-        return vim.api.nvim_command("filetype detect")
-      end
-      vim.api.nvim_buf_call(request.bufnr, _5_)
-      preview = nil
-      return nil
+      return syntax(vim.fn.fnamemodify(selection.filename, ":t"), request.bufnr)
     end
   end
   snap.sync(_3_)

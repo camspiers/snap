@@ -1,8 +1,8 @@
 (let [snap (require :snap)
       loading (snap.get :loading)
       read-file (snap.get :preview.read-file)
-      parse (snap.get :common.vimgrep.parse)]
-
+      parse (snap.get :common.vimgrep.parse)
+      syntax (snap.get :preview.syntax)]
   (fn [request]
     ;; Display loading
     (var load-counter 0)
@@ -41,13 +41,7 @@
         (when (<= selection.lnum preview-size)
           ;; TODO Col highlighting isn't working
           (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)]))
-        ;; Create a fake path
-        (local fake-path (.. (vim.fn.tempname) "/" (vim.fn.fnamemodify selection.filename ":t")))
-        (vim.api.nvim_buf_set_name request.bufnr fake-path)
-        ;; Detect filetype
-        (vim.api.nvim_buf_call request.bufnr (fn []
-          ;; Use the fake path to enable ftdetection
-          (vim.api.nvim_command "filetype detect")))
-        (set preview nil))))
+        ;; Add synxtax highlighting
+        (syntax (vim.fn.fnamemodify selection.filename ":t") request.bufnr))))
     
     (set preview nil)))
