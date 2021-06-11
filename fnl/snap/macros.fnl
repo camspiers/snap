@@ -48,7 +48,7 @@
   `(when ,value (assertstring ,value ,msg)))
 
 (fn assertmetatable [value metatable msg]
-  `(assert (= (getmetatable ,value) metatable) ,msg))
+  `(assert (= (getmetatable ,value) ,metatable) ,msg))
 
 (fn assertthread [value msg]
   `(assert (= (type ,value) :thread) ,msg))

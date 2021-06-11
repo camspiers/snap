@@ -89,6 +89,10 @@ do
         config["on-enter"](type)
         return config["on-exit"]()
       end
+      local function on_next()
+        config["on-next"]()
+        return config["on-exit"]()
+      end
       local function on_tab()
         config["on-select-toggle"]()
         return config["on-down"]()
@@ -109,6 +113,7 @@ do
         return register.clean(bufnr)
       end
       register["buf-map"](bufnr, {"n", "i"}, {"<CR>"}, on_enter)
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-q>"}, on_next)
       local function _4_(...)
         return on_enter("split", ...)
       end

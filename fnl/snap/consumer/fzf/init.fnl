@@ -21,7 +21,8 @@
           (each [data err cancel (io.spawn :fzf [:-f request.filter] cwd stdout)]
             (when needsdata
               (when (= files-string nil)
-                (set files-string (table.concat files "\n")))
+                (local plain-files (vim.tbl_map #(tostring $1) files))
+                (set files-string (table.concat plain-files "\n")))
               (stdout:write files-string)
               (stdout:shutdown)
               (set needsdata false))

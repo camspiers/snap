@@ -226,7 +226,7 @@ do
         setmetatable(meta_result1, meta_tbl)
         return meta_result1
       elseif (_3_ == "table") then
-        assert((getmetatable(result) == metatable))
+        assert((getmetatable(result) == meta_tbl), "result has wrong metatable")
         return result
       else
         local _ = _3_
@@ -680,7 +680,43 @@ do
           return set_next_view_row(_11_)
         end
       end
-      local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt})
+      local function on_next()
+        if config.next then
+          local results0 = last_results
+          local next_config = {}
+          for key, value in pairs(config) do
+            next_config[key] = value
+          end
+          local function _11_()
+            do
+              local _12_ = type(config.next)
+              if (_12_ == "function") then
+                local function _13_()
+                  return results0
+                end
+                next_config["producer"] = consumer(_13_)
+              elseif (_12_ == "table") then
+                for key, value in pairs(config.next.config) do
+                  next_config[key] = value
+                end
+                local _13_
+                if config.next.format then
+                  _13_ = config.next.consumer(config.next.format(results0))
+                else
+                  local function _14_()
+                    return results0
+                  end
+                  _13_ = config.next.consumer(_14_)
+                end
+                next_config["producer"] = _13_
+              end
+            end
+            return run0(next_config)
+          end
+          return vim.schedule_wrap(_11_)()
+        end
+      end
+      local input_view_info = input.create({["has-views"] = has_views, ["on-down"] = on_down, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-next"] = on_next, ["on-pagedown"] = on_pagedown, ["on-pageup"] = on_pageup, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-up"] = on_up, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt})
       table.insert(buffers, input_view_info.bufnr)
       if (initial_filter ~= "") then
         vim.api.nvim_feedkeys(initial_filter, "n", false)

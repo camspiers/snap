@@ -38,6 +38,10 @@
       (config.on-enter type)
       (config.on-exit))
 
+    (fn on-next []
+      (config.on-next)
+      (config.on-exit))
+
     (fn on-tab []
       (config.on-select-toggle)
       (config.on-down))
@@ -58,6 +62,7 @@
     ;; Enter and exit
     ;; e.g. we want to support opening in splits etc
     (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
+    (register.buf-map bufnr [:n :i] [:<C-q>] on-next)
     (register.buf-map bufnr [:n :i] [:<C-x>] (partial on-enter "split"))
     (register.buf-map bufnr [:n :i] [:<C-v>] (partial on-enter "vsplit"))
     (register.buf-map bufnr [:n :i] [:<C-t>] (partial on-enter "tab"))

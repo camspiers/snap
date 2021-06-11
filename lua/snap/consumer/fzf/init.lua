@@ -22,7 +22,12 @@ local function _1_(producer)
       for data, err, cancel in io.spawn("fzf", {"-f", request.filter}, cwd, stdout) do
         if needsdata then
           if (files_string == nil) then
-            files_string = table.concat(files, "\n")
+            local plain_files
+            local function _3_(_241)
+              return tostring(_241)
+            end
+            plain_files = vim.tbl_map(_3_, files)
+            files_string = table.concat(plain_files, "\n")
           end
           stdout:write(files_string)
           stdout:shutdown()

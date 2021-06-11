@@ -91,7 +91,7 @@
               (setmetatable meta-result meta_tbl)
               meta-result)
     :table (do
-             (assertmetatable result meta_tbl)
+             (assertmetatable result meta_tbl "result has wrong metatable")
              result)
     _ (assert false "result passed to snap.meta_result must be a string or meta result")))
 
@@ -148,7 +148,8 @@
   "The main entry point for running snaps"
   ;; Required values
   (asserttable config "snap.run config must be a table")
-  (assertfunction (get_producer config.producer) "snap.run 'producer' must be a function or a table with a default function")
+  (assertfunction
+    (get_producer config.producer) "snap.run 'producer' must be a function or a table with a default function")
   (assertfunction config.select "snap.run 'select' must be a function")
 
   ;; Optional values
@@ -474,6 +475,29 @@
   ;; View page down handler
   (fn on-viewpagedown [] (when has-views (set-next-view-row #(+ $1 $2))))
 
+  ;; Allows a series of steps
+  (fn on-next []
+    (when config.next
+      (local results last-results)
+      (local next-config {})
+      (each [key value (pairs config)]
+        (tset next-config key value))
+      ;; handle next step
+      (safecall (fn []
+        (match (type config.next)
+          :function (tset next-config :producer (consumer (fn [] results)))
+          :table (do
+            (each [key value (pairs config.next.config)]
+              (tset next-config key value))
+            (tset
+              next-config
+              :producer
+              (if
+                config.next.format
+                (config.next.consumer (config.next.format results))
+                (config.next.consumer (fn [] results))))))
+         (run next-config)))))
+
   ;; Initializes the input view
   ;; This is where all the key bindings happen
   (local input-view-info (input.create
@@ -481,6 +505,7 @@
      : layout
      : prompt
      : on-enter
+     : on-next
      : on-exit
      : on-up
      : on-down
