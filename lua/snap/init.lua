@@ -694,7 +694,7 @@ do
                 local function _13_()
                   return results0
                 end
-                next_config["producer"] = consumer(_13_)
+                next_config["producer"] = config.next(_13_)
               elseif (_12_ == "table") then
                 for key, value in pairs(config.next.config) do
                   next_config[key] = value

@@ -485,7 +485,7 @@
       ;; handle next step
       (safecall (fn []
         (match (type config.next)
-          :function (tset next-config :producer (consumer (fn [] results)))
+          :function (tset next-config :producer (config.next (fn [] results)))
           :table (do
             (each [key value (pairs config.next.config)]
               (tset next-config key value))
