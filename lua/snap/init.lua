@@ -337,7 +337,7 @@ do
       local loading = (config.loading or get("loading"))
       local initial_filter = (config.initial_filter or "")
       local original_winnr = vim.api.nvim_get_current_win()
-      local prompt = string.format("%s> ", (config.prompt or "Find"))
+      local prompt = string.format("%s ", (config.prompt or "Find>"))
       local selected = {}
       local cursor_row = 1
       local function get_selection()

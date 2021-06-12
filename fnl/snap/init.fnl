@@ -194,7 +194,7 @@
   (local original-winnr (vim.api.nvim_get_current_win))
 
   ;; Configures a default or custom prompt
-  (local prompt (string.format "%s> " (or config.prompt :Find)))
+  (local prompt (string.format "%s " (or config.prompt :Find>)))
 
   ;; Stores the selected items, used for multiselect
   (var selected {})
