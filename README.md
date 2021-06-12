@@ -163,6 +163,7 @@ Move cursor to the next selection.
 
 - `<Down>`
 - `<C-n>`
+- `<C-j>`
 
 #### Previous
 
@@ -170,6 +171,7 @@ Move cursor to the previous selection.
 
 - `<Up>`
 - `<C-p>`
+- `<C-k>`
 
 #### Multiselect (enabled when `multiselect` is provided)
 

@@ -53,10 +53,10 @@
     (fn on-ctrla []
       (config.on-select-all-toggle))
 
-    (local on_lines (fn []
-      (config.on-update (get-filter))))
+    (fn on_lines []
+      (config.on-update (get-filter)))
 
-    (fn on_detach [] 
+    (fn on_detach []
       (register.clean bufnr))
 
     ;; Enter and exit
@@ -74,8 +74,8 @@
     (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
 
     ;; Up & down
-    (register.buf-map bufnr [:n :i] [:<Up> :<C-p>] config.on-up)
-    (register.buf-map bufnr [:n :i] [:<Down> :<C-n>] config.on-down)
+    (register.buf-map bufnr [:n :i] [:<Up> :<C-p> :<C-k>] config.on-up)
+    (register.buf-map bufnr [:n :i] [:<Down> :<C-n> :<C-j>] config.on-down)
     (register.buf-map bufnr [:n :i] [:<C-f> :<PageUp>] config.on-pageup)
     (register.buf-map bufnr [:n :i] [:<C-b> :<PageDown>] config.on-pagedown)
 
