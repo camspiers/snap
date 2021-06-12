@@ -2,7 +2,7 @@
       tbl (snap.get :common.tbl)
       general (snap.get :producer.fd.general)]
   (local file {})
-  (local args [:--no-ignore-vcs])
+  (local args [:--no-ignore-vcs :-t :f])
   (fn file.default [request]
     (let [cwd (snap.sync vim.fn.getcwd)]
       (general request {: args : cwd})))

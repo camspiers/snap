@@ -3,7 +3,7 @@ local snap = require("snap")
 local tbl = snap.get("common.tbl")
 local general = snap.get("producer.fd.general")
 local file = {}
-local args = {"--no-ignore-vcs"}
+local args = {"--no-ignore-vcs", "-t", "f"}
 file.default = function(request)
   local cwd = snap.sync(vim.fn.getcwd)
   return general(request, {args = args, cwd = cwd})
