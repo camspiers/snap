@@ -316,6 +316,12 @@ do
       if config.layout then
         assert((type(config.layout) == "function"), "snap.run 'layout' must be a function")
       end
+      if config.prerun then
+        assert((type(config.prerun) == "function"), "snap.run 'prerun' must be a function")
+      end
+      if config.postrun then
+        assert((type(config.postrun) == "function"), "snap.run 'postrun' must be a function")
+      end
       if config.views then
         assert((type(config.views) == "table"), "snap.run 'views' must be a table")
       end
@@ -340,6 +346,7 @@ do
       local prompt = string.format("%s ", (config.prompt or "Find>"))
       local selected = {}
       local cursor_row = 1
+      if config.prerun then config.prerun() end
       local function get_selection()
         return last_results[cursor_row]
       end
@@ -360,6 +367,7 @@ do
             buffer.delete(bufnr, {force = true})
           end
         end
+        if config.postrun then config.postrun() end
         return vim.api.nvim_command("stopinsert")
       end
       local total_views
