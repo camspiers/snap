@@ -104,34 +104,32 @@ do
       local function on_ctrla()
         return config["on-select-all-toggle"]()
       end
-      local on_lines
-      local function _3_()
+      local function on_lines()
         return config["on-update"](get_filter())
       end
-      on_lines = _3_
       local function on_detach()
         return register.clean(bufnr)
       end
       register["buf-map"](bufnr, {"n", "i"}, {"<CR>"}, on_enter)
       register["buf-map"](bufnr, {"n", "i"}, {"<C-q>"}, on_next)
-      local function _4_(...)
+      local function _3_(...)
         return on_enter("split", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-x>"}, _4_)
-      local function _5_(...)
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-x>"}, _3_)
+      local function _4_(...)
         return on_enter("vsplit", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-v>"}, _5_)
-      local function _6_(...)
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-v>"}, _4_)
+      local function _5_(...)
         return on_enter("tab", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-t>"}, _6_)
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-t>"}, _5_)
       register["buf-map"](bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
       register["buf-map"](bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
       register["buf-map"](bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
       register["buf-map"](bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
-      register["buf-map"](bufnr, {"n", "i"}, {"<Up>", "<C-p>"}, config["on-up"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<Down>", "<C-n>"}, config["on-down"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<Up>", "<C-p>", "<C-k>"}, config["on-up"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<Down>", "<C-n>", "<C-j>"}, config["on-down"])
       register["buf-map"](bufnr, {"n", "i"}, {"<C-f>", "<PageUp>"}, config["on-pageup"])
       register["buf-map"](bufnr, {"n", "i"}, {"<C-b>", "<PageDown>"}, config["on-pagedown"])
       register["buf-map"](bufnr, {"n", "i"}, {"<C-d>"}, config["on-viewpagedown"])
