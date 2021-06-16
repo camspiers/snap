@@ -38,8 +38,5 @@
                 (each [_ result (ipairs results)]
                   (tset results-indexed (tostring result) result))
                 (local filtered-results (vim.split (data:sub 1 -2) "\n" true))
-                (coroutine.yield (vim.tbl_map #(. results-indexed $1) filtered-results))
-                
-                
-                )))
+                (coroutine.yield (vim.tbl_map #(. results-indexed $1) filtered-results)))))
           nil))))))
