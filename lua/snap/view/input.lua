@@ -95,11 +95,11 @@ do
       end
       local function on_tab()
         config["on-select-toggle"]()
-        return config["on-down"]()
+        return config["on-next-item"]()
       end
       local function on_shifttab()
         config["on-select-toggle"]()
-        return config["on-up"]()
+        return config["on-prev-item"]()
       end
       local function on_ctrla()
         return config["on-select-all-toggle"]()
@@ -128,10 +128,38 @@ do
       register["buf-map"](bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
       register["buf-map"](bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
       register["buf-map"](bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
-      register["buf-map"](bufnr, {"n", "i"}, {"<Up>", "<C-p>", "<C-k>"}, config["on-up"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<Down>", "<C-n>", "<C-j>"}, config["on-down"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-f>", "<PageUp>"}, config["on-pageup"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-b>", "<PageDown>"}, config["on-pagedown"])
+      local _6_
+      if config.reverse then
+        _6_ = {"<Down>", "<C-j>"}
+      else
+        _6_ = {"<Up>", "<C-k>"}
+      end
+      register["buf-map"](bufnr, {"n", "i"}, _6_, config["on-prev-item"])
+      local _8_
+      if config.reverse then
+        _8_ = {"<Up>", "<C-k>"}
+      else
+        _8_ = {"<Down>", "<C-j>"}
+      end
+      register["buf-map"](bufnr, {"n", "i"}, _8_, config["on-next-item"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-p>"}, config["on-prev-item"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-n>"}, config["on-next-item"])
+      local _10_
+      if config.reverse then
+        _10_ = {"<PageDown>"}
+      else
+        _10_ = {"<PageUp>"}
+      end
+      register["buf-map"](bufnr, {"n", "i"}, _10_, config["on-prev-page"])
+      local _12_
+      if config.reverse then
+        _12_ = {"<PageUp>"}
+      else
+        _12_ = {"<PageDown>"}
+      end
+      register["buf-map"](bufnr, {"n", "i"}, _12_, config["on-next-page"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-b>"}, config["on-prev-page"])
+      register["buf-map"](bufnr, {"n", "i"}, {"<C-f>"}, config["on-next-page"])
       register["buf-map"](bufnr, {"n", "i"}, {"<C-d>"}, config["on-viewpagedown"])
       register["buf-map"](bufnr, {"n", "i"}, {"<C-u>"}, config["on-viewpageup"])
       vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))

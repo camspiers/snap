@@ -29,38 +29,58 @@
            ;; so just swap the args to be called with
            (set args# [...]))))))
 
+(fn asserttype [typ value msg]
+  `(assert (= (type ,value) ,typ) ,msg))
+
+(fn asserttype? [typ value msg]
+  `(when ,value (asserttype ,typ ,value ,msg)))
+
 (fn assertfunction [value msg]
-  `(assert (= (type ,value) :function) ,msg))
+  `(asserttype :function ,value ,msg))
 
 (fn assertfunction? [value msg]
-  `(when ,value (assertfunction ,value ,msg)))
+  `(asserttype? :function ,value ,msg))
 
 (fn asserttable [value msg]
-  `(assert (= (type ,value) :table) ,msg))
+  `(asserttype :table ,value ,msg))
 
 (fn asserttable? [value msg]
-  `(when ,value (asserttable ,value ,msg)))
+  `(asserttype? :table ,value ,msg))
 
 (fn assertstring [value msg]
-  `(assert (= (type ,value) :string) ,msg))
+  `(asserttype :string ,value ,msg))
 
 (fn assertstring? [value msg]
-  `(when ,value (assertstring ,value ,msg)))
+  `(asserttype? :string ,value ,msg))
+
+(fn assertthread [value msg]
+  `(asserttype :thread ,value ,msg))
+
+(fn assertthread? [value msg]
+  `(asserttype? :thread ,value ,msg))
+
+(fn assertboolean [value msg]
+  `(asserttype :boolean ,value ,msg))
+
+(fn assertboolean? [value msg]
+  `(asserttype? :boolean ,value ,msg))
 
 (fn assertmetatable [value metatable msg]
   `(assert (= (getmetatable ,value) ,metatable) ,msg))
 
-(fn assertthread [value msg]
-  `(assert (= (type ,value) :thread) ,msg))
-
 {: safefn
  : safecall
  : safedebounced
+ : asserttype
+ : asserttype?
  : assertfunction
  : assertfunction?
  : asserttable
  : asserttable?
  : assertstring
  : assertstring?
- : assertmetatable
- : assertthread}
+ : assertthread
+ : assertthread?
+ : assertboolean
+ : assertboolean?
+ : assertmetatable}

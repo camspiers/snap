@@ -44,11 +44,11 @@
 
     (fn on-tab []
       (config.on-select-toggle)
-      (config.on-down))
+      (config.on-next-item))
 
     (fn on-shifttab []
       (config.on-select-toggle)
-      (config.on-up))
+      (config.on-prev-item))
 
     (fn on-ctrla []
       (config.on-select-all-toggle))
@@ -73,11 +73,17 @@
     (register.buf-map bufnr [:n :i] [:<S-Tab>] on-shifttab)
     (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
 
-    ;; Up & down
-    (register.buf-map bufnr [:n :i] [:<Up> :<C-p> :<C-k>] config.on-up)
-    (register.buf-map bufnr [:n :i] [:<Down> :<C-n> :<C-j>] config.on-down)
-    (register.buf-map bufnr [:n :i] [:<C-f> :<PageUp>] config.on-pageup)
-    (register.buf-map bufnr [:n :i] [:<C-b> :<PageDown>] config.on-pagedown)
+    ;; Up & down are reversed when view is revered
+    (register.buf-map bufnr [:n :i] (if config.reverse [:<Down> :<C-j>] [:<Up> :<C-k>]) config.on-prev-item)
+    (register.buf-map bufnr [:n :i] (if config.reverse [:<Up> :<C-k>]  [:<Down> :<C-j>]) config.on-next-item)
+    (register.buf-map bufnr [:n :i] [:<C-p>] config.on-prev-item)
+    (register.buf-map bufnr [:n :i] [:<C-n>] config.on-next-item)
+
+    ;; Up & down are reversed when view is revered
+    (register.buf-map bufnr [:n :i] (if config.reverse [:<PageDown>] [:<PageUp>]) config.on-prev-page)
+    (register.buf-map bufnr [:n :i] (if config.reverse [:<PageUp>]  [:<PageDown>]) config.on-next-page)
+    (register.buf-map bufnr [:n :i] [:<C-b>] config.on-prev-page)
+    (register.buf-map bufnr [:n :i] [:<C-f>] config.on-next-page)
 
     ;; Views
     (register.buf-map bufnr [:n :i] [:<C-d>] config.on-viewpagedown)

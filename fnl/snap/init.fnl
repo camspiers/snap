@@ -161,6 +161,7 @@
     (each [_ view (ipairs config.views)]
       (assertfunction view "snap.run each view in 'views' must be a function")))
   (assertfunction? config.loading "snap.run 'loading' must be a function")
+  (assertboolean? config.reverse "snap.run 'reverse' must be a boolean")
 
   ;; Store the last results
   (var last-results [])
@@ -246,9 +247,15 @@
   ;; Creates the results buffer and window and stores thier numbers
   (local results-view (results.create {: layout : has-views}))
 
+  ;; Tracks size of partial results
+  (var partial-results-length 1)
   ;; Helper to update cursor
   (fn update-cursor []
-    (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0]))
+    (if config.reverse
+      (do
+        (vim.api.nvim_win_set_cursor results-view.winnr [(- partial-results-length (- cursor-row 1)) 0])
+        (vim.api.nvim_win_call results-view.winnr (partial vim.api.nvim_command "silent normal zb")))
+      (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0])))
 
   ;; Register buffer for exiting
   ;; TODO make registering buffer a standard pattern
@@ -275,6 +282,7 @@
           ;; If there are no results then clear
           (do
            (buffer.set-lines results-view.bufnr 0 -1 [])
+           (set partial-results-length 1)
            (update-cursor))
           ;; Otherwise render partial results
           ;; Don't render more than we need to
@@ -284,6 +292,26 @@
             (each [_ result (ipairs results)
                    :until (= max (length partial-results))]
               (table.insert partial-results (tostring result)))
+
+            ;; Update length
+            (set partial-results-length (length partial-results))
+
+            ;; Reverse the results
+            (when config.reverse
+              (when (< partial-results-length results-view.height)
+                (for [_ partial-results-length results-view.height]
+                  (table.insert partial-results "")))
+
+              ;; Include the empty buffer lines in the length
+              (set partial-results-length (length partial-results))
+
+              ;; Reorder the table
+              (for [left-index 1 (math.floor (/ partial-results-length 2))]
+                (let [left (. partial-results left-index)
+                      right-index (- partial-results-length (- left-index 1))
+                      right (. partial-results right-index)]
+                  (tset partial-results left-index right)
+                  (tset partial-results right-index left))))
             ;; Set the lines, but make sure tables are converted to strings
             (buffer.set-lines results-view.bufnr 0 -1 partial-results)
             ;; Make sure the cursor is always updated
@@ -291,12 +319,13 @@
             ;; Update highlights
             (each [row (pairs partial-results)]
               (local result (. results row))
+              (local reverse-handled-row (if config.reverse (- partial-results-length (- row 1)) row))
               ;; Add positions highlighting
               (when
                 (has_meta result :positions)
                 (buffer.add-positions-highlight
                   results-view.bufnr
-                  row
+                  reverse-handled-row
                   (match (type result.positions)
                     :table result.positions
                     :function (result:positions)
@@ -304,7 +333,7 @@
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (buffer.add-selected-highlight results-view.bufnr row))))))
+                (buffer.add-selected-highlight results-view.bufnr reverse-handled-row))))))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
@@ -449,16 +478,16 @@
       (write-results last-results)))
 
   ;; On up handler
-  (fn on-up [] (on-key-direction #(- $1 1)))
+  (fn on-prev-item [] (on-key-direction #(- $1 1)))
 
   ;; On down handler
-  (fn on-down [] (on-key-direction #(+ $1 1)))
+  (fn on-next-item [] (on-key-direction #(+ $1 1)))
  
   ;; Page up handler
-  (fn on-pageup [] (on-key-direction #(- $1 results-view.height)))
+  (fn on-prev-page [] (on-key-direction #(- $1 results-view.height)))
 
   ;; Page down handler
-  (fn on-pagedown [] (on-key-direction #(+ $1 results-view.height)))
+  (fn on-next-page [] (on-key-direction #(+ $1 results-view.height)))
 
   ;; Moves the view position
   (fn set-next-view-row [next-index]
@@ -477,40 +506,43 @@
 
   ;; Allows a series of steps
   (fn on-next []
-    (when config.next
+    (when
+      (or config.next (and config.steps (> (length config.steps) 0)))
       (local results last-results)
       (local next-config {})
       (each [key value (pairs config)]
         (tset next-config key value))
+      (local next (or config.next (table.remove config.steps)))
       ;; handle next step
       (safecall (fn []
-        (match (type config.next)
-          :function (tset next-config :producer (config.next (fn [] results)))
+        (match (type next)
+          :function (tset next-config :producer (next (fn [] results)))
           :table (do
-            (each [key value (pairs config.next.config)]
+            (each [key value (pairs next.config)]
               (tset next-config key value))
             (tset
               next-config
               :producer
               (if
-                config.next.format
-                (config.next.consumer (config.next.format results))
-                (config.next.consumer (fn [] results))))))
+                next.format
+                (next.consumer (next.format results))
+                (next.consumer (fn [] results))))))
          (run next-config)))))
 
   ;; Initializes the input view
   ;; This is where all the key bindings happen
   (local input-view-info (input.create
     {: has-views
+     :reverse config.reverse
      : layout
      : prompt
      : on-enter
      : on-next
      : on-exit
-     : on-up
-     : on-down
-     : on-pageup
-     : on-pagedown
+     : on-prev-item
+     : on-next-item
+     : on-prev-page
+     : on-next-page
      : on-viewpageup
      : on-viewpagedown
      : on-select-toggle
