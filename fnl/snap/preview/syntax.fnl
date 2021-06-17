@@ -1,7 +1,7 @@
-(let [has-treesitter (pcall require :nvim-treesitter)
-      (_ highlight) (pcall require :nvim-treesitter.highlight)
-      (_ parsers) (pcall require :nvim-treesitter.parsers)]
-  (fn [path bufnr]
+(fn [path bufnr]
+    (local has-treesitter (pcall require :nvim-treesitter))
+    (local (_ highlight) (pcall require :nvim-treesitter.highlight))
+    (local (_ parsers) (pcall require :nvim-treesitter.parsers))
     (local fake-path (.. (vim.fn.tempname) "/" path))
     (vim.api.nvim_buf_set_name bufnr fake-path)
     (vim.api.nvim_buf_call bufnr (fn []
@@ -21,4 +21,4 @@
             (parsers.has_parser lang)
             (highlight.attach bufnr lang)
             (vim.api.nvim_buf_set_option bufnr "syntax" filetype)))
-        (vim.api.nvim_buf_set_option bufnr "syntax" filetype)))))
+        (vim.api.nvim_buf_set_option bufnr "syntax" filetype))))
