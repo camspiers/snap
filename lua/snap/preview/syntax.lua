@@ -1,8 +1,8 @@
 local _2afile_2a = "fnl/snap/preview/syntax.fnl"
-local has_treesitter = pcall(require, "nvim-treesitter")
-local _, highlight = pcall(require, "nvim-treesitter.highlight")
-local _0, parsers = pcall(require, "nvim-treesitter.parsers")
 local function _1_(path, bufnr)
+  local has_treesitter = pcall(require, "nvim-treesitter")
+  local _, highlight = pcall(require, "nvim-treesitter.highlight")
+  local _0, parsers = pcall(require, "nvim-treesitter.parsers")
   local fake_path = (vim.fn.tempname() .. "/" .. path)
   vim.api.nvim_buf_set_name(bufnr, fake_path)
   local function _2_()
