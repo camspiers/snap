@@ -134,6 +134,34 @@ snap.run {
 }
 ```
 
+### Find Help Tags
+
+```lua
+snap.run {
+  prompt = "Help>",
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.help'),
+  select = snap.get'select.help'.select,
+  views = {snap.get'preview.help'}
+}
+```
+
+### Grep with FZF as optional next step
+
+The following will run the vimgrep producer and upon `<C-q>` will run `fzf` on the filtered results.
+
+```lua
+snap.run {
+  producer = snap.get'producer.ripgrep.vimgrep',
+  steps = {{
+    consumer = snap.get'consumer.fzf',
+    config = {prompt = "FZF>"}
+  }},
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
 ### Key Bindings
 
 #### Select
