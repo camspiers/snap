@@ -134,6 +134,22 @@ snap.run {
 }
 ```
 
+or find git files with fallback to ripgrep:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzf'(
+    snap.get'consumer.try'(
+      snap.get'producer.git.file',
+      snap.get'producer.ripgrep.file'
+    ),
+  ),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
 ### Find Help Tags
 
 ```lua
@@ -156,6 +172,25 @@ snap.run {
     consumer = snap.get'consumer.fzf',
     config = {prompt = "FZF>"}
   }},
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+}
+```
+
+### Search files in multiple paths
+
+The following will combine results from multiple paths using a producer for each path:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.fzf'(
+    snap.get'consumer.combine'(
+      snap.get'producer.ripgrep.file'.args({}, "/directory1"),
+      snap.get'producer.ripgrep.file'.args({}, "/directory2"),
+      snap.get'producer.ripgrep.file'.args({}, "/directory3"),
+    ),
+  ),
   select = snap.get'select.file'.select,
   multiselect = snap.get'select.file'.multiselect,
   views = {snap.get'preview.file'}
@@ -674,6 +709,28 @@ A component piece of fzy that only attaches position meta data.
 #### `snap.consumer.fzf`
 
 Runs filtering through fzf, only supports basic positions highlighting for now.
+
+#### `snap.consumer.try`
+
+Accepts and arbitrary number of producers and upon the first that yields results then use it and skip the rest:
+
+```lua
+snap.get'consumer.try'(
+  snap.get'producer.git.file',
+  snap.get'producer.ripgrep.file'
+)
+```
+
+#### `snap.consumer.combine`
+
+Accepts and arbitrary number of producers and combines their results:
+
+```lua
+snap.get'consumer.combine'(
+  snap.get'producer.ripgrep.file'.args({}, "/directory1"),
+  snap.get'producer.ripgrep.file'.args({}, "/directory2"),
+)
+```
 
 ### Selectors
 
