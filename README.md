@@ -116,7 +116,7 @@ snap.run {
 
 ```lua
 snap.run {
-  producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfiles'),
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.oldfile'),
   select = snap.get'select.file'.select,
   multiselect = snap.get'select.file'.multiselect,
   views = {snap.get'preview.file'}
