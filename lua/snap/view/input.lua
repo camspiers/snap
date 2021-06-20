@@ -79,7 +79,6 @@ do
       else
         mappings0 = mappings
       end
-      print(vim.inspect(mappings0))
       local function get_filter()
         local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
         if contents then
