@@ -354,13 +354,13 @@ do
         selected = nil
         config["producer"] = nil
         config["views"] = nil
-        vim.api.nvim_set_current_win(original_winnr)
         for _, _10_ in ipairs(views) do
           local _each_0_ = _10_
           local view0 = _each_0_["view"]
           view0:delete()
         end
         results_view:delete()
+        vim.api.nvim_set_current_win(original_winnr)
         input_view:delete()
         return vim.api.nvim_command("stopinsert")
       end

@@ -219,13 +219,13 @@
     (tset config :producer nil)
     (tset config :views nil)
 
-    ;; Return back to original window
-    (vim.api.nvim_set_current_win original-winnr)
-
     ;; Close each window
     (each [_ {: view} (ipairs views)]
       (view:delete))
     (results-view:delete)
+
+    ;; Return back to original window
+    (vim.api.nvim_set_current_win original-winnr)
     (input-view:delete)
 
     ;; Return back from insert mode
