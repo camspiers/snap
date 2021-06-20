@@ -752,7 +752,7 @@ do
           return vim.schedule_wrap(_12_)()
         end
       end
-      local input_view_info = input.create({["has-views"] = has_views, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-next"] = on_next, ["on-next-item"] = on_next_item, ["on-next-page"] = on_next_page, ["on-prev-item"] = on_prev_item, ["on-prev-page"] = on_prev_page, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, prompt = prompt, reverse = config.reverse})
+      local input_view_info = input.create({["has-views"] = has_views, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-next"] = on_next, ["on-next-item"] = on_next_item, ["on-next-page"] = on_next_page, ["on-prev-item"] = on_prev_item, ["on-prev-page"] = on_prev_page, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, mappings = config.mappings, prompt = prompt, reverse = config.reverse})
       table.insert(buffers, input_view_info.bufnr)
       if (initial_filter ~= "") then
         vim.api.nvim_feedkeys(initial_filter, "n", false)

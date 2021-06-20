@@ -62,6 +62,29 @@ do
   t_0_["accumulate"] = v_0_
   accumulate = v_0_
 end
+local merge
+do
+  local v_0_
+  do
+    local v_0_0
+    local function merge0(tbl1, tbl2)
+      local result = {}
+      for key, val in pairs(tbl1) do
+        result[key] = val
+      end
+      for key, val in pairs(tbl2) do
+        result[key] = val
+      end
+      return result
+    end
+    v_0_0 = merge0
+    _0_["merge"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["merge"] = v_0_
+  merge = v_0_
+end
 local concat
 do
   local v_0_

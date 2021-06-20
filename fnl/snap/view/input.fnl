@@ -13,6 +13,24 @@
      : col
      :focusable true}))
 
+(local mappings {
+  :next [:<C-q>]
+  :enter [:<CR>]
+  :enter-split [:<C-x>]
+  :enter-vsplit [:<C-v>]
+  :enter-tab [:<C-t>]
+  :exit [:<Esc> :<C-c>]
+  :select [:<Tab>]
+  :unselect [:<S-Tab>]
+  :select-all [:<C-a>]
+  :prev-item [:<C-p>]
+  :next-item [:<C-n>]
+  :prev-page [:<C-b>]
+  :next-page [:<C-f>]
+  :view-page-down [:<C-d>]
+  :view-page-up [:<C-u>]
+})
+
 (defn create [config]
   "Creates the input view"
   (let [bufnr (buffer.create)
@@ -23,6 +41,8 @@
     (buffer.add-highlight bufnr :SnapPrompt 0 0 (string.len config.prompt))
     (vim.api.nvim_command :startinsert)
     (vim.api.nvim_win_set_option winnr :winhl "Normal:SnapNormal,FloatBorder:SnapBorder")
+
+    (local mappings (if config.mappings (tbl.merge mappings config.mappings) mappings))
 
     (fn get-filter []
       (let [contents (tbl.first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]
@@ -63,33 +83,33 @@
 
     ;; Enter and exit
     ;; e.g. we want to support opening in splits etc
-    (register.buf-map bufnr [:n :i] [:<CR>] on-enter)
-    (register.buf-map bufnr [:n :i] [:<C-q>] on-next)
-    (register.buf-map bufnr [:n :i] [:<C-x>] (partial on-enter "split"))
-    (register.buf-map bufnr [:n :i] [:<C-v>] (partial on-enter "vsplit"))
-    (register.buf-map bufnr [:n :i] [:<C-t>] (partial on-enter "tab"))
-    (register.buf-map bufnr [:n :i] [:<Esc> :<C-c>] on-exit)
+    (register.buf-map bufnr [:n :i] mappings.next on-next)
+    (register.buf-map bufnr [:n :i] mappings.enter on-enter)
+    (register.buf-map bufnr [:n :i] mappings.enter-split (partial on-enter "split"))
+    (register.buf-map bufnr [:n :i] mappings.enter-vsplit (partial on-enter "vsplit"))
+    (register.buf-map bufnr [:n :i] mappings.enter-tab (partial on-enter "tab"))
+    (register.buf-map bufnr [:n :i] mappings.exit on-exit)
 
     ;; Selection
-    (register.buf-map bufnr [:n :i] [:<Tab>] on-tab)
-    (register.buf-map bufnr [:n :i] [:<S-Tab>] on-shifttab)
-    (register.buf-map bufnr [:n :i] [:<C-a>] on-ctrla)
+    (register.buf-map bufnr [:n :i] mappings.select on-tab)
+    (register.buf-map bufnr [:n :i] mappings.unselect on-shifttab)
+    (register.buf-map bufnr [:n :i] mappings.select-all on-ctrla)
 
     ;; Up & down are reversed when view is revered
     (register.buf-map bufnr [:n :i] (if config.reverse [:<Down> :<C-j>] [:<Up> :<C-k>]) config.on-prev-item)
     (register.buf-map bufnr [:n :i] (if config.reverse [:<Up> :<C-k>]  [:<Down> :<C-j>]) config.on-next-item)
-    (register.buf-map bufnr [:n :i] [:<C-p>] config.on-prev-item)
-    (register.buf-map bufnr [:n :i] [:<C-n>] config.on-next-item)
+    (register.buf-map bufnr [:n :i] mappings.prev-item config.on-prev-item)
+    (register.buf-map bufnr [:n :i] mappings.next-item config.on-next-item)
 
     ;; Up & down are reversed when view is revered
     (register.buf-map bufnr [:n :i] (if config.reverse [:<PageDown>] [:<PageUp>]) config.on-prev-page)
     (register.buf-map bufnr [:n :i] (if config.reverse [:<PageUp>]  [:<PageDown>]) config.on-next-page)
-    (register.buf-map bufnr [:n :i] [:<C-b>] config.on-prev-page)
-    (register.buf-map bufnr [:n :i] [:<C-f>] config.on-next-page)
+    (register.buf-map bufnr [:n :i] mappings.prev-page config.on-prev-page)
+    (register.buf-map bufnr [:n :i] mappings.next-page config.on-next-page)
 
     ;; Views
-    (register.buf-map bufnr [:n :i] [:<C-d>] config.on-viewpagedown)
-    (register.buf-map bufnr [:n :i] [:<C-u>] config.on-viewpageup)
+    (register.buf-map bufnr [:n :i] mappings.view-page-down config.on-viewpagedown)
+    (register.buf-map bufnr [:n :i] mappings.view-page-down config.on-viewpageup)
 
     (vim.api.nvim_command
       (string.format

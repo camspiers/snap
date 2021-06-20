@@ -58,6 +58,7 @@ local function layout(config)
   end
   return {col = col, focusable = true, height = 1, row = ((row + height) - size.padding), width = _3_}
 end
+local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>"}, ["next-page"] = {"<C-f>"}, ["prev-item"] = {"<C-p>"}, ["prev-page"] = {"<C-b>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
 local create
 do
   local v_0_
@@ -72,6 +73,13 @@ do
       buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
       vim.api.nvim_command("startinsert")
       vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
+      local mappings0
+      if config.mappings then
+        mappings0 = tbl.merge(mappings, config.mappings)
+      else
+        mappings0 = mappings
+      end
+      print(vim.inspect(mappings0))
       local function get_filter()
         local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
         if contents then
@@ -112,58 +120,58 @@ do
       local function on_detach()
         return register.clean(bufnr)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<CR>"}, on_enter)
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-q>"}, on_next)
-      local function _3_(...)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0.next, on_next)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0.enter, on_enter)
+      local function _4_(...)
         return on_enter("split", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-x>"}, _3_)
-      local function _4_(...)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-split"], _4_)
+      local function _5_(...)
         return on_enter("vsplit", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-v>"}, _4_)
-      local function _5_(...)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-vsplit"], _5_)
+      local function _6_(...)
         return on_enter("tab", ...)
       end
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-t>"}, _5_)
-      register["buf-map"](bufnr, {"n", "i"}, {"<Esc>", "<C-c>"}, on_exit)
-      register["buf-map"](bufnr, {"n", "i"}, {"<Tab>"}, on_tab)
-      register["buf-map"](bufnr, {"n", "i"}, {"<S-Tab>"}, on_shifttab)
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-a>"}, on_ctrla)
-      local _6_
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-tab"], _6_)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0.exit, on_exit)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0.select, on_tab)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0.unselect, on_shifttab)
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["select-all"], on_ctrla)
+      local _7_
       if config.reverse then
-        _6_ = {"<Down>", "<C-j>"}
+        _7_ = {"<Down>", "<C-j>"}
       else
-        _6_ = {"<Up>", "<C-k>"}
+        _7_ = {"<Up>", "<C-k>"}
       end
-      register["buf-map"](bufnr, {"n", "i"}, _6_, config["on-prev-item"])
-      local _8_
+      register["buf-map"](bufnr, {"n", "i"}, _7_, config["on-prev-item"])
+      local _9_
       if config.reverse then
-        _8_ = {"<Up>", "<C-k>"}
+        _9_ = {"<Up>", "<C-k>"}
       else
-        _8_ = {"<Down>", "<C-j>"}
+        _9_ = {"<Down>", "<C-j>"}
       end
-      register["buf-map"](bufnr, {"n", "i"}, _8_, config["on-next-item"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-p>"}, config["on-prev-item"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-n>"}, config["on-next-item"])
-      local _10_
+      register["buf-map"](bufnr, {"n", "i"}, _9_, config["on-next-item"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-item"], config["on-prev-item"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["next-item"], config["on-next-item"])
+      local _11_
       if config.reverse then
-        _10_ = {"<PageDown>"}
+        _11_ = {"<PageDown>"}
       else
-        _10_ = {"<PageUp>"}
+        _11_ = {"<PageUp>"}
       end
-      register["buf-map"](bufnr, {"n", "i"}, _10_, config["on-prev-page"])
-      local _12_
+      register["buf-map"](bufnr, {"n", "i"}, _11_, config["on-prev-page"])
+      local _13_
       if config.reverse then
-        _12_ = {"<PageUp>"}
+        _13_ = {"<PageUp>"}
       else
-        _12_ = {"<PageDown>"}
+        _13_ = {"<PageDown>"}
       end
-      register["buf-map"](bufnr, {"n", "i"}, _12_, config["on-next-page"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-b>"}, config["on-prev-page"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-f>"}, config["on-next-page"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-d>"}, config["on-viewpagedown"])
-      register["buf-map"](bufnr, {"n", "i"}, {"<C-u>"}, config["on-viewpageup"])
+      register["buf-map"](bufnr, {"n", "i"}, _13_, config["on-next-page"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-page"], config["on-prev-page"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpageup"])
       vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
       vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
       return {bufnr = bufnr, winnr = winnr}

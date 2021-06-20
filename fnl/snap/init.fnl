@@ -534,6 +534,7 @@
   (local input-view-info (input.create
     {: has-views
      :reverse config.reverse
+     :mappings config.mappings
      : layout
      : prompt
      : on-enter

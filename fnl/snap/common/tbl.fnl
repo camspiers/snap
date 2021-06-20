@@ -7,6 +7,14 @@
       (when (not= (tostring value) "")
         (table.insert tbl value)))))
 
+(defn merge [tbl1 tbl2]
+  (let [result {}]
+    (each [key val (pairs tbl1)]
+      (tset result key val))
+    (each [key val (pairs tbl2)]
+      (tset result key val))
+    result))
+
 (defn concat [tbl-a tbl-b]
   "Concatenates tables"
   (let [tbl []]
