@@ -51,14 +51,14 @@ local function layout(config)
   local row = _let_0_["row"]
   local width = _let_0_["width"]
   local _3_
-  if config["has-views"] then
+  if config["has-views"]() then
     _3_ = math.floor((width * size["view-width"]))
   else
     _3_ = width
   end
   return {col = col, focusable = true, height = 1, row = ((row + height) - size.padding), width = _3_}
 end
-local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>"}, ["next-page"] = {"<C-f>"}, ["prev-item"] = {"<C-p>"}, ["prev-page"] = {"<C-b>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
+local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>"}, ["next-page"] = {"<C-f>"}, ["prev-item"] = {"<C-p>"}, ["prev-page"] = {"<C-b>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
 local create
 do
   local v_0_
@@ -66,8 +66,8 @@ do
     local v_0_0
     local function create0(config)
       local bufnr = buffer.create()
-      local layout0 = layout(config)
-      local winnr = window.create(bufnr, layout0)
+      local layout_config = layout(config)
+      local winnr = window.create(bufnr, layout_config)
       vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
       vim.fn.prompt_setprompt(bufnr, config.prompt)
       buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
@@ -171,9 +171,33 @@ do
       register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpageup"])
-      vim.api.nvim_command(string.format("autocmd! WinLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
+      vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
       vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
-      return {bufnr = bufnr, winnr = winnr}
+      local function delete()
+        if vim.api.nvim_win_is_valid(winnr) then
+          window.close(winnr)
+        end
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          return buffer.delete(bufnr, {force = true})
+        end
+      end
+      local function update(view)
+        local layout_config0 = layout(config)
+        window.update(winnr, layout_config0)
+        do end (view)["height"] = layout_config0.height
+        view["width"] = layout_config0.width
+        return nil
+      end
+      local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
+      vim.api.nvim_command("augroup SnapInputViewResize")
+      vim.api.nvim_command("autocmd!")
+      local function _15_()
+        return view:update()
+      end
+      vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _15_)))
+      vim.api.nvim_command("augroup END")
+      return view
     end
     v_0_0 = create0
     _0_["create"] = v_0_0

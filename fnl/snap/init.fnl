@@ -176,12 +176,6 @@
   ;; Used to send cancel request to producer coroutines
   (var exit false)
 
-  ;; Store buffers for exiting
-  (local buffers [])
-
-  ;; Store windows for closing
-  (local windows [])
-
   ;; Default to the bottom layout
   (local layout (or config.layout (. (get :layout) :centered)))
 
@@ -203,6 +197,14 @@
   ;; Store the cursor row
   (var cursor-row 1)
 
+  ;; Allows the toggling of hide views
+  (var hide-views false)
+
+  ;; Vars for storing all views
+  (var input-view nil)
+  (var results-view nil)
+  (var views [])
+
   ;; Helper function for getting the line under the cursor
   (fn get-selection [] (. last-results cursor-row))
 
@@ -220,32 +222,33 @@
     ;; Return back to original window
     (vim.api.nvim_set_current_win original-winnr)
 
-    ;; Close each open window
-    (each [_ winnr (ipairs windows)]
-      (when (vim.api.nvim_win_is_valid winnr)
-        (window.close winnr)))
-
-    ;; Delete each open buffer
-    (each [_ bufnr (ipairs buffers)]
-      (when (vim.api.nvim_buf_is_valid bufnr)
-        (buffer.delete bufnr {:force true})))
+    ;; Close each window
+    (each [_ {: view} (ipairs views)]
+      (view:delete))
+    (results-view:delete)
+    (input-view:delete)
 
     ;; Return back from insert mode
     (vim.api.nvim_command :stopinsert))
 
-  ;; Create requested views
+  ;; Calculate the total views
   (local total-views (if config.views (length config.views) 0))
-  (local has-views (> total-views 0))
-  (local views [])
-  (when has-views
-    (each [index producer (ipairs config.views)]
-      (local view {:view (view.create {: layout : index : total-views}) : producer})
-      (table.insert views view)
-      (table.insert buffers view.view.bufnr)
-      (table.insert windows view.view.winnr)))
+
+  ;; Dynamic because we can hide and show views
+  (fn has-views [] (and (not hide-views) (> total-views 0)))
+
+  ;; Views need to be recreated when we hide/show
+  (fn create-views []
+    (when (has-views)
+      (each [index producer (ipairs config.views)]
+        (local view {:view (view.create {: layout : index : total-views}) : producer})
+        (table.insert views view))))
+
+  ;; Create the views
+  (create-views)
 
   ;; Creates the results buffer and window and stores thier numbers
-  (local results-view (results.create {: layout : has-views}))
+  (set results-view (results.create {: layout : has-views}))
 
   ;; Tracks size of partial results
   (var partial-results-length 1)
@@ -256,10 +259,6 @@
         (vim.api.nvim_win_set_cursor results-view.winnr [(- partial-results-length (- cursor-row 1)) 0])
         (vim.api.nvim_win_call results-view.winnr (partial vim.api.nvim_command "silent normal zb")))
       (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0])))
-
-  ;; Register buffer for exiting
-  ;; TODO make registering buffer a standard pattern
-  (table.insert buffers results-view.bufnr)
 
   ;; Updates the views based on selection
   (safedebounced update-views [selection]
@@ -273,7 +272,7 @@
       (create {: producer : request})))
 
   ;; Only write what results are needed
-  (safedebounced write-results [results filter]
+  (safedebounced write-results [results force-views]
     (when (not exit)
       (let [result-size (length results)]
         ;; Make sure cursor stays in view
@@ -338,7 +337,7 @@
       ;; When we are running views schedule them
       (local selection (get-selection))
       (when
-        (and has-views (not= (tostring last-requested-selection) (tostring selection)))
+        (and (has-views) (or force-views (not= (tostring last-requested-selection) (tostring selection))))
         (set last-requested-selection selection)
         ;; Create new buffers
         ;; Each view gets a new buffer each selection change
@@ -347,7 +346,6 @@
         ;; performance issues
         (each [_ {: view} (ipairs views)]
           (local bufnr (buffer.create))
-          (table.insert buffers bufnr)
           (vim.api.nvim_win_set_buf view.winnr bufnr)
           (buffer.delete view.bufnr {:force true})
           (tset view :bufnr bufnr))
@@ -386,7 +384,7 @@
         (= (length results) 0)
         (do
           (set last-results results)
-          (write-results last-results request.filter))
+          (write-results last-results))
         ;; When we have scores attached then sort
         (has_meta (tbl.first results) :score)
         ;; Sort the table as far as we need to display results
@@ -400,7 +398,7 @@
           ;; Store the last written results
           (set last-results results)
           ;; Schedule the write
-          (write-results last-results request.filter)))
+          (write-results last-results)))
       ;; Free the results
       (set results []))
     ;; Runs on each tick to check if loading screen is needed
@@ -433,7 +431,7 @@
           ;; Set the results to enable cursor
           (set last-results results)
           ;; Schedule write
-          (write-results last-results request.filter))))
+          (write-results last-results))))
     ;; And off we go!
     (create config))
 
@@ -491,7 +489,7 @@
 
   ;; Moves the view position
   (fn set-next-view-row [next-index]
-    (when has-views
+    (when (has-views)
       (local {:view {: winnr : bufnr : height}} (tbl.first views))
       (let [line-count (vim.api.nvim_buf_line_count bufnr)
             [row] (vim.api.nvim_win_get_cursor winnr)
@@ -499,10 +497,10 @@
         (vim.api.nvim_win_set_cursor winnr [index 0]))))
 
   ;; View page up handler
-  (fn on-viewpageup [] (when has-views (set-next-view-row #(- $1 $2))))
+  (fn on-viewpageup [] (when (has-views) (set-next-view-row #(- $1 $2))))
 
   ;; View page down handler
-  (fn on-viewpagedown [] (when has-views (set-next-view-row #(+ $1 $2))))
+  (fn on-viewpagedown [] (when (has-views) (set-next-view-row #(+ $1 $2))))
 
   ;; Allows a series of steps
   (fn on-next []
@@ -529,12 +527,26 @@
                 (next.consumer (fn [] results))))))
          (run next-config)))))
 
+  (fn on-view-toggle-hide []
+    (set hide-views (not hide-views))
+    (results-view:update)
+    (input-view:update)
+    (if hide-views
+      (do
+        (each [_ {: view} (ipairs views)]
+          (view:delete))
+        (set views []))
+      (do
+        (create-views)
+        (vim.api.nvim_set_current_win input-view.winnr)
+        (write-results last-results true))))
+
   ;; Initializes the input view
   ;; This is where all the key bindings happen
-  (local input-view-info (input.create
-    {: has-views
-     :reverse config.reverse
+  (set input-view (input.create
+    {:reverse config.reverse
      :mappings config.mappings
+     : has-views
      : layout
      : prompt
      : on-enter
@@ -546,12 +558,10 @@
      : on-next-page
      : on-viewpageup
      : on-viewpagedown
+     : on-view-toggle-hide
      : on-select-toggle
      : on-select-all-toggle
      : on-update}))
-
-  ;; Register buffer for exiting
-  (table.insert buffers input-view-info.bufnr)
 
   ;; Feed the initial filer to the input
   (when (not= initial-filter "")

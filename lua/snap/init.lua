@@ -334,8 +334,6 @@ do
       local last_requested_filter = ""
       local last_requested_selection = nil
       local exit = false
-      local buffers = {}
-      local windows = {}
       local layout = (config.layout or (get("layout")).centered)
       local loading = (config.loading or get("loading"))
       local initial_filter = (config.initial_filter or "")
@@ -343,6 +341,10 @@ do
       local prompt = string.format("%s ", (config.prompt or "Find>"))
       local selected = {}
       local cursor_row = 1
+      local hide_views = false
+      local input_view = nil
+      local results_view = nil
+      local views = {}
       local function get_selection()
         return last_results[cursor_row]
       end
@@ -353,16 +355,13 @@ do
         config["producer"] = nil
         config["views"] = nil
         vim.api.nvim_set_current_win(original_winnr)
-        for _, winnr in ipairs(windows) do
-          if vim.api.nvim_win_is_valid(winnr) then
-            window.close(winnr)
-          end
+        for _, _10_ in ipairs(views) do
+          local _each_0_ = _10_
+          local view0 = _each_0_["view"]
+          view0:delete()
         end
-        for _, bufnr in ipairs(buffers) do
-          if vim.api.nvim_buf_is_valid(bufnr) then
-            buffer.delete(bufnr, {force = true})
-          end
-        end
+        results_view:delete()
+        input_view:delete()
         return vim.api.nvim_command("stopinsert")
       end
       local total_views
@@ -371,36 +370,38 @@ do
       else
         total_views = 0
       end
-      local has_views = (total_views > 0)
-      local views = {}
-      if has_views then
-        for index, producer in ipairs(config.views) do
-          local view0 = {producer = producer, view = view.create({["total-views"] = total_views, index = index, layout = layout})}
-          table.insert(views, view0)
-          table.insert(buffers, view0.view.bufnr)
-          table.insert(windows, view0.view.winnr)
+      local function has_views()
+        return (not hide_views and (total_views > 0))
+      end
+      local function create_views()
+        if has_views() then
+          for index, producer in ipairs(config.views) do
+            local view0 = {producer = producer, view = view.create({["total-views"] = total_views, index = index, layout = layout})}
+            table.insert(views, view0)
+          end
+          return nil
         end
       end
-      local results_view = results.create({["has-views"] = has_views, layout = layout})
+      create_views()
+      results_view = results.create({["has-views"] = has_views, layout = layout})
       local partial_results_length = 1
       local function update_cursor()
         if config.reverse then
           vim.api.nvim_win_set_cursor(results_view.winnr, {(partial_results_length - (cursor_row - 1)), 0})
-          local function _12_(...)
+          local function _11_(...)
             return vim.api.nvim_command("silent normal zb", ...)
           end
-          return vim.api.nvim_win_call(results_view.winnr, _12_)
+          return vim.api.nvim_win_call(results_view.winnr, _11_)
         else
           return vim.api.nvim_win_set_cursor(results_view.winnr, {cursor_row, 0})
         end
       end
-      table.insert(buffers, results_view.bufnr)
       local update_views
       do
         local body_0_
-        local function _12_(selection)
-          for _, _13_ in ipairs(views) do
-            local _each_0_ = _13_
+        local function _11_(selection)
+          for _, _12_ in ipairs(views) do
+            local _each_0_ = _12_
             local producer = _each_0_["producer"]
             local _each_1_ = _each_0_["view"]
             local bufnr = _each_1_["bufnr"]
@@ -416,28 +417,28 @@ do
           end
           return nil
         end
-        body_0_ = _12_
+        body_0_ = _11_
         local args_0_ = nil
-        local function _13_(...)
+        local function _12_(...)
           if (args_0_ == nil) then
             args_0_ = {...}
-            local function _14_()
+            local function _13_()
               local actual_args_0_ = args_0_
               args_0_ = nil
               return body_0_(unpack(actual_args_0_))
             end
-            return vim.schedule(_14_)
+            return vim.schedule(_13_)
           else
             args_0_ = {...}
             return nil
           end
         end
-        update_views = _13_
+        update_views = _12_
       end
       local write_results
       do
         local body_0_
-        local function _12_(results0, filter)
+        local function _11_(results0, force_views)
           if not exit then
             do
               local result_size = #results0
@@ -482,18 +483,18 @@ do
                     reverse_handled_row = row
                   end
                   if has_meta(result, "positions") then
-                    local function _17_()
-                      local _16_ = type(result.positions)
-                      if (_16_ == "table") then
+                    local function _16_()
+                      local _15_ = type(result.positions)
+                      if (_15_ == "table") then
                         return result.positions
-                      elseif (_16_ == "function") then
+                      elseif (_15_ == "function") then
                         return result:positions()
                       else
-                        local _ = _16_
+                        local _ = _15_
                         return assert(false, "result positions must be a table or function")
                       end
                     end
-                    buffer["add-positions-highlight"](results_view.bufnr, reverse_handled_row, _17_())
+                    buffer["add-positions-highlight"](results_view.bufnr, reverse_handled_row, _16_())
                   end
                   if selected[tostring(result)] then
                     buffer["add-selected-highlight"](results_view.bufnr, reverse_handled_row)
@@ -502,13 +503,12 @@ do
               end
             end
             local selection = get_selection()
-            if (has_views and (tostring(last_requested_selection) ~= tostring(selection))) then
+            if (has_views() and (force_views or (tostring(last_requested_selection) ~= tostring(selection)))) then
               last_requested_selection = selection
-              for _, _13_ in ipairs(views) do
-                local _each_0_ = _13_
+              for _, _12_ in ipairs(views) do
+                local _each_0_ = _12_
                 local view0 = _each_0_["view"]
                 local bufnr = buffer.create()
-                table.insert(buffers, bufnr)
                 vim.api.nvim_win_set_buf(view0.winnr, bufnr)
                 buffer.delete(view0.bufnr, {force = true})
                 do end (view0)["bufnr"] = bufnr
@@ -519,23 +519,23 @@ do
             end
           end
         end
-        body_0_ = _12_
+        body_0_ = _11_
         local args_0_ = nil
-        local function _13_(...)
+        local function _12_(...)
           if (args_0_ == nil) then
             args_0_ = {...}
-            local function _14_()
+            local function _13_()
               local actual_args_0_ = args_0_
               args_0_ = nil
               return body_0_(unpack(actual_args_0_))
             end
-            return vim.schedule(_14_)
+            return vim.schedule(_13_)
           else
             args_0_ = {...}
             return nil
           end
         end
-        write_results = _13_
+        write_results = _12_
       end
       local function on_update(filter)
         last_requested_filter = filter
@@ -553,41 +553,41 @@ do
         local write_loading
         do
           local body_0_
-          local function _12_()
+          local function _11_()
             if not request0.canceled() then
               local loading_screen = loading(results_view.width, results_view.height, loading_count)
               return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
             end
           end
-          body_0_ = _12_
+          body_0_ = _11_
           local args_0_ = nil
-          local function _13_(...)
+          local function _12_(...)
             if (args_0_ == nil) then
               args_0_ = {...}
-              local function _14_()
+              local function _13_()
                 local actual_args_0_ = args_0_
                 args_0_ = nil
                 return body_0_(unpack(actual_args_0_))
               end
-              return vim.schedule(_14_)
+              return vim.schedule(_13_)
             else
               args_0_ = {...}
               return nil
             end
           end
-          write_loading = _13_
+          write_loading = _12_
         end
         config0["on-end"] = function()
           if (#results0 == 0) then
             last_results = results0
-            write_results(last_results, request0.filter)
+            write_results(last_results)
           elseif has_meta(tbl.first(results0), "score") then
-            local function _12_(_241, _242)
+            local function _11_(_241, _242)
               return (_241.score > _242.score)
             end
-            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _12_)
+            tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _11_)
             last_results = results0
-            write_results(last_results, request0.filter)
+            write_results(last_results)
           end
           results0 = {}
           return nil
@@ -609,7 +609,7 @@ do
             if not has_meta(tbl.first(results0), "score") then
               early_write = true
               last_results = results0
-              return write_results(last_results, request0.filter)
+              return write_results(last_results)
             end
           end
         end
@@ -662,31 +662,31 @@ do
         return write_results(last_results)
       end
       local function on_prev_item()
-        local function _12_(_241)
+        local function _11_(_241)
           return (_241 - 1)
         end
-        return on_key_direction(_12_)
+        return on_key_direction(_11_)
       end
       local function on_next_item()
-        local function _12_(_241)
+        local function _11_(_241)
           return (_241 + 1)
         end
-        return on_key_direction(_12_)
+        return on_key_direction(_11_)
       end
       local function on_prev_page()
-        local function _12_(_241)
+        local function _11_(_241)
           return (_241 - results_view.height)
         end
-        return on_key_direction(_12_)
+        return on_key_direction(_11_)
       end
       local function on_next_page()
-        local function _12_(_241)
+        local function _11_(_241)
           return (_241 + results_view.height)
         end
-        return on_key_direction(_12_)
+        return on_key_direction(_11_)
       end
       local function set_next_view_row(next_index)
-        if has_views then
+        if has_views() then
           local _local_1_ = tbl.first(views)
           local _local_2_ = _local_1_["view"]
           local bufnr = _local_2_["bufnr"]
@@ -700,19 +700,19 @@ do
         end
       end
       local function on_viewpageup()
-        if has_views then
-          local function _12_(_241, _242)
+        if has_views() then
+          local function _11_(_241, _242)
             return (_241 - _242)
           end
-          return set_next_view_row(_12_)
+          return set_next_view_row(_11_)
         end
       end
       local function on_viewpagedown()
-        if has_views then
-          local function _12_(_241, _242)
+        if has_views() then
+          local function _11_(_241, _242)
             return (_241 + _242)
           end
-          return set_next_view_row(_12_)
+          return set_next_view_row(_11_)
         end
       end
       local function on_next()
@@ -723,37 +723,54 @@ do
             next_config[key] = value
           end
           local next = (config.next or table.remove(config.steps))
-          local function _12_()
+          local function _11_()
             do
-              local _13_ = type(next)
-              if (_13_ == "function") then
-                local function _14_()
+              local _12_ = type(next)
+              if (_12_ == "function") then
+                local function _13_()
                   return results0
                 end
-                next_config["producer"] = next(_14_)
-              elseif (_13_ == "table") then
+                next_config["producer"] = next(_13_)
+              elseif (_12_ == "table") then
                 for key, value in pairs(next.config) do
                   next_config[key] = value
                 end
-                local _14_
+                local _13_
                 if next.format then
-                  _14_ = next.consumer(next.format(results0))
+                  _13_ = next.consumer(next.format(results0))
                 else
-                  local function _15_()
+                  local function _14_()
                     return results0
                   end
-                  _14_ = next.consumer(_15_)
+                  _13_ = next.consumer(_14_)
                 end
-                next_config["producer"] = _14_
+                next_config["producer"] = _13_
               end
             end
             return run0(next_config)
           end
-          return vim.schedule_wrap(_12_)()
+          return vim.schedule_wrap(_11_)()
         end
       end
-      local input_view_info = input.create({["has-views"] = has_views, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-next"] = on_next, ["on-next-item"] = on_next_item, ["on-next-page"] = on_next_page, ["on-prev-item"] = on_prev_item, ["on-prev-page"] = on_prev_page, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-update"] = on_update, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, mappings = config.mappings, prompt = prompt, reverse = config.reverse})
-      table.insert(buffers, input_view_info.bufnr)
+      local function on_view_toggle_hide()
+        hide_views = not hide_views
+        results_view:update()
+        input_view:update()
+        if hide_views then
+          for _, _11_ in ipairs(views) do
+            local _each_0_ = _11_
+            local view0 = _each_0_["view"]
+            view0:delete()
+          end
+          views = {}
+          return nil
+        else
+          create_views()
+          vim.api.nvim_set_current_win(input_view.winnr)
+          return write_results(last_results, true)
+        end
+      end
+      input_view = input.create({["has-views"] = has_views, ["on-enter"] = on_enter, ["on-exit"] = on_exit, ["on-next"] = on_next, ["on-next-item"] = on_next_item, ["on-next-page"] = on_next_page, ["on-prev-item"] = on_prev_item, ["on-prev-page"] = on_prev_page, ["on-select-all-toggle"] = on_select_all_toggle, ["on-select-toggle"] = on_select_toggle, ["on-update"] = on_update, ["on-view-toggle-hide"] = on_view_toggle_hide, ["on-viewpagedown"] = on_viewpagedown, ["on-viewpageup"] = on_viewpageup, layout = layout, mappings = config.mappings, prompt = prompt, reverse = config.reverse})
       if (initial_filter ~= "") then
         vim.api.nvim_feedkeys(initial_filter, "n", false)
       end

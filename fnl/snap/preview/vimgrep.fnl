@@ -34,7 +34,6 @@
       (when (not (request.canceled))
         ;; Highlight using the cursor
         (vim.api.nvim_win_set_option request.winnr :cursorline true)
-        (vim.api.nvim_win_set_option request.winnr :cursorcolumn true)
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; Try to set cursor to appropriate line

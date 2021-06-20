@@ -25,11 +25,11 @@ autoload = _1_
 local function _2_(...)
   local ok_3f_0_, val_0_ = nil, nil
   local function _2_()
-    return {require("snap.common.buffer"), require("snap.view.size"), require("snap.common.tbl"), require("snap.common.window")}
+    return {require("snap.common.buffer"), require("snap.common.register"), require("snap.view.size"), require("snap.common.tbl"), require("snap.common.window")}
   end
   ok_3f_0_, val_0_ = pcall(_2_)
   if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", size = "snap.view.size", tbl = "snap.common.tbl", window = "snap.common.window"}}
+    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", register = "snap.common.register", size = "snap.view.size", tbl = "snap.common.tbl", window = "snap.common.window"}}
     return val_0_
   else
     return print(val_0_)
@@ -37,9 +37,10 @@ local function _2_(...)
 end
 local _local_0_ = _2_(...)
 local buffer = _local_0_[1]
-local size = _local_0_[2]
-local tbl = _local_0_[3]
-local window = _local_0_[4]
+local register = _local_0_[2]
+local size = _local_0_[3]
+local tbl = _local_0_[4]
+local window = _local_0_[5]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.view.view"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
@@ -66,12 +67,36 @@ do
     local v_0_0
     local function create0(config)
       local bufnr = buffer.create()
-      local layout0 = layout(config)
-      local winnr = window.create(bufnr, layout0)
+      local layout_config = layout(config)
+      local winnr = window.create(bufnr, layout_config)
       vim.api.nvim_win_set_option(winnr, "cursorline", false)
+      vim.api.nvim_win_set_option(winnr, "cursorcolumn", false)
       vim.api.nvim_win_set_option(winnr, "wrap", false)
       vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
-      return {bufnr = bufnr, height = layout0.height, width = layout0.width, winnr = winnr}
+      local function delete()
+        if vim.api.nvim_win_is_valid(winnr) then
+          window.close(winnr)
+        end
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          return buffer.delete(bufnr, {force = true})
+        end
+      end
+      local function update(view)
+        local layout_config0 = layout(config)
+        window.update(winnr, layout_config0)
+        do end (view)["height"] = layout_config0.height
+        view["width"] = layout_config0.width
+        return nil
+      end
+      local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
+      vim.api.nvim_command("augroup SnapViewResize")
+      vim.api.nvim_command("autocmd!")
+      local function _3_()
+        return view:update()
+      end
+      vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _3_)))
+      vim.api.nvim_command("augroup END")
+      return view
     end
     v_0_0 = create0
     _0_["create"] = v_0_0

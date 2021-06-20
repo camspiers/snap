@@ -51,7 +51,7 @@ do
       local height = _arg_0_["height"]
       local row = _arg_0_["row"]
       local width = _arg_0_["width"]
-      return vim.api.nvim_open_win(bufnr, 0, {anchor = "NW", border = {"\226\149\173", "\226\148\128", "\226\149\174", "\226\148\130", "\226\149\175", "\226\148\128", "\226\149\176", "\226\148\130"}, col = col, focusable = focusable, height = height, relative = "editor", row = row, style = "minimal", width = width})
+      return vim.api.nvim_open_win(bufnr, 0, {anchor = "NW", border = {"\226\149\173", "\226\148\128", "\226\149\174", "\226\148\130", "\226\149\175", "\226\148\128", "\226\149\176", "\226\148\130"}, col = col, focusable = focusable, height = height, noautocmd = true, relative = "editor", row = row, style = "minimal", width = width})
     end
     v_0_0 = create0
     _0_["create"] = v_0_0
@@ -60,6 +60,30 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["create"] = v_0_
   create = v_0_
+end
+local update
+do
+  local v_0_
+  do
+    local v_0_0
+    local function update0(winnr, _3_)
+      local _arg_0_ = _3_
+      local col = _arg_0_["col"]
+      local focusable = _arg_0_["focusable"]
+      local height = _arg_0_["height"]
+      local row = _arg_0_["row"]
+      local width = _arg_0_["width"]
+      if vim.api.nvim_win_is_valid(winnr) then
+        return vim.api.nvim_win_set_config(winnr, {col = col, focusable = focusable, height = height, relative = "editor", row = row, width = width})
+      end
+    end
+    v_0_0 = update0
+    _0_["update"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["update"] = v_0_
+  update = v_0_
 end
 local close
 do

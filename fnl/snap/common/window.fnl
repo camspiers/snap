@@ -7,10 +7,21 @@
                           : row
                           : col
                           : focusable
+                          :noautocmd true
                           :relative :editor
                           :anchor :NW
                           :style :minimal
                           :border ["╭" "─" "╮" "│" "╯" "─" "╰" "│"]}))
+
+(defn update [winnr {: width : height : row : col : focusable}]
+  "Updates a window with specified options"
+  (when (vim.api.nvim_win_is_valid winnr)
+    (vim.api.nvim_win_set_config winnr {: width
+                                        : height
+                                        : row
+                                        : col
+                                        : focusable
+                                        :relative :editor})))
 
 (defn close [winnr]
   (vim.api.nvim_win_close winnr true))

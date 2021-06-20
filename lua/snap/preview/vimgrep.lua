@@ -30,7 +30,6 @@ local function _1_(request)
   local function _3_()
     if not request.canceled() then
       vim.api.nvim_win_set_option(request.winnr, "cursorline", true)
-      vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", true)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
       if (selection.lnum <= preview_size) then
         vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
