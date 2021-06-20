@@ -70,6 +70,7 @@ do
       local winnr = window.create(bufnr, layout0)
       vim.api.nvim_win_set_option(winnr, "cursorline", false)
       vim.api.nvim_win_set_option(winnr, "wrap", false)
+      vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
       return {bufnr = bufnr, height = layout0.height, width = layout0.width, winnr = winnr}
     end
     v_0_0 = create0

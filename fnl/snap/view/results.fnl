@@ -21,4 +21,5 @@
     (vim.api.nvim_buf_set_option bufnr :wrapmargin 0)
     (vim.api.nvim_win_set_option winnr :wrap false)
     (vim.api.nvim_win_set_option winnr :cursorline true)
+    (vim.api.nvim_win_set_option winnr :winhl "CursorLine:SnapSelect,Normal:SnapNormal,FloatBorder:SnapBorder")
     {: bufnr : winnr :height layout.height :width layout.width}))

@@ -56,13 +56,29 @@ do
   t_0_["set-lines"] = v_0_
   set_lines = v_0_
 end
+local add_highlight
+do
+  local v_0_
+  do
+    local v_0_0
+    local function add_highlight0(bufnr, hl, row, col_start, col_end)
+      return vim.api.nvim_buf_add_highlight(bufnr, namespace, hl, row, col_start, col_end)
+    end
+    v_0_0 = add_highlight0
+    _0_["add-highlight"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["add-highlight"] = v_0_
+  add_highlight = v_0_
+end
 local add_selected_highlight
 do
   local v_0_
   do
     local v_0_0
     local function add_selected_highlight0(bufnr, row)
-      return vim.api.nvim_buf_add_highlight(bufnr, namespace, "Comment", (row - 1), 0, -1)
+      return vim.api.nvim_buf_add_highlight(bufnr, namespace, "SnapMultiSelect", (row - 1), 0, -1)
     end
     v_0_0 = add_selected_highlight0
     _0_["add-selected-highlight"] = v_0_0
@@ -80,7 +96,7 @@ do
     local function add_positions_highlight0(bufnr, row, positions)
       local line = (row - 1)
       for _, col in ipairs(positions) do
-        vim.api.nvim_buf_add_highlight(bufnr, namespace, "Search", line, (col - 1), col)
+        add_highlight(bufnr, "SnapPosition", line, (col - 1), col)
       end
       return nil
     end

@@ -69,7 +69,9 @@ do
       local winnr = window.create(bufnr, layout0)
       vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
       vim.fn.prompt_setprompt(bufnr, config.prompt)
+      buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
       vim.api.nvim_command("startinsert")
+      vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
       local function get_filter()
         local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
         if contents then

@@ -20,7 +20,9 @@
         winnr (window.create bufnr layout)]
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
     (vim.fn.prompt_setprompt bufnr config.prompt)
+    (buffer.add-highlight bufnr :SnapPrompt 0 0 (string.len config.prompt))
     (vim.api.nvim_command :startinsert)
+    (vim.api.nvim_win_set_option winnr :winhl "Normal:SnapNormal,FloatBorder:SnapBorder")
 
     (fn get-filter []
       (let [contents (tbl.first (vim.api.nvim_buf_get_lines bufnr 0 1 false))]

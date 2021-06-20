@@ -27,4 +27,5 @@
         winnr (window.create bufnr layout)]
     (vim.api.nvim_win_set_option winnr :cursorline false)
     (vim.api.nvim_win_set_option winnr :wrap false)
+    (vim.api.nvim_win_set_option winnr :winhl "Normal:SnapNormal,FloatBorder:SnapBorder")
     {: bufnr : winnr :height layout.height :width layout.width}))

@@ -7,15 +7,19 @@
   "Helper to set lines to results view"
   (vim.api.nvim_buf_set_lines bufnr start end false lines))
 
+(defn add-highlight [bufnr hl row col-start col-end]
+  "Helper function for adding highlighting"
+  (vim.api.nvim_buf_add_highlight bufnr namespace hl row col-start col-end))
+
 (defn add-selected-highlight [bufnr row]
   "Helper function for adding selected highlighting"
-  (vim.api.nvim_buf_add_highlight bufnr namespace :Comment (- row 1) 0 -1))
+  (vim.api.nvim_buf_add_highlight bufnr namespace :SnapMultiSelect (- row 1) 0 -1))
 
 (defn add-positions-highlight [bufnr row positions]
   "Helper function for adding positions highlights"
   (local line (- row 1))
   (each [_ col (ipairs positions)]
-    (vim.api.nvim_buf_add_highlight bufnr namespace :Search line (- col 1) col)))
+    (add-highlight bufnr :SnapPosition line (- col 1) col)))
 
 (defn create []
   "Creates a scratch buffer"
