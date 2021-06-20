@@ -274,6 +274,12 @@ Moves the cursor of the first view up a page (if more than one exists).
 
 - `<C-u>`
 
+#### Toggle Views
+
+Toggles the views on and off.
+
+- `<C-h>`
+
 ### Creating Mappings
 
 `snap` registers no mappings, autocmds, or commands, and never will.
