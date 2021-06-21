@@ -1,5 +1,6 @@
 local _2afile_2a = "fnl/snap/producer/ripgrep/vimgrep.fnl"
 local snap = require("snap")
+local tbl = snap.get("common.tbl")
 local general = snap.get("producer.ripgrep.general")
 local vimgrep = {}
 local args = {"--line-buffered", "-M", 100, "--vimgrep"}

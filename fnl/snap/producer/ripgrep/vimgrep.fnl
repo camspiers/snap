@@ -1,4 +1,5 @@
 (let [snap (require :snap)
+      tbl (snap.get :common.tbl)
       general (snap.get :producer.ripgrep.general)]
   (local vimgrep {})
   (local args [:--line-buffered :-M 100 :--vimgrep])
