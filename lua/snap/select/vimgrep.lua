@@ -63,15 +63,35 @@ do
   local v_0_
   do
     local v_0_0
-    local function select0(selection, winnr)
+    local function select0(selection, winnr, type)
+      local winnr0 = winnr
       local _let_0_ = parse(selection)
       local col = _let_0_["col"]
       local filename = _let_0_["filename"]
       local lnum = _let_0_["lnum"]
       local buffer = vim.fn.bufnr(filename, true)
       vim.api.nvim_buf_set_option(buffer, "buflisted", true)
-      vim.api.nvim_win_set_buf(winnr, buffer)
-      return vim.api.nvim_win_set_cursor(winnr, {lnum, col})
+      do
+        local _3_ = type
+        if (_3_ == nil) then
+          if (winnr0 ~= false) then
+            vim.api.nvim_win_set_buf(winnr0, buffer)
+          end
+        elseif (_3_ == "vsplit") then
+          vim.api.nvim_command("vsplit")
+          vim.api.nvim_win_set_buf(0, buffer)
+          winnr0 = vim.api.nvim_get_current_win()
+        elseif (_3_ == "split") then
+          vim.api.nvim_command("split")
+          vim.api.nvim_win_set_buf(0, buffer)
+          winnr0 = vim.api.nvim_get_current_win()
+        elseif (_3_ == "tab") then
+          vim.api.nvim_command("tabnew")
+          vim.api.nvim_win_set_buf(0, buffer)
+          winnr0 = vim.api.nvim_get_current_win()
+        end
+      end
+      return vim.api.nvim_win_set_cursor(winnr0, {lnum, col})
     end
     v_0_0 = select0
     _0_["select"] = v_0_0

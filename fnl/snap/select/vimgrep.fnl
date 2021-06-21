@@ -7,9 +7,24 @@
   (vim.api.nvim_command :copen)
   (vim.api.nvim_command :cfirst))
 
-(defn select [selection winnr]
+(defn select [selection winnr type]
+  (var winnr winnr)
   (let [{: filename : lnum : col} (parse selection)]
     (let [buffer (vim.fn.bufnr filename true)]
       (vim.api.nvim_buf_set_option buffer :buflisted true)
-      (vim.api.nvim_win_set_buf winnr buffer)
+      (match type
+        nil (when (not= winnr false)
+          (vim.api.nvim_win_set_buf winnr buffer))
+        :vsplit (do
+          (vim.api.nvim_command "vsplit")
+          (vim.api.nvim_win_set_buf 0 buffer)
+          (set winnr (vim.api.nvim_get_current_win)))
+        :split (do
+          (vim.api.nvim_command "split")
+          (vim.api.nvim_win_set_buf 0 buffer)
+          (set winnr (vim.api.nvim_get_current_win)))
+        :tab (do
+          (vim.api.nvim_command "tabnew")
+          (vim.api.nvim_win_set_buf 0 buffer)
+          (set winnr (vim.api.nvim_get_current_win))))
       (vim.api.nvim_win_set_cursor winnr [lnum col]))))
