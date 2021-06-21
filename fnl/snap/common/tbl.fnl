@@ -18,8 +18,10 @@
 (defn concat [tbl-a tbl-b]
   "Concatenates tables"
   (let [tbl []]
-    (accumulate tbl tbl-a)
-    (accumulate tbl tbl-b)
+    (each [_ value (ipairs tbl-a)]
+      (table.insert tbl value))
+    (each [_ value (ipairs tbl-b)]
+      (table.insert tbl value))
     tbl))
 
 (defn take [tbl num]

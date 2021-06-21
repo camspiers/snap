@@ -92,8 +92,12 @@ do
     local v_0_0
     local function concat0(tbl_a, tbl_b)
       local tbl = {}
-      accumulate(tbl, tbl_a)
-      accumulate(tbl, tbl_b)
+      for _, value in ipairs(tbl_a) do
+        table.insert(tbl, value)
+      end
+      for _, value in ipairs(tbl_b) do
+        table.insert(tbl, value)
+      end
       return tbl
     end
     v_0_0 = concat0
