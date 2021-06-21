@@ -762,6 +762,10 @@ NOTE: Provides both `select` and `multiselect`.
 
 Changes directory in response to selection. 
 
+#### `snap.select.insert`
+
+Inserts selection at cursor location.
+
 ```
 NOTE: Only provides `select`.
 ```
