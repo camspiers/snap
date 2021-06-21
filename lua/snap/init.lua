@@ -784,4 +784,23 @@ do
   t_0_["run"] = v_0_
   run = v_0_
 end
+local create0
+do
+  local v_0_
+  do
+    local v_0_0
+    local function create1(config, defaults)
+      local function _3_()
+        return run(tbl.merge((defaults or {}), config))
+      end
+      return _3_
+    end
+    v_0_0 = create1
+    _0_["create"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["create"] = v_0_
+  create0 = v_0_
+end
 return nil

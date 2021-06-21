@@ -570,3 +570,6 @@
 
   nil)
 
+(defn create [config defaults]
+  "Creates a function that will run snap with the following config"
+  (fn [] (run (tbl.merge (or defaults {}) config))))
