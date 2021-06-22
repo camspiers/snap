@@ -90,17 +90,20 @@ do
       local exited = false
       local function on_exit()
         if not exited then
+          vim.api.nvim_command("augroup SnapInputLeave")
+          vim.api.nvim_command("autocmd!")
+          vim.api.nvim_command("augroup END")
           exited = true
           return config["on-exit"]()
         end
       end
       local function on_enter(type)
         config["on-enter"](type)
-        return config["on-exit"]()
+        return on_exit()
       end
       local function on_next()
         config["on-next"]()
-        return config["on-exit"]()
+        return on_exit()
       end
       local function on_tab()
         config["on-select-toggle"]()
@@ -172,7 +175,10 @@ do
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
+      vim.api.nvim_command("augroup SnapInputLeave")
+      vim.api.nvim_command("autocmd!")
       vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
+      vim.api.nvim_command("augroup END")
       vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
       local function delete()
         if vim.api.nvim_win_is_valid(winnr) then

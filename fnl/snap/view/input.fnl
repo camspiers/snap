@@ -54,16 +54,19 @@
 
     (fn on-exit []
       (when (not exited)
+        (vim.api.nvim_command "augroup SnapInputLeave")
+        (vim.api.nvim_command "autocmd!")
+        (vim.api.nvim_command "augroup END")
         (set exited true)
         (config.on-exit)))
 
     (fn on-enter [type]
       (config.on-enter type)
-      (config.on-exit))
+      (on-exit))
 
     (fn on-next []
       (config.on-next)
-      (config.on-exit))
+      (on-exit))
 
     (fn on-tab []
       (config.on-select-toggle)
@@ -113,11 +116,14 @@
     (register.buf-map bufnr [:n :i] mappings.view-page-up config.on-viewpageup)
     (register.buf-map bufnr [:n :i] mappings.view-toggle-hide config.on-view-toggle-hide)
 
+    (vim.api.nvim_command "augroup SnapInputLeave")
+    (vim.api.nvim_command "autocmd!")
     (vim.api.nvim_command
       (string.format
         "autocmd! BufLeave <buffer=%s> %s"
         bufnr
         (register.get-autocmd-call (tostring bufnr) on-exit)))
+    (vim.api.nvim_command "augroup END")
 
     (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
 

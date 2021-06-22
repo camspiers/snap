@@ -1,7 +1,8 @@
 (module snap.select.file)
 
 (defn select [selection winnr type]
-  (let [buffer (vim.fn.bufnr (tostring selection) true)]
+  (local path (vim.fn.fnamemodify (tostring selection) ":p"))
+  (let [buffer (vim.fn.bufnr path true)]
     (vim.api.nvim_buf_set_option buffer :buflisted true)
     (match type
       nil (when (not= winnr false)

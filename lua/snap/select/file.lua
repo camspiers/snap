@@ -45,7 +45,8 @@ do
   do
     local v_0_0
     local function select0(selection, winnr, type)
-      local buffer = vim.fn.bufnr(tostring(selection), true)
+      local path = vim.fn.fnamemodify(tostring(selection), ":p")
+      local buffer = vim.fn.bufnr(path, true)
       vim.api.nvim_buf_set_option(buffer, "buflisted", true)
       local _3_ = type
       if (_3_ == nil) then
