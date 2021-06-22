@@ -162,6 +162,14 @@ do
   t_0_["buf-map"] = v_0_
   buf_map = v_0_
 end
+local function handle_string(tbl)
+  local _3_ = type(tbl)
+  if (_3_ == "table") then
+    return tbl
+  elseif (_3_ == "string") then
+    return {tbl}
+  end
+end
 local map
 do
   local v_0_
@@ -169,8 +177,8 @@ do
     local v_0_0
     local function map0(modes, keys, fnc, opts)
       local rhs = get_map_call("global", fnc)
-      for _, key in ipairs(keys) do
-        for _0, mode in ipairs(modes) do
+      for _, key in ipairs(handle_string(keys)) do
+        for _0, mode in ipairs(handle_string(modes)) do
           vim.api.nvim_set_keymap(mode, key, rhs, (opts or {}))
         end
       end
