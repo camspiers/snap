@@ -10,7 +10,8 @@
 (defn select [selection winnr type]
   (var winnr winnr)
   (let [{: filename : lnum : col} (parse selection)]
-    (let [buffer (vim.fn.bufnr filename true)]
+    (local path (vim.fn.fnamemodify filename ":p"))
+    (let [buffer (vim.fn.bufnr path true)]
       (vim.api.nvim_buf_set_option buffer :buflisted true)
       (match type
         nil (when (not= winnr false)

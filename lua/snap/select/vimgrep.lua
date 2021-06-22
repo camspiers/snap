@@ -69,7 +69,8 @@ do
       local col = _let_0_["col"]
       local filename = _let_0_["filename"]
       local lnum = _let_0_["lnum"]
-      local buffer = vim.fn.bufnr(filename, true)
+      local path = vim.fn.fnamemodify(filename, ":p")
+      local buffer = vim.fn.bufnr(path, true)
       vim.api.nvim_buf_set_option(buffer, "buflisted", true)
       do
         local _3_ = type
