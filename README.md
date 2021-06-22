@@ -13,19 +13,27 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 
 ### With Packer
 
-```
+```lua
 use { 'camspiers/snap' }
 ```
 
 or with `fzy`:
 
-```
+```lua
 use { 'camspiers/snap', rocks = {'fzy'}}
 ```
 
+### With vim-plug
+
+```
+Plug 'camspiers/snap'
+```
+
+You will need to use `luarocks` manually if you want to install `fzy`, probably best to just use `fzf` if you are using vim-plug.
+
 #### Semi-Optional Dependencies
 
-To use the following `snap` components you need the specified dependencies, however not all coponents are needed, for example you should probably choose between `fzy` and `fzf` as your primary consumer.
+To use the following `snap` components you need the specified dependencies, however not all components are needed, for example you should probably choose between `fzy` and `fzf` as your primary consumer.
 
 | Component            | Dependency                        |
 | -------------------- | --------------------------------- |
@@ -38,33 +46,76 @@ To use the following `snap` components you need the specified dependencies, howe
 
 They are semi-optional because you can mix and match them depending on which technology you want to use.
 
-## Basic Example
+## Getting Started
 
-The following is a basic example to give a taste of the API. It creates a highly performant live grep `snap`.
+By default `snap` doesn't configure any key mappings or commands for you, you will need to configure your own. Additionally `snap` uses a philosophy where global configuration is avoided, instead stateless configuration is provided to each invocation of `snap.run`.
+
+To generate a function that will invoke `snap.run` with a defined config you can use `snap.create`.
+
+### Registering Global Keymaps
 
 ```lua
-snap.run {
+local snap = require'snap'
+
+-- normal mode mapping <Leader><Leader> for searching files in cwd 
+snap.register.map('n', '<Leader><Leader>', snap.create {
+  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+})
+
+-- creates normal mode mapping <Leader>f for grepping files in cwd 
+snap.register.map('n', '<Leader>f', snap.create {
   producer = snap.get'producer.ripgrep.vimgrep',
   select = snap.get'select.vimgrep'.select,
   multiselect = snap.get'select.vimgrep'.multiselect,
   views = {snap.get'preview.vimgrep'}
-}
+})
 ```
 
-Or given this can easily create the ability to ripgrep your entire filesystem with a result for every character, you can set a reasonable upper limit to 10,000 matches:
+### Registering Global Keymaps With Common Defaults
+
+If you have some default configuration, e.g. `reverse = true` or a custom layout function you want to provide to all usages of `snap.run`, then you can take advantage of the `defaults` parameter of `snap.create`.
 
 ```lua
-snap.run {
-  producer = snap.get'consumer.limit'(10000, snap.get'producer.ripgrep.vimgrep'),
+local snap = require'snap'
+
+-- a custom create function that adds common defaults
+local function create(config)
+  return snap.create(config, {
+    -- use reverse results display for all configs
+    reverse = true,
+    -- use the bottom layout for all configs
+    layout = snap.get"layout".bottom,
+    mappings = {
+      enter = {"<CR>", "<C-o>"}, -- my custom mapping
+    }
+  })
+end
+
+-- normal mode mapping <Leader><Leader> for searching files in cwd 
+snap.register.map('n', '<Leader><Leader>', create {
+  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'}
+})
+
+-- creates normal mode mapping <Leader>f for grepping files in cwd 
+snap.register.map('n', '<Leader>f', create {
+  producer = snap.get'producer.ripgrep.vimgrep',
   select = snap.get'select.vimgrep'.select,
   multiselect = snap.get'select.vimgrep'.multiselect,
   views = {snap.get'preview.vimgrep'}
-}
+})
 ```
 
-## Usage
+## Recipes
 
-`snap` comes with inbuilt producers and consumers to enable easy creation of finders.
+`snap` comes with inbuilt producers and consumers (see [How Snap Works](#how-snap-works) for what producers and consumers are) to enable easy creation of finders.
+
+The following recipes illustrate direct usage of `snap.run` meaning calling the following examples will immediately run snap, but as illustrated above when registering a mapping you most often want to get a function that will invoke `snap.run` with a particular config, in that case the following examples can be replaced with invocations to `snap.create` to get such a function.
 
 ### Find Files
 
@@ -95,6 +146,17 @@ snap.run {
 ```lua
 snap.run {
   producer = snap.get'producer.ripgrep.vimgrep',
+  select = snap.get'select.vimgrep'.select,
+  multiselect = snap.get'select.vimgrep'.multiselect,
+  views = {snap.get'preview.vimgrep'}
+}
+```
+
+Or given this can easily create the ability to ripgrep your entire filesystem with a result for every character, you can set a reasonable upper limit to 10,000 matches:
+
+```lua
+snap.run {
+  producer = snap.get'consumer.limit'(10000, snap.get'producer.ripgrep.vimgrep'),
   select = snap.get'select.vimgrep'.select,
   multiselect = snap.get'select.vimgrep'.multiselect,
   views = {snap.get'preview.vimgrep'}
@@ -197,7 +259,9 @@ snap.run {
 }
 ```
 
-### Key Bindings
+### Key Bindings for Input Buffer
+
+The following are what bindings are made for the input buffer while snap is open.
 
 #### Select
 
@@ -280,27 +344,46 @@ Toggles the views on and off.
 
 - `<C-h>`
 
-### Creating Mappings
+### Customizing Default Input Buffer Mappings
 
-`snap` registers no mappings, autocmds, or commands, and never will.
+The default mappings can be customized by providing a `mappings` key to your `snap.run` configs.
 
-You can register your mappings in the following way:
+The following are the default mappings, each of which can be overridden:
 
 ```lua
-local snap = require'snap'
-snap.register.map({"n"}, {"<Leader>f"}, function ()
-  snap.run {
-    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-    select = snap.get'select.file'.select,
-    multiselect = snap.get'select.file'.multiselect
-  }
-end)
+{
+  ["enter-split"] = {"<C-x>"},
+  ["enter-tab"] = {"<C-t>"},
+  ["enter-vsplit"] = {"<C-v>"},
+  ["next-item"] = {"<C-n>"},
+  ["next-page"] = {"<C-f>"},
+  ["prev-item"] = {"<C-p>"},
+  ["prev-page"] = {"<C-b>"},
+  ["select-all"] = {"<C-a>"},
+  ["view-page-down"] = {"<C-d>"},
+  ["view-page-up"] = {"<C-u>"},
+  ["view-toggle-hide"] = {"<C-h>"},
+  enter = {"<CR>"},
+  exit = {"<Esc>", "<C-c>"},
+  next = {"<C-q>"},
+  select = {"<Tab>"},
+  unselect = {"<S-Tab>"}
+}
 ```
 
-An exmaple that configures a variety of in-built snaps is available here:
+Example:
 
-https://gist.github.com/camspiers/686395ab3bda4a0d00684d72acc24c23
-
+```lua
+snap.run {
+  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+  select = snap.get'select.file'.select,
+  multiselect = snap.get'select.file'.multiselect,
+  views = {snap.get'preview.file'},
+  mappings = {
+    enter = {"<CR>", "<C-o>"}, -- my custom mapping
+  }
+}
+```
 
 ## How Snap Works
 

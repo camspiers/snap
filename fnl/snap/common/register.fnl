@@ -34,9 +34,15 @@
       (each [_ mode (ipairs modes)]
         (vim.api.nvim_buf_set_keymap bufnr mode key rhs (or opts {:nowait true}))))))
 
+(fn handle-string [tbl]
+  "When a table is provided just return, if a string is provided wrap in the table"
+  (match (type tbl)
+    :table tbl
+    :string [tbl]))
+
 (defn map [modes keys fnc opts]
   "Creates a global mapping"
   (let [rhs (get-map-call "global" fnc)]
-    (each [_ key (ipairs keys)]
-      (each [_ mode (ipairs modes)]
+    (each [_ key (ipairs (handle-string keys))]
+      (each [_ mode (ipairs (handle-string modes))]
         (vim.api.nvim_set_keymap mode key rhs (or opts {}))))))
