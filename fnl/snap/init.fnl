@@ -219,17 +219,17 @@
     (tset config :producer nil)
     (tset config :views nil)
 
-    ;; Close each window
-    (each [_ {: view} (ipairs views)]
-      (view:delete))
-    (results-view:delete)
+    (safecall (fn []
+      ;; Close each window
+      (each [_ {: view} (ipairs views)]
+        (view:delete))
+      (results-view:delete)
+      (input-view:delete)
+      ;; Return back to original window
+      (vim.api.nvim_set_current_win original-winnr)
 
-    ;; Return back to original window
-    (vim.api.nvim_set_current_win original-winnr)
-    (input-view:delete)
-
-    ;; Return back from insert mode
-    (vim.api.nvim_command :stopinsert))
+      ;; Return back from insert mode
+      (vim.api.nvim_command :stopinsert))))
 
   ;; Calculate the total views
   (local total-views (if config.views (length config.views) 0))
