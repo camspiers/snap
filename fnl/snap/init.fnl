@@ -572,4 +572,5 @@
 
 (defn create [config defaults]
   "Creates a function that will run snap with the following config"
-  (fn [] (run (tbl.merge (or defaults {}) config))))
+  (assertfunction config "Config must be a function")
+  (fn [] (run (tbl.merge (or defaults {}) (config)))))

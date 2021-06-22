@@ -793,8 +793,9 @@ do
   do
     local v_0_0
     local function create1(config, defaults)
+      assert((type(config) == "function"), "Config must be a function")
       local function _3_()
-        return run(tbl.merge((defaults or {}), config))
+        return run(tbl.merge((defaults or {}), config()))
       end
       return _3_
     end

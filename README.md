@@ -58,20 +58,24 @@ To generate a function that will invoke `snap.run` with a defined config you can
 local snap = require'snap'
 
 -- normal mode mapping <Leader><Leader> for searching files in cwd 
-snap.register.map('n', '<Leader><Leader>', snap.create {
-  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-})
+snap.register.map('n', '<Leader><Leader>', snap.create(function ()
+  return {
+    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+    select = snap.get'select.file'.select,
+    multiselect = snap.get'select.file'.multiselect,
+    views = {snap.get'preview.file'}
+  }
+end))
 
 -- creates normal mode mapping <Leader>f for grepping files in cwd 
-snap.register.map('n', '<Leader>f', snap.create {
-  producer = snap.get'producer.ripgrep.vimgrep',
-  select = snap.get'select.vimgrep'.select,
-  multiselect = snap.get'select.vimgrep'.multiselect,
-  views = {snap.get'preview.vimgrep'}
-})
+snap.register.map('n', '<Leader>f', snap.create(function ()
+  return {
+    producer = snap.get'producer.ripgrep.vimgrep',
+    select = snap.get'select.vimgrep'.select,
+    multiselect = snap.get'select.vimgrep'.multiselect,
+    views = {snap.get'preview.vimgrep'}
+  }
+end))
 ```
 
 ### Registering Global Keymaps With Common Defaults
@@ -95,20 +99,24 @@ local function create(config)
 end
 
 -- normal mode mapping <Leader><Leader> for searching files in cwd 
-snap.register.map('n', '<Leader><Leader>', create {
-  producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-  select = snap.get'select.file'.select,
-  multiselect = snap.get'select.file'.multiselect,
-  views = {snap.get'preview.file'}
-})
+snap.register.map('n', '<Leader><Leader>', create(function ()
+  return {
+    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
+    select = snap.get'select.file'.select,
+    multiselect = snap.get'select.file'.multiselect,
+    views = {snap.get'preview.file'}
+  }
+end))
 
 -- creates normal mode mapping <Leader>f for grepping files in cwd 
-snap.register.map('n', '<Leader>f', create {
-  producer = snap.get'producer.ripgrep.vimgrep',
-  select = snap.get'select.vimgrep'.select,
-  multiselect = snap.get'select.vimgrep'.multiselect,
-  views = {snap.get'preview.vimgrep'}
-})
+snap.register.map('n', '<Leader>f', create(function ()
+  return {
+    producer = snap.get'producer.ripgrep.vimgrep',
+    select = snap.get'select.vimgrep'.select,
+    multiselect = snap.get'select.vimgrep'.multiselect,
+    views = {snap.get'preview.vimgrep'}
+  }
+end))
 ```
 
 ## Recipes
