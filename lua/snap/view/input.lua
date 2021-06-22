@@ -170,7 +170,7 @@ do
       register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-page"], config["on-prev-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpageup"])
+      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
       vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
       vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})

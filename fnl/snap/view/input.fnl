@@ -110,7 +110,7 @@
 
     ;; Views
     (register.buf-map bufnr [:n :i] mappings.view-page-down config.on-viewpagedown)
-    (register.buf-map bufnr [:n :i] mappings.view-page-down config.on-viewpageup)
+    (register.buf-map bufnr [:n :i] mappings.view-page-up config.on-viewpageup)
     (register.buf-map bufnr [:n :i] mappings.view-toggle-hide config.on-view-toggle-hide)
 
     (vim.api.nvim_command
