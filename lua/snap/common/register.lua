@@ -39,7 +39,7 @@ local _local_0_ = _2_(...)
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.common.register"
 do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
-local register = {}
+local register = {commands = {}}
 local clean
 do
   local v_0_
@@ -191,5 +191,31 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["map"] = v_0_
   map = v_0_
+end
+_G.snap_commands = function()
+  return vim.tbl_keys(register.commands)
+end
+local command
+do
+  local v_0_
+  do
+    local v_0_0
+    local function command0(name, fnc)
+      if (#register.commands == 0) then
+        vim.api.nvim_command("command! -nargs=1 -complete=customlist,v:lua.snap_commands Snap lua require'snap'.register.run('commands', <f-args>)")
+      end
+      if (register.commands[name] ~= nil) then
+        assert(false, string.format("attempting to register duplicate command with name '%s'", name))
+      end
+      register.commands[name] = fnc
+      return nil
+    end
+    v_0_0 = command0
+    _0_["command"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["command"] = v_0_
+  command = v_0_
 end
 return nil

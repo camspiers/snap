@@ -60,6 +60,30 @@ do
   t_0_["register"] = v_0_
   register0 = v_0_
 end
+local map
+do
+  local v_0_
+  do
+    local v_0_0
+    local function map0(key, fnc, command)
+      assert((type(key) == "string"), "map key argument must be a string")
+      assert((type(fnc) == "function"), "map fnc argument must be a function")
+      if command then
+        assert((type(command) == "string"), "map command argument must be a string")
+      end
+      register0.map("n", key, fnc)
+      if command then
+        return register0.command(command, fnc)
+      end
+    end
+    v_0_0 = map0
+    _0_["map"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["map"] = v_0_
+  map = v_0_
+end
 local get_producer
 do
   local v_0_

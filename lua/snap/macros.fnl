@@ -65,6 +65,12 @@
 (fn assertboolean? [value msg]
   `(asserttype? :boolean ,value ,msg))
 
+(fn assertnumber [value msg]
+  `(asserttype :number ,value ,msg))
+
+(fn assertnumber? [value msg]
+  `(asserttype? :number ,value ,msg))
+
 (fn assertmetatable [value metatable msg]
   `(assert (= (getmetatable ,value) ,metatable) ,msg))
 
@@ -83,4 +89,6 @@
  : assertthread?
  : assertboolean
  : assertboolean?
+ : assertnumber
+ : assertnumber?
  : assertmetatable}
