@@ -1,6 +1,6 @@
-(module snap.defaults {require {snap snap
-                                tbl snap.common.tbl}
-                       require-macros [snap.macros]})
+(module snap.config {require {snap snap
+                              tbl snap.common.tbl}
+                     require-macros [snap.macros]})
 
 (fn format-prompt [suffix prompt]
   "Formats a prompt"
@@ -12,7 +12,7 @@
   If for example you prefer fzy over fzf, then:
 
   -- This creates a version of snap.defaults.file with fzy set as the default consumer:
-  local file = defaults.file:with {consumer = 'fzy'}
+  local file = file:with {consumer = 'fzy'}
 
   -- Adds a mapping to search buffers
   snap.map('n', '<Leader>b', file {producer = 'vim.buffer'})"

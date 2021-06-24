@@ -1,7 +1,7 @@
-local _2afile_2a = "fnl/snap/defaults/init.fnl"
+local _2afile_2a = "fnl/snap/config/init.fnl"
 local _0_
 do
-  local name_0_ = "snap.defaults"
+  local name_0_ = "snap.config"
   local module_0_
   do
     local x_0_ = package.loaded[name_0_]
@@ -39,7 +39,7 @@ local _local_0_ = _2_(...)
 local snap = _local_0_[1]
 local tbl = _local_0_[2]
 local _2amodule_2a = _0_
-local _2amodule_name_2a = "snap.defaults"
+local _2amodule_name_2a = "snap.config"
 do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
 local function format_prompt(suffix, prompt)
   return string.format("%s%s", prompt, (suffix or ">"))
