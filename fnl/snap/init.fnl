@@ -33,13 +33,18 @@
 ;; Exposes register as a main API
 (def register register)
 
-(defn map [key fnc command]
+(defn map [key run command]
   "Creates a mapping and an optional command name"
   (assertstring key "map key argument must be a string")
-  (assertfunction fnc "map fnc argument must be a function")
+  (assertfunction run "map run argument must be a function")
   (assertstring? command "map command argument must be a string")
-  (register.map :n key fnc)
-  (when command (register.command command fnc)))
+  (register.map :n key run)
+  (when command (register.command command run)))
+
+(defn maps [config]
+  "Creates mappings"
+  (each [_ [key run command] (ipairs config)]
+    (map key run command)))
 
 (defn get_producer [producer]
   "When a producer is a table, pull the default function out of it"

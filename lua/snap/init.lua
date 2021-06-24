@@ -65,15 +65,15 @@ do
   local v_0_
   do
     local v_0_0
-    local function map0(key, fnc, command)
+    local function map0(key, run, command)
       assert((type(key) == "string"), "map key argument must be a string")
-      assert((type(fnc) == "function"), "map fnc argument must be a function")
+      assert((type(run) == "function"), "map run argument must be a function")
       if command then
         assert((type(command) == "string"), "map command argument must be a string")
       end
-      register0.map("n", key, fnc)
+      register0.map("n", key, run)
       if command then
-        return register0.command(command, fnc)
+        return register0.command(command, run)
       end
     end
     v_0_0 = map0
@@ -83,6 +83,29 @@ do
   local t_0_ = (_0_)["aniseed/locals"]
   t_0_["map"] = v_0_
   map = v_0_
+end
+local maps
+do
+  local v_0_
+  do
+    local v_0_0
+    local function maps0(config)
+      for _, _3_ in ipairs(config) do
+        local _each_0_ = _3_
+        local key = _each_0_[1]
+        local run = _each_0_[2]
+        local command = _each_0_[3]
+        map(key, run, command)
+      end
+      return nil
+    end
+    v_0_0 = maps0
+    _0_["maps"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["maps"] = v_0_
+  maps = v_0_
 end
 local get_producer
 do

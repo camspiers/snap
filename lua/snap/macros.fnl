@@ -2,6 +2,10 @@
 (fn safefn [name ...]
   `(local ,name (vim.schedule_wrap (fn ,...))))
 
+;; Defines a metafunction
+(fn defmetafn [name tbl ...]
+  `(def ,name (setmetatable ,tbl {:__call (fn [self# ...] ((fn ,...) ...))})))
+
 ;; Calls a non-fast mode function safely
 (fn safecall [fnc ...]
   `((vim.schedule_wrap ,fnc) ,...))
@@ -77,6 +81,7 @@
 {: safefn
  : safecall
  : safedebounced
+ : defmetafn
  : asserttype
  : asserttype?
  : assertfunction
