@@ -115,6 +115,18 @@
   (assertstring field "field passed to snap.has_meta must be a string")
   (and (= (getmetatable result) meta_tbl) (not= (. result field) nil)))
 
+(defn display [result]
+  (when (not (has_meta result :displayed))
+    (with_meta result :displayed
+      (let [display_fn
+        (if (has_meta result :display)
+            (do
+              (assertfunction result.display "display meta must be a function")
+              result.display)
+            tostring)]
+        (display_fn result))))
+  result.displayed)
+
 ;; Run docs:
 ;;
 ;; @config: {
@@ -290,7 +302,7 @@
                 partial-results []]
             (each [_ result (ipairs results)
                    :until (= max (length partial-results))]
-              (table.insert partial-results (tostring result)))
+              (table.insert partial-results (display result)))
 
             ;; Update length
             (set partial-results-length (length partial-results))

@@ -298,6 +298,29 @@ do
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
 end
+local display
+do
+  local v_0_
+  do
+    local v_0_0
+    local function display0(result)
+      if not has_meta(result, "displayed") then
+        local function _3_()
+          local display_fn = tostring
+          return display_fn(result)
+        end
+        with_meta(result, "displayed", _3_())
+      end
+      return result.displayed
+    end
+    v_0_0 = display0
+    _0_["display"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["display"] = v_0_
+  display = v_0_
+end
 local run
 do
   local v_0_
@@ -454,7 +477,7 @@ do
                 local partial_results = {}
                 for _, result in ipairs(results0) do
                   if (max == #partial_results) then break end
-                  table.insert(partial_results, tostring(result))
+                  table.insert(partial_results, display(result))
                 end
                 partial_results_length = #partial_results
                 if config.reverse then
