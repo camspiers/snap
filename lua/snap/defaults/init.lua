@@ -91,6 +91,8 @@ local function file_prompt_by_type(type)
   local _3_ = type
   if (_3_ == "ripgrep.file") then
     return "Rg Files"
+  elseif (_3_ == "fd.file") then
+    return "Fd Files"
   elseif (_3_ == "vim.oldfile") then
     return "Old Files"
   elseif (_3_ == "vim.buffer") then

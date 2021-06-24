@@ -44,6 +44,7 @@
 (fn file-prompt-by-type [type]
   (match type
     :ripgrep.file "Rg Files"
+    :fd.file "Fd Files"
     :vim.oldfile "Old Files"
     :vim.buffer "Buffers"
     :git.file "Git Files"
@@ -55,6 +56,7 @@
   Supported producers:
 
   - ripgrep.file
+  - fd.file
   - vim.oldfile
   - vim.buffer
   - git.file
