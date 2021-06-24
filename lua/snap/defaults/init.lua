@@ -44,16 +44,16 @@ do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
 local function create_prompt(suffix, prompt)
   return string.format("%s%s", prompt, (suffix or ">"))
 end
-local function with(type, defaults)
+local function with(fnc, defaults)
   local function _3_(config)
-    return type(tbl.merge(defaults, config))
+    return fnc(tbl.merge(defaults, config))
   end
   return _3_
 end
-local function file_producer_by_type(config, type)
+local function file_producer_by_kind(config, kind)
   local producer
   do
-    local _3_ = type
+    local _3_ = kind
     if (_3_ == "ripgrep.file") then
       producer = snap.get("producer.ripgrep.file")
     elseif (_3_ == "fd.file") then
@@ -78,7 +78,7 @@ local function file_producer_by_type(config, type)
       end
     end
   end
-  if ((type == "ripgrep.file") or (type == "fd.file")) then
+  if ((kind == "ripgrep.file") or (kind == "fd.file")) then
     if config.args then
       producer = producer.args(config.args)
     elseif config.hidden then
@@ -87,7 +87,7 @@ local function file_producer_by_type(config, type)
   end
   return producer
 end
-local function file_prompt_by_type(type)
+local function file_prompt_by_kind(type)
   local _3_ = type
   if (_3_ == "ripgrep.file") then
     return "Rg Files"
@@ -135,23 +135,23 @@ do
         assert(not (config.producer and config.combine), "file.combine and file.producer can not be used together")
         assert(not (config.try and config.combine), "file.try and file.combine can not be used together")
         assert(not (config.hidden and config.args), "file.args and file.hidden can not be used together")
-        local by_type
+        local by_kind
         local function _11_(...)
-          return file_producer_by_type(config, ...)
+          return file_producer_by_kind(config, ...)
         end
-        by_type = _11_
-        local consumer_type = (config.consumer or "fzf")
+        by_kind = _11_
+        local consumer_kind = (config.consumer or "fzf")
         local producer
         if config.try then
-          producer = snap.get("consumer.try")(unpack(vim.tbl_map(by_type, config.try)))
+          producer = snap.get("consumer.try")(unpack(vim.tbl_map(by_kind, config.try)))
         elseif config.combine then
-          producer = snap.get("consumer.combine")(unpack(vim.tbl_map(by_type, config.combine)))
+          producer = snap.get("consumer.combine")(unpack(vim.tbl_map(by_kind, config.combine)))
         else
-          producer = by_type(config.producer)
+          producer = by_kind(config.producer)
         end
         local consumer
         do
-          local _13_ = consumer_type
+          local _13_ = consumer_kind
           if (_13_ == "fzf") then
             consumer = snap.get("consumer.fzf")
           elseif (_13_ == "fzy") then
@@ -179,11 +179,11 @@ do
         if config.prompt then
           prompt = create_prompt0(config.prompt)
         elseif config.producer then
-          prompt = create_prompt0(file_prompt_by_type(config.producer))
+          prompt = create_prompt0(file_prompt_by_kind(config.producer))
         elseif config.try then
-          prompt = create_prompt0(table.concat(vim.tbl_map(file_prompt_by_type, config.try), " or "))
+          prompt = create_prompt0(table.concat(vim.tbl_map(file_prompt_by_kind, config.try), " or "))
         elseif config.combine then
-          prompt = create_prompt0(table.concat(vim.tbl_map(file_prompt_by_type, config.combine), " + "))
+          prompt = create_prompt0(table.concat(vim.tbl_map(file_prompt_by_kind, config.combine), " + "))
         else
         prompt = nil
         end
@@ -203,8 +203,8 @@ do
   t_0_["file"] = v_0_
   file = v_0_
 end
-local function vimgrep_prompt_by_type(type)
-  local _3_ = type
+local function vimgrep_prompt_by_kind(kind)
+  local _3_ = kind
   if (_3_ == "ripgrep.vimgrep") then
     return "Rg Vimgrep"
   else
@@ -235,10 +235,10 @@ do
         if config.hidden then
           assert((type(config.hidden) == "boolean"), "vimgrep.hidden must be a boolean")
         end
-        local producer_type = (config.producer or "ripgrep.vimgrep")
+        local producer_kind = (config.producer or "ripgrep.vimgrep")
         local producer
         do
-          local _10_ = producer_type
+          local _10_ = producer_kind
           if (_10_ == "ripgrep.vimgrep") then
             producer = snap.get("producer.ripgrep.vimgrep")
           else
@@ -255,7 +255,7 @@ do
             end
           end
         end
-        if (producer_type == "ripgrep.vimgrep") then
+        if (producer_kind == "ripgrep.vimgrep") then
           if config.args then
             producer = producer.args(config.args)
           elseif config.hidden then
@@ -282,8 +282,8 @@ do
         local prompt
         if config.prompt then
           prompt = create_prompt0(config.prompt)
-        elseif producer_type then
-          prompt = create_prompt0(vimgrep_prompt_by_type(producer_type))
+        elseif producer_kind then
+          prompt = create_prompt0(vimgrep_prompt_by_kind(producer_kind))
         else
         prompt = nil
         end

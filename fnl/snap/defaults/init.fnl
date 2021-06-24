@@ -5,7 +5,7 @@
 (fn create-prompt [suffix prompt]
   (string.format "%s%s" prompt (or suffix :>)))
 
-(fn with [type defaults]
+(fn with [fnc defaults]
   "Returns a new default with config pre-applied.
 
   If for example you prefer fzy over fzf, that is you don't like the common default, then:
@@ -17,11 +17,11 @@
   snap.map('n', '<Leader>b', file {producer = 'vim.buffer'})
 "
   (fn [config]
-    (type (tbl.merge defaults config))))
+    (fnc (tbl.merge defaults config))))
 
-(fn file-producer-by-type [config type]
+(fn file-producer-by-kind [config kind]
   "Gets a producer from producer type strings and handle special configs like args and hidden"
-  (var producer (match type
+  (var producer (match kind
     :ripgrep.file (snap.get :producer.ripgrep.file)
     :fd.file (snap.get :producer.fd.file)
     :vim.oldfile (snap.get :producer.vim.oldfile)
@@ -32,7 +32,7 @@
 
   ;; For ripgrep.file and fd.file set custom args or hidden
   (when
-    (or (= type :ripgrep.file) (= type :fd.file))
+    (or (= kind :ripgrep.file) (= kind :fd.file))
     (if
       config.args
       (set producer (producer.args config.args))
@@ -41,7 +41,7 @@
 
   producer)
 
-(fn file-prompt-by-type [type]
+(fn file-prompt-by-kind [type]
   (match type
     :ripgrep.file "Rg Files"
     :fd.file "Fd Files"
@@ -125,24 +125,24 @@
   (assert (not (and config.hidden config.args)) "file.args and file.hidden can not be used together")
 
   ;; Helper function with config applied
-  (local by-type (partial file-producer-by-type config))
+  (local by-kind (partial file-producer-by-kind config))
   
-  ;; Consumer type
-  (local consumer-type (or config.consumer :fzf))
+  ;; Consumer kind
+  (local consumer-kind (or config.consumer :fzf))
 
-  ;; Get the initial producer module based on type
+  ;; Get the initial producer module based on kind
   (local producer (if
     ;; If we are using try
     config.try
-    ((snap.get :consumer.try) (unpack (vim.tbl_map by-type config.try)))
+    ((snap.get :consumer.try) (unpack (vim.tbl_map by-kind config.try)))
     ;; If we are using combine
     config.combine
-    ((snap.get :consumer.combine) (unpack (vim.tbl_map by-type config.combine)))
+    ((snap.get :consumer.combine) (unpack (vim.tbl_map by-kind config.combine)))
     ;; Otherwise producer must be set
-    (by-type config.producer)))
+    (by-kind config.producer)))
 
-  ;; Get the consumer module based on type
-  (local consumer (match consumer-type
+  ;; Get the consumer module based on kind
+  (local consumer (match consumer-kind
     :fzf (snap.get :consumer.fzf)
     :fzy (snap.get :consumer.fzy)
     (where c (= (type c) :function)) c
@@ -151,16 +151,16 @@
   ;; Defaults in the user defined suffix
   (local create-prompt (partial create-prompt config.suffix))
 
-  ;; Create reasonable prompts based on types
+  ;; Create reasonable prompts based on kinds
   (local prompt (if
     config.prompt
     (create-prompt config.prompt)
     config.producer
-    (create-prompt (file-prompt-by-type config.producer))
+    (create-prompt (file-prompt-by-kind config.producer))
     config.try
-    (create-prompt (table.concat (vim.tbl_map file-prompt-by-type config.try) " or "))
+    (create-prompt (table.concat (vim.tbl_map file-prompt-by-kind config.try) " or "))
     config.combine
-    (create-prompt (table.concat (vim.tbl_map file-prompt-by-type config.combine) " + "))))
+    (create-prompt (table.concat (vim.tbl_map file-prompt-by-kind config.combine) " + "))))
 
   ;; Get the select module
   (local select (snap.get :select.file))
@@ -174,8 +174,8 @@
                     :multiselect select.multiselect
                     :views [(snap.get :preview.file)]})))
 
-(fn vimgrep-prompt-by-type [type]
-  (match type
+(fn vimgrep-prompt-by-kind [kind]
+  (match kind
     :ripgrep.vimgrep "Rg Vimgrep"
     _ "Custom Vimgrep"))
 
@@ -188,17 +188,17 @@
   (assertboolean? config.hidden "vimgrep.hidden must be a boolean")
 
   ;; Get the producer type
-  (local producer-type (or config.producer :ripgrep.vimgrep))
+  (local producer-kind (or config.producer :ripgrep.vimgrep))
 
   ;; Gets the producer based on the producer type
-  (var producer (match producer-type
+  (var producer (match producer-kind
     :ripgrep.vimgrep (snap.get :producer.ripgrep.vimgrep)
     (where p (= (type p) :function)) p
     _ (assert false "vimgrep.producer is invalid")))
 
   ;; Customize vimgrep
   (when
-    (= producer-type :ripgrep.vimgrep)
+    (= producer-kind :ripgrep.vimgrep)
     (if
       config.args
       (set producer (producer.args config.args))
@@ -215,12 +215,12 @@
   ;; Defaults in the user defined suffix
   (local create-prompt (partial create-prompt config.suffix))
 
-  ;; Get a reasonable default prompt based on types
+  ;; Get a reasonable default prompt based on kinds
   (local prompt (if
     config.prompt
     (create-prompt config.prompt)
-    producer-type
-    (create-prompt (vimgrep-prompt-by-type producer-type))))
+    producer-kind
+    (create-prompt (vimgrep-prompt-by-kind producer-kind))))
 
   ;; Get the select module
   (local select (snap.get :select.vimgrep))
