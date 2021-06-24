@@ -9,7 +9,7 @@ endif
 
 let g:loaded_snap = 1
 
-highlight default link SnapSelect WildMenu
+highlight default link SnapSelect Visual
 highlight default link SnapMultiSelect Type
 
 highlight default link SnapNormal Normal
