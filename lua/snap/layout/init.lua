@@ -133,7 +133,12 @@ do
   do
     local v_0_0
     local function bottom0()
-      return _25bottom(0.9, 0.7)
+      local lines0 = vim.api.nvim_get_option("lines")
+      local height = math.floor((lines0 * 0.5))
+      local width = (vim.api.nvim_get_option("columns") - 4)
+      local col = 0
+      local row = (lines0 - height - 4)
+      return {col = col, height = height, row = row, width = width}
     end
     v_0_0 = bottom0
     _0_["bottom"] = v_0_0
