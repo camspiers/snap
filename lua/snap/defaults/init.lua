@@ -41,8 +41,8 @@ local tbl = _local_0_[2]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.defaults"
 do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
-local function create_prompt(prefix, prompt)
-  return string.format("%s%s", prompt, (prefix or ">"))
+local function create_prompt(suffix, prompt)
+  return string.format("%s%s", prompt, (suffix or ">"))
 end
 local function with(type, defaults)
   local function _3_(config)
@@ -172,7 +172,7 @@ do
         end
         local create_prompt0
         local function _14_(...)
-          return create_prompt(config.prefix, ...)
+          return create_prompt(config.suffix, ...)
         end
         create_prompt0 = _14_
         local prompt
@@ -276,7 +276,7 @@ do
         end
         local create_prompt0
         local function _13_(...)
-          return create_prompt(config.prefix, ...)
+          return create_prompt(config.suffix, ...)
         end
         create_prompt0 = _13_
         local prompt

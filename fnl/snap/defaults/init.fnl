@@ -2,8 +2,8 @@
                                 tbl snap.common.tbl}
                        require-macros [snap.macros]})
 
-(fn create-prompt [prefix prompt]
-  (string.format "%s%s" prompt (or prefix :>)))
+(fn create-prompt [suffix prompt]
+  (string.format "%s%s" prompt (or suffix :>)))
 
 (fn with [type defaults]
   "Returns a new default with config pre-applied.
@@ -73,7 +73,7 @@
   - args
   - layout
   - prompt
-  - prefix
+  - suffix
 
   Examples:
 
@@ -148,8 +148,8 @@
     (where c (= (type c) :function)) c
     _ (assert false "file.consumer is invalid")))
 
-  ;; Defaults in the user defined prefix
-  (local create-prompt (partial create-prompt config.prefix))
+  ;; Defaults in the user defined suffix
+  (local create-prompt (partial create-prompt config.suffix))
 
   ;; Create reasonable prompts based on types
   (local prompt (if
@@ -212,8 +212,8 @@
       (partial (snap.get :consumer.limit) config.limit)
       (fn [producer] producer)))
 
-  ;; Defaults in the user defined prefix
-  (local create-prompt (partial create-prompt config.prefix))
+  ;; Defaults in the user defined suffix
+  (local create-prompt (partial create-prompt config.suffix))
 
   ;; Get a reasonable default prompt based on types
   (local prompt (if
