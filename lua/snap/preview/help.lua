@@ -8,7 +8,8 @@ local function _1_(request)
     if not request.canceled() then
       vim.api.nvim_buf_set_option(request.bufnr, "buftype", "help")
       local function _3_()
-        return vim.api.nvim_command(string.format("noautocmd help %s", tostring(request.selection)))
+        vim.api.nvim_command(string.format("noautocmd help %s", tostring(request.selection)))
+        return vim.api.nvim_buf_set_option(request.bufnr, "syntax", "help")
       end
       return vim.api.nvim_buf_call(request.bufnr, _3_)
     end
