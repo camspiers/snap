@@ -77,7 +77,7 @@
   "Outputs the current selection"
   (local register (vim.fn.getreg "\""))
   (vim.api.nvim_exec "normal! y" false)
-  (var filter (vim.fn.trim (vim.fn.getreg "@")))
+  (local filter (vim.fn.trim (vim.fn.getreg "@")))
   (vim.fn.setreg "\"" register)
   filter)
 
