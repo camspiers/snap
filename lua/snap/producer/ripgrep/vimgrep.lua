@@ -8,6 +8,10 @@ vimgrep.default = function(request)
   local cwd = snap.sync(vim.fn.getcwd)
   return general(request, {args = tbl.concat(args, {request.filter}), cwd = cwd})
 end
+vimgrep.hidden = function(request)
+  local cwd = snap.sync(vim.fn.getcwd)
+  return general(request, {args = tbl.concat(args, {"--hidden", request.filter}), cwd = cwd})
+end
 vimgrep.args = function(new_args, cwd)
   local args0 = tbl.concat(args, new_args)
   local absolute = (cwd ~= nil)

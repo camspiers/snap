@@ -1,6 +1,7 @@
 (module snap.common.register)
 
-(local register {})
+;; Prefill with commands key
+(local register {:commands {}})
 
 (defn clean [group]
   "Cleans up unneeded buffer maps"
@@ -46,3 +47,19 @@
     (each [_ key (ipairs (handle-string keys))]
       (each [_ mode (ipairs (handle-string modes))]
         (vim.api.nvim_set_keymap mode key rhs (or opts {}))))))
+
+;; Beware this is the only place in space where the global lua table is modified
+(fn _G.snap_commands []
+  "Returns the list of Snap command for global :Snap command"
+  (vim.tbl_keys register.commands))
+
+;; You should tend not to use this directly and instead just use snap.map with a command name
+(defn command [name fnc]
+  "Adds a named function to the global :Snap command"
+  ;; When the Snap command isn't registered add it
+  (when (= (length register.commands) 0)
+    (vim.api.nvim_command
+      "command! -nargs=1 -complete=customlist,v:lua.snap_commands Snap lua require'snap'.register.run('commands', <f-args>)"))
+  (when (not= (. register.commands name) nil)
+    (assert false (string.format "attempting to register duplicate command with name '%s'" name)))
+  (tset register.commands name fnc))

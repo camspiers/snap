@@ -2,6 +2,10 @@
 (fn safefn [name ...]
   `(local ,name (vim.schedule_wrap (fn ,...))))
 
+;; Defines a metafunction
+(fn defmetafn [name tbl ...]
+  `(def ,name (setmetatable ,tbl {:__call (fn [self# ...] ((fn ,...) ...))})))
+
 ;; Calls a non-fast mode function safely
 (fn safecall [fnc ...]
   `((vim.schedule_wrap ,fnc) ,...))
@@ -28,6 +32,12 @@
            ;; When the args are already set we have already scheduled
            ;; so just swap the args to be called with
            (set args# [...]))))))
+
+(fn asserttypes [types value msg]
+  `(assert (vim.tbl_contains ,types (type ,value)) ,msg))
+
+(fn asserttypes? [types value msg]
+  `(when ,value (asserttypes ,types ,value ,msg)))
 
 (fn asserttype [typ value msg]
   `(assert (= (type ,value) ,typ) ,msg))
@@ -65,12 +75,21 @@
 (fn assertboolean? [value msg]
   `(asserttype? :boolean ,value ,msg))
 
+(fn assertnumber [value msg]
+  `(asserttype :number ,value ,msg))
+
+(fn assertnumber? [value msg]
+  `(asserttype? :number ,value ,msg))
+
 (fn assertmetatable [value metatable msg]
   `(assert (= (getmetatable ,value) ,metatable) ,msg))
 
 {: safefn
  : safecall
  : safedebounced
+ : defmetafn
+ : asserttypes
+ : asserttypes?
  : asserttype
  : asserttype?
  : assertfunction
@@ -83,4 +102,6 @@
  : assertthread?
  : assertboolean
  : assertboolean?
+ : assertnumber
+ : assertnumber?
  : assertmetatable}
