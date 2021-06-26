@@ -152,7 +152,7 @@ The full API:
   suffix?: string,
 
   // An optional layout function, see layout API below
-  layout?: string,
+  layout?: function,
 
   // An optional table that passes args to producers that support it
   args?: table<string>,
