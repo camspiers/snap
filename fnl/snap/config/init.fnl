@@ -142,6 +142,7 @@
   (asserttable?    config.combine           "file.combine must be a table")
   (assertboolean?  config.reverse           "file.reverse must be a boolean")
   (assertnumber?   config.preview-min-width "file.preview-min-with must be a boolean")
+  (asserttable?    config.mappings          "file.mappings must be a table")
   (asserttypes?    [:function :boolean] config.preview "file.preview must be a boolean or a function")
 
   ;; Ensure at least one producer config is set
@@ -199,11 +200,13 @@
     (let [hide-views (partial hide-views config)
           reverse (or config.reverse false)
           layout  (or config.layout nil)
+          mappings (or config.mappings nil)
           producer (consumer producer)
           select select-file.select
           multiselect select-file.multiselect
           views [(snap.get :preview.file)]]
       (snap.run {: prompt
+                 : mappings
                  : layout
                  : reverse
                  : producer
@@ -255,14 +258,15 @@
   vimgrep {layout = myCustomLayoutFunction}"
 
   (asserttable config)
-  (assertstring?   config.prompt  "vimgrep.prompt must be a string")
-  (assertnumber?   config.limit   "vimgrep.limit must be a number")
-  (assertfunction? config.layout  "vimgrep.layout must be a function")
-  (asserttable?    config.args    "vimgrep.args must be a table")
-  (assertboolean?  config.hidden  "vimgrep.hidden must be a boolean")
-  (assertstring?   config.suffix  "vimgrep.suffix must be a string")
-  (assertboolean?  config.reverse "vimgrep.reverse must be a boolean")
-  (assertboolean?  config.preview "vimgrep.preview must be a boolean")
+  (assertstring?   config.prompt   "vimgrep.prompt must be a string")
+  (assertnumber?   config.limit    "vimgrep.limit must be a number")
+  (assertfunction? config.layout   "vimgrep.layout must be a function")
+  (asserttable?    config.args     "vimgrep.args must be a table")
+  (assertboolean?  config.hidden   "vimgrep.hidden must be a boolean")
+  (assertstring?   config.suffix   "vimgrep.suffix must be a string")
+  (assertboolean?  config.reverse  "vimgrep.reverse must be a boolean")
+  (assertboolean?  config.preview  "vimgrep.preview must be a boolean")
+  (asserttable?    config.mappings "vimgrep.mappings must be a table")
 
   ;; Get the producer type
   (local producer-kind (or config.producer :ripgrep.vimgrep))
@@ -304,12 +308,14 @@
     (let [hide-views (partial hide-views config)
           reverse (or config.reverse false)
           layout (or config.layout nil)
+          mappings (or config.mappings nil)
           producer (consumer producer)
           select vimgrep-select.select
           multiselect vimgrep-select.multiselect
           views [(snap.get :preview.vimgrep)]]
       (snap.run {: prompt
                  : layout
+                 : mappings
                  : producer
                  : select
                  : multiselect

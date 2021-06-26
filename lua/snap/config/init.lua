@@ -153,6 +153,9 @@ do
         if config["preview-min-width"] then
           assert((type(config["preview-min-width"]) == "number"), "file.preview-min-with must be a boolean")
         end
+        if config.mappings then
+          assert((type(config.mappings) == "table"), "file.mappings must be a table")
+        end
         if config.preview then
           assert(vim.tbl_contains({"function", "boolean"}, type(config.preview)), "file.preview must be a boolean or a function")
         end
@@ -162,10 +165,10 @@ do
         assert(not (config.try and config.combine), "file.try and file.combine can not be used together")
         assert(not (config.hidden and config.args), "file.args and file.hidden can not be used together")
         local by_kind
-        local function _15_(...)
+        local function _16_(...)
           return file_producer_by_kind(config, ...)
         end
-        by_kind = _15_
+        by_kind = _16_
         local consumer_kind = (config.consumer or "fzf")
         local producer
         if config.try then
@@ -177,32 +180,32 @@ do
         end
         local consumer
         do
-          local _17_ = consumer_kind
-          if (_17_ == "fzf") then
+          local _18_ = consumer_kind
+          if (_18_ == "fzf") then
             consumer = snap.get("consumer.fzf")
-          elseif (_17_ == "fzy") then
+          elseif (_18_ == "fzy") then
             consumer = snap.get("consumer.fzy")
           else
-            local function _18_()
-              local c = _17_
+            local function _19_()
+              local c = _18_
               return (type(c) == "function")
             end
-            if ((nil ~= _17_) and _18_()) then
-              local c = _17_
+            if ((nil ~= _18_) and _19_()) then
+              local c = _18_
               consumer = c
             else
-              local _ = _17_
+              local _ = _18_
               consumer = assert(false, "file.consumer is invalid")
             end
           end
         end
         local add_prompt_suffix
-        local function _18_(...)
+        local function _19_(...)
           return format_prompt(config.suffix, ...)
         end
-        add_prompt_suffix = _18_
+        add_prompt_suffix = _19_
         local prompt
-        local function _19_()
+        local function _20_()
           if config.prompt then
             return config.prompt
           elseif config.producer then
@@ -213,21 +216,22 @@ do
             return table.concat(vim.tbl_map(file_prompt_by_kind, config.combine), " + ")
           end
         end
-        prompt = add_prompt_suffix(_19_())
+        prompt = add_prompt_suffix(_20_())
         local select_file = snap.get("select.file")
-        local hide_views0
-        local function _20_(...)
-          return hide_views(config, ...)
-        end
-        hide_views0 = _20_
         local function _21_()
+          local hide_views0
+          local function _22_(...)
+            return hide_views(config, ...)
+          end
+          hide_views0 = _22_
           local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
+          local mappings = (config.mappings or nil)
           local producer0 = consumer(producer)
           local select = select_file.select
           local multiselect = select_file.multiselect
           local views = {snap.get("preview.file")}
-          return snap.run({["hide-views"] = hide_views0, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
+          return snap.run({["hide-views"] = hide_views0, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
         end
         return _21_
       end
@@ -282,22 +286,25 @@ do
         if config.preview then
           assert((type(config.preview) == "boolean"), "vimgrep.preview must be a boolean")
         end
+        if config.mappings then
+          assert((type(config.mappings) == "table"), "vimgrep.mappings must be a table")
+        end
         local producer_kind = (config.producer or "ripgrep.vimgrep")
         local producer
         do
-          local _13_ = producer_kind
-          if (_13_ == "ripgrep.vimgrep") then
+          local _14_ = producer_kind
+          if (_14_ == "ripgrep.vimgrep") then
             producer = snap.get("producer.ripgrep.vimgrep")
           else
-            local function _14_()
-              local p = _13_
+            local function _15_()
+              local p = _14_
               return (type(p) == "function")
             end
-            if ((nil ~= _13_) and _14_()) then
-              local p = _13_
+            if ((nil ~= _14_) and _15_()) then
+              local p = _14_
               producer = p
             else
-              local _ = _13_
+              local _ = _14_
               producer = assert(false, "vimgrep.producer is invalid")
             end
           end
@@ -311,44 +318,45 @@ do
         end
         local consumer
         if config.limit then
-          local function _15_(...)
+          local function _16_(...)
             return snap.get("consumer.limit")(config.limit, ...)
           end
-          consumer = _15_
+          consumer = _16_
         else
-          local function _15_(producer0)
+          local function _16_(producer0)
             return producer0
           end
-          consumer = _15_
+          consumer = _16_
         end
         local format_prompt0
-        local function _16_(...)
+        local function _17_(...)
           return format_prompt(config.suffix, ...)
         end
-        format_prompt0 = _16_
+        format_prompt0 = _17_
         local prompt
-        local function _17_()
+        local function _18_()
           if config.prompt then
             return config.prompt
           elseif producer_kind then
             return vimgrep_prompt_by_kind(producer_kind)
           end
         end
-        prompt = format_prompt0(_17_())
+        prompt = format_prompt0(_18_())
         local vimgrep_select = snap.get("select.vimgrep")
-        local hide_views0
-        local function _18_(...)
-          return hide_views(config, ...)
-        end
-        hide_views0 = _18_
         local function _19_()
+          local hide_views0
+          local function _20_(...)
+            return hide_views(config, ...)
+          end
+          hide_views0 = _20_
           local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
+          local mappings = (config.mappings or nil)
           local producer0 = consumer(producer)
           local select = vimgrep_select.select
           local multiselect = vimgrep_select.multiselect
           local views = {snap.get("preview.vimgrep")}
-          return snap.run({["hide-views"] = hide_views0, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
+          return snap.run({["hide-views"] = hide_views0, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
         end
         return _19_
       end

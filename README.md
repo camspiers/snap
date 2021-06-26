@@ -168,6 +168,9 @@ The full API:
 
   // An optional boolean or function that returning true displays the preview and when false hides
   preview?: boolean | function,
+
+  // An optional table of custom input buffer mappings, see mappings section below for options
+  mappings?: table
 }
 ```
 
