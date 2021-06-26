@@ -9,6 +9,19 @@
   "Disables previews based on screen size"
   (<= (vim.api.nvim_get_option :columns) (or min-width default-min-width)))
 
+(fn hide-views [config]
+  "Gives nice defaults for how previews should be display based on manual setting, custom function or display size
+  
+   if config.preview is nil or is true
+   then determinw if preview is disabled based on screen size
+   if config.preview is set and is false
+   then always hide
+   if config.preview is a function call the function and return the negation of the result"
+  (match (type config.preview)
+    :nil (preview-disabled config.preview-min-width)
+    :boolean (or (= config.preview false) (preview-disabled config.preview-min-width))
+    :function (not (config.preview))))
+
 (fn format-prompt [suffix prompt]
   "Formats a prompt"
   (string.format "%s%s" prompt (or suffix :>)))
@@ -177,17 +190,7 @@
   ;; Get the selection module
   (local select-file (snap.get :select.file))
 
-  ;; Define a function that handles the following:
-  ;; if config.preview is nil or is true
-  ;; then determinw if preview is disabled based on screen size
-  ;; if config.preview is set and is false
-  ;; then always hide
-  ;; if config.preview is a function call the function and return the negation of the result
-  (fn hide-views []
-    (match (type config.preview)
-      :nil (preview-disabled config.preview-min-width)
-      :boolean (or (= config.preview false) (preview-disabled config.preview-min-width))
-      :function (not (config.preview))))
+  (local hide-views (partial hide-views config))
 
   ;; Create a function to invoke snap
   (fn []
@@ -294,8 +297,7 @@
 
   (local vimgrep-select (snap.get :select.vimgrep))
 
-  ;; Get the preview flag with default to true
-  (local preview (if (not= config.preview nil) config.preview true)) 
+  (local hide-views (partial hide-views config))
 
   (fn []
     (let [reverse (or config.reverse false)
@@ -303,6 +305,12 @@
           producer (consumer producer)
           select vimgrep-select.select
           multiselect vimgrep-select.multiselect
-          views (if preview [(snap.get :preview.vimgrep)] nil)]
-      (snap.run {: prompt : layout : producer : select : multiselect : views}))))
+          views [(snap.get :preview.vimgrep)]]
+      (snap.run {: prompt
+                 : layout
+                 : producer
+                 : select
+                 : multiselect
+                 : views
+                 : hide-views}))))
 

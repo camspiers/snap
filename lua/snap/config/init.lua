@@ -45,6 +45,16 @@ local default_min_width = (80 * 2)
 local function preview_disabled(min_width)
   return (vim.api.nvim_get_option("columns") <= (min_width or default_min_width))
 end
+local function hide_views(config)
+  local _3_ = type(config.preview)
+  if (_3_ == "nil") then
+    return preview_disabled(config["preview-min-width"])
+  elseif (_3_ == "boolean") then
+    return ((config.preview == false) or preview_disabled(config["preview-min-width"]))
+  elseif (_3_ == "function") then
+    return not config.preview()
+  end
+end
 local function format_prompt(suffix, prompt)
   return string.format("%s%s", prompt, (suffix or ">"))
 end
@@ -205,26 +215,21 @@ do
         end
         prompt = add_prompt_suffix(_19_())
         local select_file = snap.get("select.file")
-        local function hide_views()
-          local _20_ = type(config.preview)
-          if (_20_ == "nil") then
-            return preview_disabled(config["preview-min-width"])
-          elseif (_20_ == "boolean") then
-            return ((config.preview == false) or preview_disabled(config["preview-min-width"]))
-          elseif (_20_ == "function") then
-            return not config.preview()
-          end
+        local hide_views0
+        local function _20_(...)
+          return hide_views(config, ...)
         end
-        local function _20_()
+        hide_views0 = _20_
+        local function _21_()
           local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
           local producer0 = consumer(producer)
           local select = select_file.select
           local multiselect = select_file.multiselect
           local views = {snap.get("preview.file")}
-          return snap.run({["hide-views"] = hide_views, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
+          return snap.run({["hide-views"] = hide_views0, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
         end
-        return _20_
+        return _21_
       end
       return _4_(...)
     end
@@ -331,25 +336,19 @@ do
         end
         prompt = format_prompt0(_17_())
         local vimgrep_select = snap.get("select.vimgrep")
-        local preview
-        if (config.preview ~= nil) then
-          preview = config.preview
-        else
-          preview = true
+        local hide_views0
+        local function _18_(...)
+          return hide_views(config, ...)
         end
+        hide_views0 = _18_
         local function _19_()
           local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
           local producer0 = consumer(producer)
           local select = vimgrep_select.select
           local multiselect = vimgrep_select.multiselect
-          local views
-          if preview then
-            views = {snap.get("preview.vimgrep")}
-          else
-            views = nil
-          end
-          return snap.run({layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
+          local views = {snap.get("preview.vimgrep")}
+          return snap.run({["hide-views"] = hide_views0, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
         end
         return _19_
       end
