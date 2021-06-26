@@ -99,7 +99,7 @@ If you want to also make your function available via the `:Snap myexamplefunctio
 ```lua
 local snap = require'snap'
 snap.maps {
-  {"<Leader><Leader>", snap.config.file {producer = "ripgrep.file"}, "mycommandname"}
+  {"<Leader><Leader>", snap.config.file {producer = "ripgrep.file"}, {command = "mycommandname"}}
 }
 ```
 
