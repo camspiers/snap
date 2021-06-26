@@ -81,30 +81,40 @@ do
     local function map0(key, run, opts)
       assert((type(key) == "string"), "map key argument must be a string")
       assert((type(run) == "function"), "map run argument must be a function")
-      local command
-      do
-        local _3_ = type(opts)
-        if (_3_ == "string") then
-          print("[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
-          command = opts
-        elseif (_3_ == "table") then
-          command = opts.command
-        else
-        command = nil
+      if (opts ~= nil) then
+        local command
+        do
+          local _3_ = type(opts)
+          if (_3_ == "string") then
+            print("[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
+            command = opts
+          elseif (_3_ == "table") then
+            command = opts.command
+          else
+          command = nil
+          end
         end
-      end
-      if command then
-        assert((type(command) == "string"), "map command argument must be a string")
-      end
-      local _5_
-      if opts.modes then
-        _5_ = opts.modes
+        return nil
       else
-        _5_ = "n"
-      end
-      register0.map(_5_, key, run)
-      if command then
-        return register0.command(command, run)
+        local _3_
+        if command then
+          _3_ = assert((type(command) == "string"), "map command argument must be a string")
+        else
+        _3_ = nil
+        end
+        if _3_ then
+          local _5_
+          if opts.modes then
+            _5_ = opts.modes
+          else
+            _5_ = "n"
+          end
+          return register0.map(_5_, key, run)
+        else
+          if command then
+            return register0.command(command, run)
+          end
+        end
       end
     end
     v_0_0 = map0

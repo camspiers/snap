@@ -41,14 +41,15 @@
   "Creates a mapping and an optional command name"
   (assertstring key "map key argument must be a string")
   (assertfunction run "map run argument must be a function")
-  (local command (match (type opts)
-    :string (do
-              (print "[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
-              opts)
-    :table opts.command))
-  (assertstring? command "map command argument must be a string")
-  (register.map (if opts.modes opts.modes :n) key run)
-  (when command (register.command command run)))
+  (if (not= opts nil)
+    (local command (match (type opts)
+      :string (do
+                (print "[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
+                opts)
+      :table opts.command))
+    (assertstring? command "map command argument must be a string")
+    (register.map (if opts.modes opts.modes :n) key run)
+    (when command (register.command command run))))
 
 (defn maps [config]
   "Creates mappings"
