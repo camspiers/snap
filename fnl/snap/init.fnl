@@ -45,9 +45,13 @@
     :string (do
               (print "[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
               opts)
-    :table opts.command))
+    :table opts.command
+    :nil nil))
   (assertstring? command "map command argument must be a string")
-  (register.map (if opts.modes opts.modes :n) key run)
+  (local modes (match (type opts)
+    :table (or opts.modes :n)
+    :nil :n))
+  (register.map modes key run)
   (when command (register.command command run)))
 
 (defn maps [config]

@@ -89,6 +89,8 @@ do
           command = opts
         elseif (_3_ == "table") then
           command = opts.command
+        elseif (_3_ == "nil") then
+          command = nil
         else
         command = nil
         end
@@ -96,13 +98,18 @@ do
       if command then
         assert((type(command) == "string"), "map command argument must be a string")
       end
-      local _5_
-      if opts.modes then
-        _5_ = opts.modes
-      else
-        _5_ = "n"
+      local modes
+      do
+        local _5_ = type(opts)
+        if (_5_ == "table") then
+          modes = (opts.modes or "n")
+        elseif (_5_ == "nil") then
+          modes = "n"
+        else
+        modes = nil
+        end
       end
-      register0.map(_5_, key, run)
+      register0.map(modes, key, run)
       if command then
         return register0.command(command, run)
       end
