@@ -56,7 +56,7 @@ There are three primary APIs to be aware of in order to set up your local nvim t
 
 ### `snap.config`
 
-`snap.config` offers a easy API for creating functions that call `snap.run` with sensible configuration. It is merely and API that provides a terse API for generating functions that call `snap.run`.
+`snap.config` offers a terse API for creating functions that call `snap.run` with sensible configuration.
 
 ### `snap.run`
 
@@ -64,7 +64,7 @@ Though used directly infrequently, `snap.run` is the API to start a snap.
 
 ### Registering Global Keymaps
 
-The following illustrates some basic usage of the `snap.config` API, we generate a variety of functions and register them as normal mode mappings:
+The following illustrates some basic usage of the `snap.maps` and `snap.config` APIs, we generate a variety of functions and register them as normal mode mappings:
 
 ```lua
 local snap = require'snap'
@@ -76,7 +76,7 @@ snap.maps {
 }
 ```
 
-This gives a basic example, however see the [`snap.config`](#snap.config-api) section for all options available.
+This gives a basic example, however see the [`snap.config`](#config-api) section for all options available.
 
 ### Registering Global Keymaps With Defaults
 
