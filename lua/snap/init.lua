@@ -82,13 +82,16 @@ do
       assert((type(key) == "string"), "map key argument must be a string")
       assert((type(run) == "function"), "map run argument must be a function")
       local command
-      if type(opts) then
-        do
+      do
+        local _3_ = type(opts)
+        if (_3_ == "string") then
           print("[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
+          command = opts
+        elseif (_3_ == "table") then
+          command = opts.command
+        else
+        command = nil
         end
-        command = opts.command
-      else
-      command = nil
       end
       if command then
         assert((type(command) == "string"), "map command argument must be a string")
