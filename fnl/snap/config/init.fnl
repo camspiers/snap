@@ -2,6 +2,13 @@
                               tbl snap.common.tbl}
                      require-macros [snap.macros]})
 
+;; Based off the concept that you should have at least 80 cols for preview and results (when all real estate is available)
+(local default-min-width (* 80 2))
+
+(fn preview-disabled [min-width]
+  "Disables previews based on screen size"
+  (<= (vim.api.nvim_get_option :columns) (or min-width default-min-width)))
+
 (fn format-prompt [suffix prompt]
   "Formats a prompt"
   (string.format "%s%s" prompt (or suffix :>)))
@@ -109,13 +116,16 @@
   file {layout = myCustomLayoutFunction}"
 
   (asserttable     config)
-  (assertstring?   config.prompt  "file.prompt must be a string")
-  (assertstring?   config.suffix  "file.suffix must be a string")
-  (assertfunction? config.layout  "file.layout must be a function")
-  (asserttable?    config.args    "file.args must be a table")
-  (assertboolean?  config.hidden  "file.hidden must be a boolean")
-  (asserttable?    config.try     "file.try must be a table")
-  (asserttable?    config.combine "file.combine must be a table")
+  (assertstring?   config.prompt            "file.prompt must be a string")
+  (assertstring?   config.suffix            "file.suffix must be a string")
+  (assertfunction? config.layout            "file.layout must be a function")
+  (asserttable?    config.args              "file.args must be a table")
+  (assertboolean?  config.hidden            "file.hidden must be a boolean")
+  (asserttable?    config.try               "file.try must be a table")
+  (asserttable?    config.combine           "file.combine must be a table")
+  (assertboolean?  config.reverse           "file.reverse must be a boolean")
+  (assertnumber?   config.preview-min-width "file.preview-min-with must be a boolean")
+  (asserttypes?    [:function :boolean] config.preview "file.preview must be a boolean or a function")
 
   ;; Ensure at least one producer config is set
   (assert (or config.producer config.try config.combine) "one of file.producer, file.try or file.combine must be set")
@@ -164,7 +174,20 @@
     config.combine
     (table.concat (vim.tbl_map file-prompt-by-kind config.combine) " + "))))
 
+  ;; Get the selection module
   (local select-file (snap.get :select.file))
+
+  ;; Define a function that handles the following:
+  ;; if config.preview is nil or is true
+  ;; then determinw if preview is disabled based on screen size
+  ;; if config.preview is set and is false
+  ;; then always hide
+  ;; if config.preview is a function call the function and return the negation of the result
+  (fn hide-views []
+    (match (type config.preview)
+      :nil (preview-disabled config.preview-min-width)
+      :boolean (or (= config.preview false) (preview-disabled config.preview-min-width))
+      :function (not (config.preview))))
 
   ;; Create a function to invoke snap
   (fn []
@@ -174,7 +197,14 @@
           select select-file.select
           multiselect select-file.multiselect
           views [(snap.get :preview.file)]]
-      (snap.run {: prompt : layout : reverse : producer : select : multiselect : views}))))
+      (snap.run {: prompt
+                 : layout
+                 : reverse
+                 : producer
+                 : select
+                 : multiselect
+                 : views
+                 : hide-views}))))
 
 (fn vimgrep-prompt-by-kind [kind]
   (match kind
@@ -219,12 +249,14 @@
   vimgrep {layout = myCustomLayoutFunction}"
 
   (asserttable config)
-  (assertstring?   config.prompt "vimgrep.prompt must be a string")
-  (assertnumber?   config.limit  "vimgrep.limit must be a number")
-  (assertfunction? config.layout "vimgrep.layout must be a function")
-  (asserttable?    config.args   "vimgrep.args must be a table")
-  (assertboolean?  config.hidden "vimgrep.hidden must be a boolean")
-  (assertstring?   config.suffix "vimgrep.suffix must be a string")
+  (assertstring?   config.prompt  "vimgrep.prompt must be a string")
+  (assertnumber?   config.limit   "vimgrep.limit must be a number")
+  (assertfunction? config.layout  "vimgrep.layout must be a function")
+  (asserttable?    config.args    "vimgrep.args must be a table")
+  (assertboolean?  config.hidden  "vimgrep.hidden must be a boolean")
+  (assertstring?   config.suffix  "vimgrep.suffix must be a string")
+  (assertboolean?  config.reverse "vimgrep.reverse must be a boolean")
+  (assertboolean?  config.preview "vimgrep.preview must be a boolean")
 
   ;; Get the producer type
   (local producer-kind (or config.producer :ripgrep.vimgrep))
@@ -262,11 +294,15 @@
 
   (local vimgrep-select (snap.get :select.vimgrep))
 
+  ;; Get the preview flag with default to true
+  (local preview (if (not= config.preview nil) config.preview true)) 
+
   (fn []
-    (let [layout (or config.layout nil)
+    (let [reverse (or config.reverse false)
+          layout (or config.layout nil)
           producer (consumer producer)
           select vimgrep-select.select
           multiselect vimgrep-select.multiselect
-          views [(snap.get :preview.vimgrep)]]
+          views (if preview [(snap.get :preview.vimgrep)] nil)]
       (snap.run {: prompt : layout : producer : select : multiselect : views}))))
 

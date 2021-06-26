@@ -135,7 +135,7 @@ do
     local function bottom0()
       local lines0 = vim.api.nvim_get_option("lines")
       local height = math.floor((lines0 * 0.5))
-      local width = (vim.api.nvim_get_option("columns") - 4)
+      local width = vim.api.nvim_get_option("columns")
       local col = 0
       local row = (lines0 - height - 4)
       return {col = col, height = height, row = row, width = width}

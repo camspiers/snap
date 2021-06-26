@@ -33,6 +33,12 @@
            ;; so just swap the args to be called with
            (set args# [...]))))))
 
+(fn asserttypes [types value msg]
+  `(assert (vim.tbl_contains ,types (type ,value)) ,msg))
+
+(fn asserttypes? [types value msg]
+  `(when ,value (asserttypes ,types ,value ,msg)))
+
 (fn asserttype [typ value msg]
   `(assert (= (type ,value) ,typ) ,msg))
 
@@ -82,6 +88,8 @@
  : safecall
  : safedebounced
  : defmetafn
+ : asserttypes
+ : asserttypes?
  : asserttype
  : asserttype?
  : assertfunction

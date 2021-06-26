@@ -52,7 +52,7 @@
 (defn bottom []
   (let [lines (vim.api.nvim_get_option :lines)
         height (math.floor (* lines 0.5))
-        width (- (vim.api.nvim_get_option :columns) 4)
+        width (vim.api.nvim_get_option :columns)
         col 0
         row (- lines height 4)]
     {: width : height : col : row }))

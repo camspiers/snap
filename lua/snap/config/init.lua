@@ -41,6 +41,10 @@ local tbl = _local_0_[2]
 local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.config"
 do local _ = ({nil, _0_, nil, {{nil}, nil, nil, nil}})[2] end
+local default_min_width = (80 * 2)
+local function preview_disabled(min_width)
+  return (vim.api.nvim_get_option("columns") <= (min_width or default_min_width))
+end
 local function format_prompt(suffix, prompt)
   return string.format("%s%s", prompt, (suffix or ">"))
 end
@@ -133,16 +137,25 @@ do
         if config.combine then
           assert((type(config.combine) == "table"), "file.combine must be a table")
         end
+        if config.reverse then
+          assert((type(config.reverse) == "boolean"), "file.reverse must be a boolean")
+        end
+        if config["preview-min-width"] then
+          assert((type(config["preview-min-width"]) == "number"), "file.preview-min-with must be a boolean")
+        end
+        if config.preview then
+          assert(vim.tbl_contains({"function", "boolean"}, type(config.preview)), "file.preview must be a boolean or a function")
+        end
         assert((config.producer or config.try or config.combine), "one of file.producer, file.try or file.combine must be set")
         assert(not (config.producer and config.try), "file.try and file.producer can not be used together")
         assert(not (config.producer and config.combine), "file.combine and file.producer can not be used together")
         assert(not (config.try and config.combine), "file.try and file.combine can not be used together")
         assert(not (config.hidden and config.args), "file.args and file.hidden can not be used together")
         local by_kind
-        local function _12_(...)
+        local function _15_(...)
           return file_producer_by_kind(config, ...)
         end
-        by_kind = _12_
+        by_kind = _15_
         local consumer_kind = (config.consumer or "fzf")
         local producer
         if config.try then
@@ -154,32 +167,32 @@ do
         end
         local consumer
         do
-          local _14_ = consumer_kind
-          if (_14_ == "fzf") then
+          local _17_ = consumer_kind
+          if (_17_ == "fzf") then
             consumer = snap.get("consumer.fzf")
-          elseif (_14_ == "fzy") then
+          elseif (_17_ == "fzy") then
             consumer = snap.get("consumer.fzy")
           else
-            local function _15_()
-              local c = _14_
+            local function _18_()
+              local c = _17_
               return (type(c) == "function")
             end
-            if ((nil ~= _14_) and _15_()) then
-              local c = _14_
+            if ((nil ~= _17_) and _18_()) then
+              local c = _17_
               consumer = c
             else
-              local _ = _14_
+              local _ = _17_
               consumer = assert(false, "file.consumer is invalid")
             end
           end
         end
         local add_prompt_suffix
-        local function _15_(...)
+        local function _18_(...)
           return format_prompt(config.suffix, ...)
         end
-        add_prompt_suffix = _15_
+        add_prompt_suffix = _18_
         local prompt
-        local function _16_()
+        local function _19_()
           if config.prompt then
             return config.prompt
           elseif config.producer then
@@ -190,18 +203,28 @@ do
             return table.concat(vim.tbl_map(file_prompt_by_kind, config.combine), " + ")
           end
         end
-        prompt = add_prompt_suffix(_16_())
+        prompt = add_prompt_suffix(_19_())
         local select_file = snap.get("select.file")
-        local function _17_()
+        local function hide_views()
+          local _20_ = type(config.preview)
+          if (_20_ == "nil") then
+            return preview_disabled(config["preview-min-width"])
+          elseif (_20_ == "boolean") then
+            return ((config.preview == false) or preview_disabled(config["preview-min-width"]))
+          elseif (_20_ == "function") then
+            return not config.preview()
+          end
+        end
+        local function _20_()
           local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
           local producer0 = consumer(producer)
           local select = select_file.select
           local multiselect = select_file.multiselect
           local views = {snap.get("preview.file")}
-          return snap.run({layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
+          return snap.run({["hide-views"] = hide_views, layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
         end
-        return _17_
+        return _20_
       end
       return _4_(...)
     end
@@ -248,22 +271,28 @@ do
         if config.suffix then
           assert((type(config.suffix) == "string"), "vimgrep.suffix must be a string")
         end
+        if config.reverse then
+          assert((type(config.reverse) == "boolean"), "vimgrep.reverse must be a boolean")
+        end
+        if config.preview then
+          assert((type(config.preview) == "boolean"), "vimgrep.preview must be a boolean")
+        end
         local producer_kind = (config.producer or "ripgrep.vimgrep")
         local producer
         do
-          local _11_ = producer_kind
-          if (_11_ == "ripgrep.vimgrep") then
+          local _13_ = producer_kind
+          if (_13_ == "ripgrep.vimgrep") then
             producer = snap.get("producer.ripgrep.vimgrep")
           else
-            local function _12_()
-              local p = _11_
+            local function _14_()
+              local p = _13_
               return (type(p) == "function")
             end
-            if ((nil ~= _11_) and _12_()) then
-              local p = _11_
+            if ((nil ~= _13_) and _14_()) then
+              local p = _13_
               producer = p
             else
-              local _ = _11_
+              local _ = _13_
               producer = assert(false, "vimgrep.producer is invalid")
             end
           end
@@ -277,40 +306,52 @@ do
         end
         local consumer
         if config.limit then
-          local function _13_(...)
+          local function _15_(...)
             return snap.get("consumer.limit")(config.limit, ...)
           end
-          consumer = _13_
+          consumer = _15_
         else
-          local function _13_(producer0)
+          local function _15_(producer0)
             return producer0
           end
-          consumer = _13_
+          consumer = _15_
         end
         local format_prompt0
-        local function _14_(...)
+        local function _16_(...)
           return format_prompt(config.suffix, ...)
         end
-        format_prompt0 = _14_
+        format_prompt0 = _16_
         local prompt
-        local function _15_()
+        local function _17_()
           if config.prompt then
             return config.prompt
           elseif producer_kind then
             return vimgrep_prompt_by_kind(producer_kind)
           end
         end
-        prompt = format_prompt0(_15_())
+        prompt = format_prompt0(_17_())
         local vimgrep_select = snap.get("select.vimgrep")
-        local function _16_()
+        local preview
+        if (config.preview ~= nil) then
+          preview = config.preview
+        else
+          preview = true
+        end
+        local function _19_()
+          local reverse = (config.reverse or false)
           local layout = (config.layout or nil)
           local producer0 = consumer(producer)
           local select = vimgrep_select.select
           local multiselect = vimgrep_select.multiselect
-          local views = {snap.get("preview.vimgrep")}
+          local views
+          if preview then
+            views = {snap.get("preview.vimgrep")}
+          else
+            views = nil
+          end
           return snap.run({layout = layout, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
         end
-        return _16_
+        return _19_
       end
       return _4_(...)
     end

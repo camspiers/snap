@@ -58,7 +58,7 @@ local function layout(config)
   local sizes = tbl.allocate((height - total_borders - total_paddings), config["total-views"])
   local height0 = sizes[config.index]
   local col_offset = math.floor((width * size["view-width"]))
-  return {col = (col + col_offset + (size.border * 2) + size.padding), focusable = false, height = height0, row = (row + tbl.sum(tbl.take(sizes, index)) + border + padding), width = (width - col_offset)}
+  return {col = (col + col_offset + (size.border * 2) + size.padding), focusable = false, height = height0, row = (row + tbl.sum(tbl.take(sizes, index)) + border + padding), width = (width - col_offset - size.padding - size.padding - size.border)}
 end
 local create
 do
