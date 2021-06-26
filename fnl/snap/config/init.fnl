@@ -121,6 +121,7 @@
   - prompt
   - suffix
   - reverse
+  - mappings
   - preview_min_width
   - preview
 
@@ -168,7 +169,7 @@
   (asserttable?    config.try               "file.try must be a table")
   (asserttable?    config.combine           "file.combine must be a table")
   (assertboolean?  config.reverse           "file.reverse must be a boolean")
-  (assertnumber?   config.preview_min_width "file.preview-min-with must be a boolean")
+  (assertnumber?   config.preview_min_width "file.preview-min-with must be a number")
   (asserttable?    config.mappings          "file.mappings must be a table")
   (asserttypes?    [:function :boolean] config.preview "file.preview must be a boolean or a function")
 
@@ -345,6 +346,7 @@
           views [(snap.get :preview.vimgrep)]]
       (snap.run {: prompt
                  : layout
+                 : reverse
                  : mappings
                  : producer
                  : select
