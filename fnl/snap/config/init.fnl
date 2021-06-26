@@ -10,13 +10,14 @@
   (<= (vim.api.nvim_get_option :columns) (or min-width default-min-width)))
 
 (fn hide-views [config]
-  "Gives nice defaults for how previews should be display based on manual setting, custom function or display size
+  "Gives reasonable defaults for how previews should be display based on manual setting, custom function or display size
   
    if config.preview is nil or is true
-   then determinw if preview is disabled based on screen size
+     then determine if preview is disabled based on screen size
    if config.preview is set and is false
-   then always hide
-   if config.preview is a function call the function and return the negation of the result"
+     then always hide
+   if config.preview is a function
+     then call the function and return the negation of the result"
   (match (type config.preview)
     :nil (preview-disabled config.preview-min-width)
     :boolean (or (= config.preview false) (preview-disabled config.preview-min-width))
@@ -92,14 +93,17 @@
   - layout
   - prompt
   - suffix
+  - reverse
+  - preview-min-width
+  - preview
 
   Examples:
 
-  -- Runs with basic defaults, fzf and ripgrep.file
-  file {}
+  -- Runs ripgrep.file producer with fzf
+  file {producer = 'ripgrep.file'}
 
   -- Runs with fzy consumer
-  file {consumer = 'fzy'}
+  file {producer = 'ripgrep.file', consumer = 'fzy'}
 
   -- Runs with vim.oldfile producer
   file {producer = 'vim.oldfile'}
@@ -111,7 +115,7 @@
   file {producer = 'git.file'}
 
   -- Runs with git.file producer with ripgrep.file fallback
-  file {try = {'git.file', 'ripgrep.file}}
+  file {try = {'git.file', 'ripgrep.file'}}
 
   -- Customizes prompt
   file {prompt = 'My Prompt'}
@@ -190,11 +194,10 @@
   ;; Get the selection module
   (local select-file (snap.get :select.file))
 
-  (local hide-views (partial hide-views config))
-
   ;; Create a function to invoke snap
   (fn []
-    (let [reverse (or config.reverse false)
+    (let [hide-views (partial hide-views config)
+          reverse (or config.reverse false)
           layout  (or config.layout nil)
           producer (consumer producer)
           select select-file.select
@@ -297,10 +300,9 @@
 
   (local vimgrep-select (snap.get :select.vimgrep))
 
-  (local hide-views (partial hide-views config))
-
   (fn []
-    (let [reverse (or config.reverse false)
+    (let [hide-views (partial hide-views config)
+          reverse (or config.reverse false)
           layout (or config.layout nil)
           producer (consumer producer)
           select vimgrep-select.select
