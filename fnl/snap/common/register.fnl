@@ -61,5 +61,5 @@
     (vim.api.nvim_command
       "command! -nargs=1 -complete=customlist,v:lua.snap_commands Snap lua require'snap'.register.run('commands', <f-args>)"))
   (when (not= (. register.commands name) nil)
-    (print (string.format "attempting to register duplicate command with name '%s'" name)))
+    (print (string.format "[Snap API] attempting to register duplicate command with name '%s'" name)))
   (tset register.commands name fnc))
