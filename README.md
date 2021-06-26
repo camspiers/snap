@@ -164,13 +164,19 @@ The full API:
   reverse?: boolean,
 
   // An optional number that chanes the minimun screen column width the preview should display at
-  preview-min-width?: number,
+  preview_min_width?: number,
 
   // An optional boolean or function that returning true displays the preview and when false hides
   preview?: boolean | function,
 
   // An optional table of custom input buffer mappings, see mappings section below for options
   mappings?: table
+
+  // An optional string, if cword then filter using current word, if selection then use selection
+  filter_with?: "cword" | "selection",
+
+  // An optional string or function use as initial filter
+  filter?: string | function
 }
 ```
 

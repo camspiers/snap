@@ -37,18 +37,22 @@
 ;; Exposes config as a main API
 (def config config)
 
-(defn map [key run command]
+(defn map [key run opts]
   "Creates a mapping and an optional command name"
   (assertstring key "map key argument must be a string")
   (assertfunction run "map run argument must be a function")
+  (local command (when (type opts)
+    :string (do (print "[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
+              opts)
+    :table opts.command))
   (assertstring? command "map command argument must be a string")
-  (register.map :n key run)
+  (register.map (if opts.modes opts.modes :n) key run)
   (when command (register.command command run)))
 
 (defn maps [config]
   "Creates mappings"
-  (each [_ [key run command] (ipairs config)]
-    (map key run command)))
+  (each [_ [key run opts] (ipairs config)]
+    (map key run opts)))
 
 (defn get_producer [producer]
   "When a producer is a table, pull the default function out of it"
@@ -173,13 +177,14 @@
   (assertfunction? config.multiselect "snap.run 'multiselect' must be a function")
   (assertstring? config.prompt "snap.run 'prompt' must be a string")
   (assertfunction? config.layout "snap.run 'layout' must be a function")
-  (asserttypes? [:boolean :function] config.hide-views "snap.run 'hide-views' must be a boolean or a function")
+  (asserttypes? [:boolean :function] config.hide_views "snap.run 'hide_views' must be a boolean or a function")
   (asserttable? config.views "snap.run 'views' must be a table")
   (when config.views
     (each [_ view (ipairs config.views)]
       (assertfunction view "snap.run each view in 'views' must be a function")))
   (assertfunction? config.loading "snap.run 'loading' must be a function")
   (assertboolean? config.reverse "snap.run 'reverse' must be a boolean")
+  (assertstring? config.initial_filter "snap.run 'initial_filter' must be a string")
 
   ;; Store the last results
   (var last-results [])
@@ -223,10 +228,10 @@
     (if
       (not= hide-views nil)
       hide-views
-      (not= config.hide-views nil)
-      (match (type config.hide-views)
-        :function (config.hide-views)
-        :boolean config.hide-views)
+      (not= config.hide_views nil)
+      (match (type config.hide_views)
+        :function (config.hide_views)
+        :boolean config.hide_views)
       false))
 
   ;; Vars for storing all views

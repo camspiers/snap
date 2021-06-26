@@ -19,8 +19,8 @@
    if config.preview is a function
      then call the function and return the negation of the result"
   (match (type config.preview)
-    :nil (preview-disabled config.preview-min-width)
-    :boolean (or (= config.preview false) (preview-disabled config.preview-min-width))
+    :nil (preview-disabled config.preview_min_width)
+    :boolean (or (= config.preview false) (preview-disabled config.preview_min_width))
     :function (not (config.preview))))
 
 (fn format-prompt [suffix prompt]
@@ -69,6 +69,33 @@
     :git.file     "Git Files"
     _             "Custom Files"))
 
+(fn current-word []
+  "Outputs the current word under cursor"
+  (vim.fn.expand "<cword>"))
+
+(fn current-selection []
+  "Outputs the current selection"
+  (local register (vim.fn.getreg "\""))
+  (vim.api.nvim_exec "normal! y" false)
+  (var filter (vim.fn.trim (vim.fn.getreg "@")))
+  (vim.fn.setreg "\"" register)
+  filter)
+
+(fn get-initial-filter [config]
+  "Gets the initial filter"
+  (if
+    (not= config.filter_with nil)
+    (match config.filter_with
+      :cword (current-word)
+      :selection (current-selection)
+      _ (assert false "config.filter_with must be a string cword, or selection"))
+    (not= config.filter nil)
+    (match (type config.filter)
+      :function (config.filter)
+      :string config.filter
+      _ (assert false "config.filter must be a string or function"))
+    nil))
+
 (defmetafn file {: with} [config]
   "Returns a functon which runs `snap.run` for searching files with common file producers and common consumers.
 
@@ -94,7 +121,7 @@
   - prompt
   - suffix
   - reverse
-  - preview-min-width
+  - preview_min_width
   - preview
 
   Examples:
@@ -141,7 +168,7 @@
   (asserttable?    config.try               "file.try must be a table")
   (asserttable?    config.combine           "file.combine must be a table")
   (assertboolean?  config.reverse           "file.reverse must be a boolean")
-  (assertnumber?   config.preview-min-width "file.preview-min-with must be a boolean")
+  (assertnumber?   config.preview_min_width "file.preview-min-with must be a boolean")
   (asserttable?    config.mappings          "file.mappings must be a table")
   (asserttypes?    [:function :boolean] config.preview "file.preview must be a boolean or a function")
 
@@ -197,13 +224,14 @@
 
   ;; Create a function to invoke snap
   (fn []
-    (let [hide-views (partial hide-views config)
+    (let [hide_views (partial hide-views config)
           reverse (or config.reverse false)
           layout  (or config.layout nil)
           mappings (or config.mappings nil)
           producer (consumer producer)
           select select-file.select
           multiselect select-file.multiselect
+          initial_filter (get-initial-filter config)
           views [(snap.get :preview.file)]]
       (snap.run {: prompt
                  : mappings
@@ -213,7 +241,8 @@
                  : select
                  : multiselect
                  : views
-                 : hide-views}))))
+                 : hide_views
+                 : initial_filter}))))
 
 (fn vimgrep-prompt-by-kind [kind]
   (match kind
@@ -305,13 +334,14 @@
   (local vimgrep-select (snap.get :select.vimgrep))
 
   (fn []
-    (let [hide-views (partial hide-views config)
+    (let [hide_views (partial hide_views config)
           reverse (or config.reverse false)
           layout (or config.layout nil)
           mappings (or config.mappings nil)
           producer (consumer producer)
           select vimgrep-select.select
           multiselect vimgrep-select.multiselect
+          initial_filter (get-initial-filter config)
           views [(snap.get :preview.vimgrep)]]
       (snap.run {: prompt
                  : layout
@@ -320,5 +350,6 @@
                  : select
                  : multiselect
                  : views
-                 : hide-views}))))
+                 : hide_views
+                 : initial_filter}))))
 

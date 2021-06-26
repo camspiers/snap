@@ -48,9 +48,9 @@ end
 local function hide_views(config)
   local _3_ = type(config.preview)
   if (_3_ == "nil") then
-    return preview_disabled(config["preview-min-width"])
+    return preview_disabled(config.preview_min_width)
   elseif (_3_ == "boolean") then
-    return ((config.preview == false) or preview_disabled(config["preview-min-width"]))
+    return ((config.preview == false) or preview_disabled(config.preview_min_width))
   elseif (_3_ == "function") then
     return not config.preview()
   end
@@ -118,6 +118,41 @@ local function file_prompt_by_kind(kind)
     return "Custom Files"
   end
 end
+local function current_word()
+  return vim.fn.expand("<cword>")
+end
+local function current_selection()
+  local register = vim.fn.getreg("\"")
+  vim.api.nvim_exec("normal! y", false)
+  local filter = vim.fn.trim(vim.fn.getreg("@"))
+  vim.fn.setreg("\"", register)
+  return filter
+end
+local function get_initial_filter(config)
+  if (config.filter_with ~= nil) then
+    local _3_ = config.filter_with
+    if (_3_ == "cword") then
+      return current_word()
+    elseif (_3_ == "selection") then
+      return current_selection()
+    else
+      local _ = _3_
+      return assert(false, "config.filter_with must be a string cword, or selection")
+    end
+  elseif (config.filter ~= nil) then
+    local _3_ = type(config.filter)
+    if (_3_ == "function") then
+      return config.filter()
+    elseif (_3_ == "string") then
+      return config.filter
+    else
+      local _ = _3_
+      return assert(false, "config.filter must be a string or function")
+    end
+  else
+    return nil
+  end
+end
 local file
 do
   local v_0_
@@ -150,8 +185,8 @@ do
         if config.reverse then
           assert((type(config.reverse) == "boolean"), "file.reverse must be a boolean")
         end
-        if config["preview-min-width"] then
-          assert((type(config["preview-min-width"]) == "number"), "file.preview-min-with must be a boolean")
+        if config.preview_min_width then
+          assert((type(config.preview_min_width) == "number"), "file.preview-min-with must be a boolean")
         end
         if config.mappings then
           assert((type(config.mappings) == "table"), "file.mappings must be a table")
@@ -230,8 +265,9 @@ do
           local producer0 = consumer(producer)
           local select = select_file.select
           local multiselect = select_file.multiselect
+          local initial_filter = get_initial_filter(config)
           local views = {snap.get("preview.file")}
-          return snap.run({["hide-views"] = hide_views0, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
+          return snap.run({hide_views = hide_views0, initial_filter = initial_filter, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
         end
         return _21_
       end
@@ -355,8 +391,9 @@ do
           local producer0 = consumer(producer)
           local select = vimgrep_select.select
           local multiselect = vimgrep_select.multiselect
+          local initial_filter = get_initial_filter(config)
           local views = {snap.get("preview.vimgrep")}
-          return snap.run({["hide-views"] = hide_views0, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
+          return snap.run({hide_views = hide_views0, initial_filter = initial_filter, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
         end
         return _19_
       end
