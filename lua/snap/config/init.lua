@@ -186,7 +186,7 @@ do
           assert((type(config.reverse) == "boolean"), "file.reverse must be a boolean")
         end
         if config.preview_min_width then
-          assert((type(config.preview_min_width) == "number"), "file.preview-min-with must be a boolean")
+          assert((type(config.preview_min_width) == "number"), "file.preview-min-with must be a number")
         end
         if config.mappings then
           assert((type(config.mappings) == "table"), "file.mappings must be a table")
@@ -393,7 +393,7 @@ do
           local multiselect = vimgrep_select.multiselect
           local initial_filter = get_initial_filter(config)
           local views = {snap.get("preview.vimgrep")}
-          return snap.run({hide_views = hide_views0, initial_filter = initial_filter, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, select = select, views = views})
+          return snap.run({hide_views = hide_views0, initial_filter = initial_filter, layout = layout, mappings = mappings, multiselect = multiselect, producer = producer0, prompt = prompt, reverse = reverse, select = select, views = views})
         end
         return _19_
       end
