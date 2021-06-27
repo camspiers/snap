@@ -8,4 +8,5 @@
       (when (not (request.canceled))
         (vim.api.nvim_buf_set_option request.bufnr :buftype :help)
         (vim.api.nvim_buf_call request.bufnr (fn []
-          (vim.api.nvim_command (string.format "noautocmd help %s" (tostring request.selection))))))))))
+          (vim.api.nvim_command (string.format "noautocmd help %s" (tostring request.selection)))
+          (vim.api.nvim_buf_set_option request.bufnr :syntax :help))))))))

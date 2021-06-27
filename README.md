@@ -29,7 +29,7 @@ use { 'camspiers/snap', rocks = {'fzy'}}
 Plug 'camspiers/snap'
 ```
 
-You will need to use `luarocks` manually if you want to install `fzy`, probably best to just use `fzf` if you are using vim-plug.
+With vim-plug you will need to use `luarocks` manually if you want to install `fzy`, probably best to just use `fzf` if you are using vim-plug.
 
 #### Semi-Optional Dependencies
 
@@ -48,82 +48,181 @@ They are semi-optional because you can mix and match them depending on which tec
 
 ## Getting Started
 
-By default `snap` doesn't configure any key mappings or commands for you, you will need to configure your own. Additionally `snap` uses a philosophy where global configuration is avoided, instead stateless configuration is provided to each invocation of `snap.run`.
+There are three primary APIs to be aware of in order to set up your local nvim to use `snap`.
 
-To generate a function that will invoke `snap.run` with a defined config you can use `snap.create`.
+### `snap.maps`
+
+`snap.maps` and `snap.map` will map a function to a particular keybinding. Any function can be registered (e.g your own lua functions), however usually you will register functions that result in a call to `snap.run`.
+
+### `snap.config`
+
+`snap.config` offers a terse API for creating functions that call `snap.run` with sensible configuration.
+
+### `snap.run`
+
+Though used directly infrequently, `snap.run` is the API to start a snap.
 
 ### Registering Global Keymaps
 
+The following illustrates some basic usage of the `snap.maps` and `snap.config` APIs, we generate a variety of functions and register them as normal mode mappings:
+
 ```lua
 local snap = require'snap'
-
--- normal mode mapping <Leader><Leader> for searching files in cwd 
-snap.register.map('n', '<Leader><Leader>', snap.create(function ()
-  return {
-    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-    select = snap.get'select.file'.select,
-    multiselect = snap.get'select.file'.multiselect,
-    views = {snap.get'preview.file'}
-  }
-end))
-
--- creates normal mode mapping <Leader>f for grepping files in cwd 
-snap.register.map('n', '<Leader>f', snap.create(function ()
-  return {
-    producer = snap.get'producer.ripgrep.vimgrep',
-    select = snap.get'select.vimgrep'.select,
-    multiselect = snap.get'select.vimgrep'.multiselect,
-    views = {snap.get'preview.vimgrep'}
-  }
-end))
+snap.maps {
+  {"<Leader><Leader>", snap.config.file {producer = "ripgrep.file"}},
+  {"<Leader>fb", snap.config.file {producer = "vim.buffer"}},
+  {"<Leader>fo", snap.config.file {producer = "vim.oldfile"}},
+  {"<Leader>ff", snap.config.vimgrep {}},
+}
 ```
 
-### Registering Global Keymaps With Common Defaults
+This gives a basic example, however see the [`snap.config`](#config-api) section for all options available.
 
-If you have some default configuration, e.g. `reverse = true` or a custom layout function you want to provide to all usages of `snap.run`, then you can take advantage of the `defaults` parameter of `snap.create`.
+### Registering Global Keymaps With Defaults
+
+Perhaps you want some default config to apply to all your `snap.config.file` usages, to do so you can generate your own version of `snap.config.file` or `snap.config.vimgrep` with applied defaults:
 
 ```lua
 local snap = require'snap'
+local file = snap.config.file:with {reverse = true, suffix = ">>", consumer = "fzy"}
+local vimgrep = snap.config.vimgrep:with {reverse = true, suffix = ">>", limit = 50000}
+snap.maps {
+  {"<Leader><Leader>", file {producer = "ripgrep.file"}},
+  {"<Leader>ff", vimgrep {}},
+}
+```
 
--- a custom create function that adds common defaults
-local function create(config)
-  return snap.create(config, {
-    -- use reverse results display for all configs
-    reverse = true,
-    -- use the bottom layout for all configs
-    layout = snap.get"layout".bottom,
-    mappings = {
-      enter = {"<CR>", "<C-o>"}, -- my custom mapping
-    }
-  })
-end
+### Registering Global Keymaps With Registered Commands
 
--- normal mode mapping <Leader><Leader> for searching files in cwd 
-snap.register.map('n', '<Leader><Leader>', create(function ()
-  return {
-    producer = snap.get'consumer.fzy'(snap.get'producer.ripgrep.file'),
-    select = snap.get'select.file'.select,
-    multiselect = snap.get'select.file'.multiselect,
-    views = {snap.get'preview.file'}
-  }
-end))
+If you want to also make your function available via the `:Snap myexamplefunction` API, you can pass an optional third parameter to `snap.map` or an optional third table value to each table to `snap.maps`.
 
--- creates normal mode mapping <Leader>f for grepping files in cwd 
-snap.register.map('n', '<Leader>f', create(function ()
-  return {
-    producer = snap.get'producer.ripgrep.vimgrep',
-    select = snap.get'select.vimgrep'.select,
-    multiselect = snap.get'select.vimgrep'.multiselect,
-    views = {snap.get'preview.vimgrep'}
-  }
-end))
+```lua
+local snap = require'snap'
+snap.maps {
+  {"<Leader><Leader>", snap.config.file {producer = "ripgrep.file"}, {command = "mycommandname"}}
+}
+```
+
+## Config API
+
+`snap.run` is designed to be a very general API used by composing different types of producers and consumers, instead of bundling defaults and configuration types into the general `snap.run` API, it is designed to be highly flexible and idempotent. So to ease the pain of creating your own functions that call `snap.run` with appropriate configuration, we instead provide `snap.config` for generating such functions with common configuration patterns.
+
+### `snap.config.file`
+
+The full API:
+
+```typescript
+{
+  // One of either producer, try or combine are required
+
+  // A required producer either by string identifier or a function
+  producer: "ripgrep.file"
+    | "fd.file"
+    | "vim.oldfile"
+    | "vim.buffer"
+    | "git.file"
+    | Producer,
+
+  // A table of producers, the first that returns results is used
+  try: table<
+    "ripgrep.file"
+    | "fd.file"
+    | "vim.oldfile"
+    | "vim.buffer"
+    | "git.file"
+    | Producer
+  >,
+
+  // A table of producers, combines returns from each
+  combine: table<
+    "ripgrep.file"
+    | "fd.file"
+    | "vim.oldfile"
+    | "vim.buffer"
+    | "git.file"
+    | Producer
+  >,
+
+  // Optionals
+
+  // An optional prompt string (without suffix e.g. ">")
+  prompt?: string,
+
+  // An optional suffix string e.g. ">>"
+  suffix?: string,
+
+  // An optional layout function, see layout API below
+  layout?: function,
+
+  // An optional table that passes args to producers that support it
+  args?: table<string>,
+
+  // An optional boolean that configures producers that suppport it
+  hidden?: boolean,
+
+  // An optional boolean that when true places the input at the top
+  reverse?: boolean,
+
+  // An optional number that chanes the minimun screen column width the preview should display at
+  preview_min_width?: number,
+
+  // An optional boolean or function that returning true displays the preview and when false hides
+  preview?: boolean | function,
+
+  // An optional table of custom input buffer mappings, see mappings section below for options
+  mappings?: table
+
+  // An optional string, if cword then filter using current word, if selection then use selection
+  filter_with?: "cword" | "selection",
+
+  // An optional string or function use as initial filter
+  filter?: string | function
+}
+```
+
+### Examples
+
+The following `snap.config.file` calls generate functions that run `snap.run` with various defaults.
+
+Each of these example functions generated would usually be passed to `snap.maps`, but you could also use them with any other mapping registration API, e.g. `which-key`.
+
+```lua
+-- Basic ripgrep file producer
+file {producer = "ripgrep.file"}
+
+-- Ripgrep file producer with args
+file {producer = "ripgrep.file", args = {'--hidden', '--iglob', '!.git/*'}}
+
+-- Git file producer with ripgrep fallback
+file {try = {"git.file", "ripgrep.file"}}
+
+-- Basic file producer with previews off
+file {producer = "ripgrep.file", preview = false}
+
+-- Basic buffer producer
+file {producer = "vim.buffer"}
+
+-- Basic oldfile producer
+file {producer = "vim.oldfile"}
+
+-- A customized prompt
+file {producer = "ripgrep.file", prompt = "MyFiles"}
+
+-- A customized prompt suffix
+file {producer = "ripgrep.file", suffix = ">>"}
+
+-- Display input at top
+file {producer = "ripgrep.file", reverse = true}
+
+-- Custom layout function
+file {producer = "ripgrep.file", layout = myCustomLayoutFunction}
 ```
 
 ## Recipes
 
 `snap` comes with inbuilt producers and consumers (see [How Snap Works](#how-snap-works) for what producers and consumers are) to enable easy creation of finders.
 
-The following recipes illustrate direct usage of `snap.run` meaning calling the following examples will immediately run snap, but as illustrated above when registering a mapping you most often want to get a function that will invoke `snap.run` with a particular config, in that case the following examples can be replaced with invocations to `snap.create` to get such a function.
+The following recipes illustrate direct usage of `snap.run` meaning calling the following examples will immediately run snap, but as illustrated above when registering a mapping you most often want to get a function that will invoke `snap.run` with a particular config, in that case the following examples can be replaced with invocations to `snap.config.file` to create the desired config.
 
 ### Find Files
 

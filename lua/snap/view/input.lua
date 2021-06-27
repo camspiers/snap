@@ -51,14 +51,20 @@ local function layout(config)
   local row = _let_0_["row"]
   local width = _let_0_["width"]
   local _3_
-  if config["has-views"]() then
-    _3_ = math.floor((width * size["view-width"]))
+  if config.reverse then
+    _3_ = row
   else
-    _3_ = width
+    _3_ = ((row + height) - size.padding)
   end
-  return {col = col, focusable = true, height = 1, row = ((row + height) - size.padding), width = _3_}
+  local _5_
+  if config["has-views"]() then
+    _5_ = (math.floor((width * size["view-width"])) - size.padding - size.padding)
+  else
+    _5_ = width
+  end
+  return {col = col, focusable = true, height = 1, row = _3_, width = _5_}
 end
-local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>"}, ["next-page"] = {"<C-f>"}, ["prev-item"] = {"<C-p>"}, ["prev-page"] = {"<C-b>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
+local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>", "<Down>", "<C-j>"}, ["next-page"] = {"<C-f>", "<PageDown"}, ["prev-item"] = {"<C-p>", "<Up>", "<C-k>"}, ["prev-page"] = {"<C-b>", "<PageUp>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
 local create
 do
   local v_0_
@@ -140,36 +146,8 @@ do
       register["buf-map"](bufnr, {"n", "i"}, mappings0.select, on_tab)
       register["buf-map"](bufnr, {"n", "i"}, mappings0.unselect, on_shifttab)
       register["buf-map"](bufnr, {"n", "i"}, mappings0["select-all"], on_ctrla)
-      local _7_
-      if config.reverse then
-        _7_ = {"<Down>", "<C-j>"}
-      else
-        _7_ = {"<Up>", "<C-k>"}
-      end
-      register["buf-map"](bufnr, {"n", "i"}, _7_, config["on-prev-item"])
-      local _9_
-      if config.reverse then
-        _9_ = {"<Up>", "<C-k>"}
-      else
-        _9_ = {"<Down>", "<C-j>"}
-      end
-      register["buf-map"](bufnr, {"n", "i"}, _9_, config["on-next-item"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-item"], config["on-prev-item"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["next-item"], config["on-next-item"])
-      local _11_
-      if config.reverse then
-        _11_ = {"<PageDown>"}
-      else
-        _11_ = {"<PageUp>"}
-      end
-      register["buf-map"](bufnr, {"n", "i"}, _11_, config["on-prev-page"])
-      local _13_
-      if config.reverse then
-        _13_ = {"<PageUp>"}
-      else
-        _13_ = {"<PageDown>"}
-      end
-      register["buf-map"](bufnr, {"n", "i"}, _13_, config["on-next-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-page"], config["on-prev-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
       register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
@@ -198,10 +176,10 @@ do
       local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
       vim.api.nvim_command("augroup SnapInputViewResize")
       vim.api.nvim_command("autocmd!")
-      local function _15_()
+      local function _7_()
         return view:update()
       end
-      vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _15_)))
+      vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _7_)))
       vim.api.nvim_command("augroup END")
       return view
     end

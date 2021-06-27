@@ -15,7 +15,7 @@
         sizes (tbl.allocate (- height total-borders total-paddings) config.total-views)
         height (. sizes config.index)
         col-offset (math.floor (* width size.view-width))]
-    {:width (- width col-offset)
+    {:width (- width col-offset size.padding size.padding size.border)
      : height
      :row (+ row (tbl.sum (tbl.take sizes index)) border padding)
      :col (+ col col-offset (* size.border 2) size.padding)
