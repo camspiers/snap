@@ -4,8 +4,9 @@ local general = snap.get("producer.git.general")
 local function _1_(request)
   local cwd = snap.sync(vim.fn.getcwd)
   if (general(request, {args = {"ls-files", "-o"}, cwd = cwd}) ~= nil) then
-    do local _ = (general(request, {args = {"ls-files"}, cwd = cwd}) .. general(request, {args = {"ls-files", "-o"}, cwd = cwd})) end
+    return (general(request, {args = {"ls-files"}, cwd = cwd}) .. general(request, {args = {"ls-files", "-o"}, cwd = cwd}))
+  else
+    return general(request, {args = {"ls-files"}, cwd = cwd})
   end
-  return general(request, {args = {"ls-files"}, cwd = cwd})
 end
 return _1_
