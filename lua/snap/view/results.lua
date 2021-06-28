@@ -87,12 +87,14 @@ do
         end
       end
       local function update(view)
-        local layout_config0 = layout(config)
-        window.update(winnr, layout_config0)
-        vim.api.nvim_win_set_option(winnr, "cursorline", true)
-        do end (view)["height"] = layout_config0.height
-        view["width"] = layout_config0.width
-        return nil
+        if vim.api.nvim_win_is_valid(winnr) then
+          local layout_config0 = layout(config)
+          window.update(winnr, layout_config0)
+          vim.api.nvim_win_set_option(winnr, "cursorline", true)
+          do end (view)["height"] = layout_config0.height
+          view["width"] = layout_config0.width
+          return nil
+        end
       end
       local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
       vim.api.nvim_command("augroup SnapResultsViewResize")

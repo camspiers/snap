@@ -38,10 +38,12 @@
         (buffer.delete bufnr {:force true})))
 
     (fn update [view]
-      (let [layout-config (layout config)]
-        (window.update winnr layout-config)
-        (tset view :height layout-config.height)
-        (tset view :width layout-config.width)))
+      (when (vim.api.nvim_win_is_valid winnr)
+        (let [layout-config (layout config)]
+          (window.update winnr layout-config)
+          (vim.api.nvim_win_set_option winnr :cursorline true)
+          (tset view :height layout-config.height)
+          (tset view :width layout-config.width))))
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 
