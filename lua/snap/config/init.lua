@@ -92,12 +92,10 @@ local function file_producer_by_kind(config, kind)
       end
     end
   end
-  if ((kind == "ripgrep.file") or (kind == "fd.file")) then
-    if config.args then
-      producer = producer.args(config.args)
-    elseif config.hidden then
-      producer = producer.hidden
-    end
+  if (config.args and ((kind == "ripgrep.file") or (kind == "fd.file") or (kind == "git.file"))) then
+    producer = producer.args(config.args)
+  elseif (config.hidden and ((kind == "ripgrep.file") or (kind == "fd.file"))) then
+    producer = producer.hidden
   end
   return producer
 end

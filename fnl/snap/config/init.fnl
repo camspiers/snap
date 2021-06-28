@@ -49,15 +49,21 @@
     :git.file     (snap.get :producer.git.file)
     (where p (= (type p) :function)) p
     _ (assert false "file.producer is invalid")))
-  ;; For ripgrep.file and fd.file set custom args or hidden
-  (when
-    (or (= kind :ripgrep.file)
-        (= kind :fd.file))
-    (if
+
+  ;; Config non-defaults
+  (if
+    (and
       config.args
-      (set producer (producer.args config.args))
+      (or (= kind :ripgrep.file)
+          (= kind :fd.file)
+          (= kind :git.file)))
+    (set producer (producer.args config.args))
+    (and
       config.hidden
-      (set producer producer.hidden)))
+      (or (= kind :ripgrep.file)
+          (= kind :fd.file)))
+      (set producer producer.hidden))
+
   producer)
 
 (fn file-prompt-by-kind [kind]
