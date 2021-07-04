@@ -204,9 +204,6 @@ do
       if (#register.commands == 0) then
         vim.api.nvim_command("command! -nargs=1 -complete=customlist,v:lua.snap_commands Snap lua require'snap'.register.run('commands', <f-args>)")
       end
-      if (register.commands[name] ~= nil) then
-        print(string.format("[Snap API] attempting to register duplicate command with name '%s'", name))
-      end
       register.commands[name] = fnc
       return nil
     end
