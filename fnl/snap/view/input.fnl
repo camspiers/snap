@@ -7,9 +7,9 @@
 (fn layout [config]
   "Creates the input layout"
   (let [{: width : height : row : col} (config.layout)]
-    {:width (if (config.has-views) (math.floor (* width size.view-width)) width)
+    {:width (if (config.has-views) (- (math.floor (* width size.view-width)) size.padding size.padding) width)
      :height 1
-     :row (- (+ row height) size.padding)
+     :row (if config.reverse row (- (+ row height) size.padding))
      : col
      :focusable true}))
 
@@ -23,10 +23,10 @@
   :select [:<Tab>]
   :unselect [:<S-Tab>]
   :select-all [:<C-a>]
-  :prev-item [:<C-p>]
-  :next-item [:<C-n>]
-  :prev-page [:<C-b>]
-  :next-page [:<C-f>]
+  :prev-item [:<C-p> :<Up> :<C-k>]
+  :next-item [:<C-n> :<Down> :<C-j>]
+  :prev-page [:<C-b> :<PageUp>]
+  :next-page [:<C-f> :<PageDown]
   :view-page-down [:<C-d>]
   :view-page-up [:<C-u>]
   :view-toggle-hide [:<C-h>]
@@ -100,14 +100,10 @@
     (register.buf-map bufnr [:n :i] mappings.select-all on-ctrla)
 
     ;; Up & down are reversed when view is revered
-    (register.buf-map bufnr [:n :i] (if config.reverse [:<Down> :<C-j>] [:<Up> :<C-k>]) config.on-prev-item)
-    (register.buf-map bufnr [:n :i] (if config.reverse [:<Up> :<C-k>]  [:<Down> :<C-j>]) config.on-next-item)
     (register.buf-map bufnr [:n :i] mappings.prev-item config.on-prev-item)
     (register.buf-map bufnr [:n :i] mappings.next-item config.on-next-item)
 
     ;; Up & down are reversed when view is revered
-    (register.buf-map bufnr [:n :i] (if config.reverse [:<PageDown>] [:<PageUp>]) config.on-prev-page)
-    (register.buf-map bufnr [:n :i] (if config.reverse [:<PageUp>]  [:<PageDown>]) config.on-next-page)
     (register.buf-map bufnr [:n :i] mappings.prev-page config.on-prev-page)
     (register.buf-map bufnr [:n :i] mappings.next-page config.on-next-page)
 
@@ -134,10 +130,12 @@
         (buffer.delete bufnr {:force true})))
 
     (fn update [view]
-      (let [layout-config (layout config)]
-        (window.update winnr layout-config)
-        (tset view :height layout-config.height)
-        (tset view :width layout-config.width)))
+      (when (vim.api.nvim_win_is_valid winnr)
+        (let [layout-config (layout config)]
+          (window.update winnr layout-config)
+          (vim.api.nvim_win_set_option winnr :cursorline true)
+          (tset view :height layout-config.height)
+          (tset view :width layout-config.width))))
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 

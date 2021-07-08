@@ -58,7 +58,7 @@ local function layout(config)
   local sizes = tbl.allocate((height - total_borders - total_paddings), config["total-views"])
   local height0 = sizes[config.index]
   local col_offset = math.floor((width * size["view-width"]))
-  return {col = (col + col_offset + (size.border * 2) + size.padding), focusable = false, height = height0, row = (row + tbl.sum(tbl.take(sizes, index)) + border + padding), width = (width - col_offset)}
+  return {col = (col + col_offset + (size.border * 2) + size.padding), focusable = false, height = height0, row = (row + tbl.sum(tbl.take(sizes, index)) + border + padding), width = (width - col_offset - size.padding - size.padding - size.border)}
 end
 local create
 do
@@ -82,11 +82,14 @@ do
         end
       end
       local function update(view)
-        local layout_config0 = layout(config)
-        window.update(winnr, layout_config0)
-        do end (view)["height"] = layout_config0.height
-        view["width"] = layout_config0.width
-        return nil
+        if vim.api.nvim_win_is_valid(winnr) then
+          local layout_config0 = layout(config)
+          window.update(winnr, layout_config0)
+          vim.api.nvim_win_set_option(winnr, "cursorline", true)
+          do end (view)["height"] = layout_config0.height
+          view["width"] = layout_config0.width
+          return nil
+        end
       end
       local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
       vim.api.nvim_command("augroup SnapViewResize")

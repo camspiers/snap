@@ -21,6 +21,7 @@
 
 (module snap {require {tbl      snap.common.tbl
                        register snap.common.register
+                       config   snap.config
                        buffer   snap.common.buffer
                        window   snap.common.window
                        input    snap.view.input
@@ -32,6 +33,31 @@
 
 ;; Exposes register as a main API
 (def register register)
+
+;; Exposes config as a main API
+(def config config)
+
+(defn map [key run opts]
+  "Creates a mapping and an optional command name"
+  (assertstring key "map key argument must be a string")
+  (assertfunction run "map run argument must be a function")
+  (local command (match (type opts)
+    :string (do
+              (print "[Snap API] The third argument to snap.map is now a table, treating passed string as command, this will be deprecated")
+              opts)
+    :table opts.command
+    :nil nil))
+  (assertstring? command "map command argument must be a string")
+  (local modes (match (type opts)
+    :table (or opts.modes :n)
+    :nil :n))
+  (register.map modes key run)
+  (when command (register.command command run)))
+
+(defn maps [config]
+  "Creates mappings"
+  (each [_ [key run opts] (ipairs config)]
+    (map key run opts)))
 
 (defn get_producer [producer]
   "When a producer is a table, pull the default function out of it"
@@ -168,12 +194,14 @@
   (assertfunction? config.multiselect "snap.run 'multiselect' must be a function")
   (assertstring? config.prompt "snap.run 'prompt' must be a string")
   (assertfunction? config.layout "snap.run 'layout' must be a function")
+  (asserttypes? [:boolean :function] config.hide_views "snap.run 'hide_views' must be a boolean or a function")
   (asserttable? config.views "snap.run 'views' must be a table")
   (when config.views
     (each [_ view (ipairs config.views)]
       (assertfunction view "snap.run each view in 'views' must be a function")))
   (assertfunction? config.loading "snap.run 'loading' must be a function")
   (assertboolean? config.reverse "snap.run 'reverse' must be a boolean")
+  (assertstring? config.initial_filter "snap.run 'initial_filter' must be a string")
 
   ;; Store the last results
   (var last-results [])
@@ -209,8 +237,19 @@
   ;; Store the cursor row
   (var cursor-row 1)
 
-  ;; Allows the toggling of hide views
-  (var hide-views false)
+  ;; Starts as nil until manually overridden
+  (var hide-views nil)
+
+  ;; Computes default value or if hide-views is manually set then use that
+  (fn get-hide-views []
+    (if
+      (not= hide-views nil)
+      hide-views
+      (not= config.hide_views nil)
+      (match (type config.hide_views)
+        :function (config.hide_views)
+        :boolean config.hide_views)
+      false))
 
   ;; Vars for storing all views
   (var input-view nil)
@@ -247,7 +286,10 @@
   (local total-views (if config.views (length config.views) 0))
 
   ;; Dynamic because we can hide and show views
-  (fn has-views [] (and (not hide-views) (> total-views 0)))
+  (fn has-views []
+    (and
+      (> total-views 0)
+      (not (get-hide-views))))
 
   ;; Views need to be recreated when we hide/show
   (fn create-views []
@@ -260,17 +302,11 @@
   (create-views)
 
   ;; Creates the results buffer and window and stores thier numbers
-  (set results-view (results.create {: layout : has-views}))
+  (set results-view (results.create {: layout : has-views :reverse config.reverse}))
 
-  ;; Tracks size of partial results
-  (var partial-results-length 1)
   ;; Helper to update cursor
   (fn update-cursor []
-    (if config.reverse
-      (do
-        (vim.api.nvim_win_set_cursor results-view.winnr [(- partial-results-length (- cursor-row 1)) 0])
-        (vim.api.nvim_win_call results-view.winnr (partial vim.api.nvim_command "silent normal zb")))
-      (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0])))
+    (vim.api.nvim_win_set_cursor results-view.winnr [cursor-row 0]))
 
   ;; Updates the views based on selection
   (safedebounced update-views [selection]
@@ -293,7 +329,6 @@
           ;; If there are no results then clear
           (do
            (buffer.set-lines results-view.bufnr 0 -1 [])
-           (set partial-results-length 1)
            (update-cursor))
           ;; Otherwise render partial results
           ;; Don't render more than we need to
@@ -303,26 +338,6 @@
             (each [_ result (ipairs results)
                    :until (= max (length partial-results))]
               (table.insert partial-results (display result)))
-
-            ;; Update length
-            (set partial-results-length (length partial-results))
-
-            ;; Reverse the results
-            (when config.reverse
-              (when (< partial-results-length results-view.height)
-                (for [_ partial-results-length results-view.height]
-                  (table.insert partial-results "")))
-
-              ;; Include the empty buffer lines in the length
-              (set partial-results-length (length partial-results))
-
-              ;; Reorder the table
-              (for [left-index 1 (math.floor (/ partial-results-length 2))]
-                (let [left (. partial-results left-index)
-                      right-index (- partial-results-length (- left-index 1))
-                      right (. partial-results right-index)]
-                  (tset partial-results left-index right)
-                  (tset partial-results right-index left))))
             ;; Set the lines, but make sure tables are converted to strings
             (buffer.set-lines results-view.bufnr 0 -1 partial-results)
             ;; Make sure the cursor is always updated
@@ -330,13 +345,12 @@
             ;; Update highlights
             (each [row (pairs partial-results)]
               (local result (. results row))
-              (local reverse-handled-row (if config.reverse (- partial-results-length (- row 1)) row))
               ;; Add positions highlighting
               (when
                 (has_meta result :positions)
                 (buffer.add-positions-highlight
                   results-view.bufnr
-                  reverse-handled-row
+                  row
                   (match (type result.positions)
                     :table result.positions
                     :function (result:positions)
@@ -344,7 +358,7 @@
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
-                (buffer.add-selected-highlight results-view.bufnr reverse-handled-row))))))
+                (buffer.add-selected-highlight results-view.bufnr row))))))
 
       ;; When we are running views schedule them
       (local selection (get-selection))
@@ -540,7 +554,10 @@
          (run next-config)))))
 
   (fn on-view-toggle-hide []
-    (set hide-views (not hide-views))
+    (set hide-views (if
+      (= hide-views nil)
+      (not (get-hide-views))
+      (not hide-views)))
     (results-view:update)
     (input-view:update)
     (if hide-views

@@ -50,7 +50,12 @@
   (%centered 0.9 0.7))
 
 (defn bottom []
-  (%bottom 0.9 0.7))
+  (let [lines (vim.api.nvim_get_option :lines)
+        height (math.floor (* lines 0.5))
+        width (vim.api.nvim_get_option :columns)
+        col 0
+        row (- lines height 4)]
+    {: width : height : col : row }))
 
 (defn top []
   (%top 0.9 0.7))
