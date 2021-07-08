@@ -445,7 +445,8 @@
     ;; Collects results progressively and renders early if possible
     (fn config.on-value [value]
       ;; Check the type
-      (asserttable value "Main producer yielded a non-yieldable value")
+      (asserttable value (string.format "Main producer yielded a non-yieldable value: %s"
+      (vim.inspect value)))
       ;; Accumulate the results
       (when (> (length value) 0)
         (tbl.accumulate results value)

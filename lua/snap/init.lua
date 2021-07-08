@@ -389,14 +389,14 @@ do
   do
     local v_0_0
     local function display0(result)
-      if not has_meta(result, "displayed") then
-        local function _3_()
-          local display_fn = tostring
-          return display_fn(result)
-        end
-        with_meta(result, "displayed", _3_())
+      local display_fn
+      if has_meta(result, "display") then
+        assert((type(result.display) == "function"), "display meta must be a function")
+        display_fn = result.display
+      else
+        display_fn = tostring
       end
-      return result.displayed
+      return display_fn(result)
     end
     v_0_0 = display0
     _0_["display"] = v_0_0
@@ -699,7 +699,7 @@ do
           end
         end
         config2["on-value"] = function(value)
-          assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
+          assert((type(value) == "table"), string.format("Main producer yielded a non-yieldable value: %s", vim.inspect(value)))
           if (#value > 0) then
             tbl.accumulate(results0, value)
             if not has_meta(tbl.first(results0), "score") then
