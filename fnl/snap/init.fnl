@@ -142,16 +142,16 @@
   (and (= (getmetatable result) meta_tbl) (not= (. result field) nil)))
 
 (defn display [result]
-  (when (not (has_meta result :displayed))
-    (with_meta result :displayed
-      (let [display_fn
-        (if (has_meta result :display)
-            (do
-              (assertfunction result.display "display meta must be a function")
-              result.display)
-            tostring)]
-        (display_fn result))))
-  result.displayed)
+  "Optionally runs a custom display function for a result"
+  ;; TODO: This could cache the result of the display function on the result and return a
+  ;; meta_result for re-use. Would increase performance but require some refactoring elsewhere.
+  (let [display_fn
+    (if (has_meta result :display)
+        (do
+          (assertfunction result.display "display meta must be a function")
+          result.display)
+        tostring)]
+    (display_fn result)))
 
 ;; Run docs:
 ;;
