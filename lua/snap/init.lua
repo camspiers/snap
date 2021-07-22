@@ -579,18 +579,26 @@ do
                 for row in pairs(partial_results) do
                   local result = (results0)[row]
                   if has_meta(result, "positions") then
-                    local function _16_()
+                    local _16_
+                    do
                       local _15_ = type(result.positions)
                       if (_15_ == "table") then
-                        return result.positions
+                        _16_ = result.positions
                       elseif (_15_ == "function") then
-                        return result:positions()
+                        _16_ = result:positions()
                       else
                         local _ = _15_
-                        return assert(false, "result positions must be a table or function")
+                        _16_ = assert(false, "result positions must be a table or function")
                       end
                     end
-                    buffer["add-positions-highlight"](results_view.bufnr, row, _16_())
+                    local function _17_()
+                      if has_meta(result, "highlight_offset") then
+                        return result.highlight_offset
+                      else
+                        return 0
+                      end
+                    end
+                    buffer["add-positions-highlight"](results_view.bufnr, row, _16_, _17_())
                   end
                   if selected[tostring(result)] then
                     buffer["add-selected-highlight"](results_view.bufnr, row)

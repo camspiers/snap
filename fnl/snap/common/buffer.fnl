@@ -15,11 +15,11 @@
   "Helper function for adding selected highlighting"
   (vim.api.nvim_buf_add_highlight bufnr namespace :SnapMultiSelect (- row 1) 0 -1))
 
-(defn add-positions-highlight [bufnr row positions]
+(defn add-positions-highlight [bufnr row positions offset]
   "Helper function for adding positions highlights"
   (local line (- row 1))
   (each [_ col (ipairs positions)]
-    (add-highlight bufnr :SnapPosition line (- col 1) col)))
+    (add-highlight bufnr :SnapPosition line (+ (- col 1) offset) (+ col offset))))
 
 (defn create []
   "Creates a scratch buffer"

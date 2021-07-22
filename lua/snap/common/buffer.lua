@@ -93,10 +93,10 @@ do
   local v_0_
   do
     local v_0_0
-    local function add_positions_highlight0(bufnr, row, positions)
+    local function add_positions_highlight0(bufnr, row, positions, offset)
       local line = (row - 1)
       for _, col in ipairs(positions) do
-        add_highlight(bufnr, "SnapPosition", line, (col - 1), col)
+        add_highlight(bufnr, "SnapPosition", line, ((col - 1) + offset), (col + offset))
       end
       return nil
     end

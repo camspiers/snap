@@ -354,7 +354,11 @@
                   (match (type result.positions)
                     :table result.positions
                     :function (result:positions)
-                    _ (assert false "result positions must be a table or function"))))
+                    _ (assert false "result positions must be a table or function"))
+                  ;; Include the offset for highlighting, if one exists
+                  (if (has_meta result :highlight_offset)
+                    result.highlight_offset
+                    0)))
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
