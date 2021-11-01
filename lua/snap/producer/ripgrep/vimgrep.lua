@@ -3,8 +3,8 @@ local snap = require("snap")
 local tbl = snap.get("common.tbl")
 local general = snap.get("producer.ripgrep.general")
 local vimgrep = {}
-local line_args = {"--line-buffered", "-M", 100, "--no-heading", "--column"}
 local args = {"--line-buffered", "-M", 100, "--vimgrep"}
+local line_args = {"--line-buffered", "-M", 100, "--no-heading", "--column"}
 vimgrep.default = function(request)
   local cwd = snap.sync(vim.fn.getcwd)
   return general(request, {args = tbl.concat(args, {request.filter}), cwd = cwd})

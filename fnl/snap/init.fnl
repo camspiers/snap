@@ -141,6 +141,18 @@
   (assertstring field "field passed to snap.has_meta must be a string")
   (and (= (getmetatable result) meta_tbl) (not= (. result field) nil)))
 
+(defn display [result]
+  "Optionally runs a custom display function for a result"
+  ;; TODO: This could cache the result of the display function on the result and return a
+  ;; meta_result for re-use. Would increase performance but require some refactoring elsewhere.
+  (let [display_fn
+    (if (has_meta result :display)
+        (do
+          (assertfunction result.display "display meta must be a function")
+          result.display)
+        tostring)]
+    (display_fn result)))
+
 ;; Run docs:
 ;;
 ;; @config: {
@@ -325,7 +337,7 @@
                 partial-results []]
             (each [_ result (ipairs results)
                    :until (= max (length partial-results))]
-              (table.insert partial-results (tostring result)))
+              (table.insert partial-results (display result)))
             ;; Set the lines, but make sure tables are converted to strings
             (buffer.set-lines results-view.bufnr 0 -1 partial-results)
             ;; Make sure the cursor is always updated
@@ -342,7 +354,11 @@
                   (match (type result.positions)
                     :table result.positions
                     :function (result:positions)
-                    _ (assert false "result positions must be a table or function"))))
+                    _ (assert false "result positions must be a table or function"))
+                  ;; Include the offset for highlighting, if one exists
+                  (if (has_meta result :highlight_offset)
+                    result.highlight_offset
+                    0)))
               ;; Add selected highlighting
               (when
                 (. selected (tostring result))
@@ -433,7 +449,8 @@
     ;; Collects results progressively and renders early if possible
     (fn config.on-value [value]
       ;; Check the type
-      (asserttable value "Main producer yielded a non-yieldable value")
+      (asserttable value (string.format "Main producer yielded a non-yieldable value: %s"
+      (vim.inspect value)))
       ;; Accumulate the results
       (when (> (length value) 0)
         (tbl.accumulate results value)

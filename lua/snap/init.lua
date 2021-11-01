@@ -383,6 +383,29 @@ do
   t_0_["has_meta"] = v_0_
   has_meta = v_0_
 end
+local display
+do
+  local v_0_
+  do
+    local v_0_0
+    local function display0(result)
+      local display_fn
+      if has_meta(result, "display") then
+        assert((type(result.display) == "function"), "display meta must be a function")
+        display_fn = result.display
+      else
+        display_fn = tostring
+      end
+      return display_fn(result)
+    end
+    v_0_0 = display0
+    _0_["display"] = v_0_0
+    v_0_ = v_0_0
+  end
+  local t_0_ = (_0_)["aniseed/locals"]
+  t_0_["display"] = v_0_
+  display = v_0_
+end
 local run
 do
   local v_0_
@@ -549,25 +572,33 @@ do
                 local partial_results = {}
                 for _, result in ipairs(results0) do
                   if (max == #partial_results) then break end
-                  table.insert(partial_results, tostring(result))
+                  table.insert(partial_results, display(result))
                 end
                 buffer["set-lines"](results_view.bufnr, 0, -1, partial_results)
                 update_cursor()
                 for row in pairs(partial_results) do
                   local result = (results0)[row]
                   if has_meta(result, "positions") then
-                    local function _16_()
+                    local _16_
+                    do
                       local _15_ = type(result.positions)
                       if (_15_ == "table") then
-                        return result.positions
+                        _16_ = result.positions
                       elseif (_15_ == "function") then
-                        return result:positions()
+                        _16_ = result:positions()
                       else
                         local _ = _15_
-                        return assert(false, "result positions must be a table or function")
+                        _16_ = assert(false, "result positions must be a table or function")
                       end
                     end
-                    buffer["add-positions-highlight"](results_view.bufnr, row, _16_())
+                    local function _17_()
+                      if has_meta(result, "highlight_offset") then
+                        return result.highlight_offset
+                      else
+                        return 0
+                      end
+                    end
+                    buffer["add-positions-highlight"](results_view.bufnr, row, _16_, _17_())
                   end
                   if selected[tostring(result)] then
                     buffer["add-selected-highlight"](results_view.bufnr, row)
@@ -676,7 +707,7 @@ do
           end
         end
         config2["on-value"] = function(value)
-          assert((type(value) == "table"), "Main producer yielded a non-yieldable value")
+          assert((type(value) == "table"), string.format("Main producer yielded a non-yieldable value: %s", vim.inspect(value)))
           if (#value > 0) then
             tbl.accumulate(results0, value)
             if not has_meta(tbl.first(results0), "score") then
