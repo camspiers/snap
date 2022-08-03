@@ -22,11 +22,11 @@ local function get_positions(filter, result)
     return vim.tbl_keys(positions)
   end
 end
-local function _1_(producer)
-  local function _2_(request)
+local function _3_(producer)
+  local function _4_(request)
     for data in snap.consume(producer, request) do
-      local _3_ = type(data)
-      if (_3_ == "table") then
+      local _5_ = type(data)
+      if (_5_ == "table") then
         if (#data == 0) then
           snap.continue()
         else
@@ -34,18 +34,20 @@ local function _1_(producer)
             return get_positions(request.filter, result)
           end
           if positions then
-            local function _4_(_241)
+            local function _6_(_241)
               return snap.with_meta(_241, "positions", positions)
             end
-            coroutine.yield(vim.tbl_map(_4_, data))
+            coroutine.yield(vim.tbl_map(_6_, data))
+          else
           end
         end
-      elseif (_3_ == "nil") then
+      elseif (_5_ == "nil") then
         coroutine.yield(nil)
+      else
       end
     end
     return nil
   end
-  return _2_
+  return _4_
 end
-return _1_
+return _3_

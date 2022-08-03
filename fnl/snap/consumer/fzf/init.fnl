@@ -9,7 +9,7 @@
       (local results [])
       (var results-string nil)
       (each [data (snap.consume cached-producer request)]
-        (tbl.accumulate results data)
+        (tbl.acc results data)
         (snap.continue))
       (if
         (= request.filter "")

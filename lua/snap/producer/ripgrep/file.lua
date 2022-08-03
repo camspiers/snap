@@ -17,7 +17,7 @@ file.args = function(new_args, cwd)
   local absolute = (cwd ~= nil)
   local function _1_(request)
     local cwd0 = (cwd or snap.sync(vim.fn.getcwd))
-    return general(request, {absolute = absolute, args = args0, cwd = cwd0})
+    return general(request, {args = args0, cwd = cwd0, absolute = absolute})
   end
   return _1_
 end

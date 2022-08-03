@@ -19,16 +19,16 @@
 ;;                                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(module snap {require {tbl      snap.common.tbl
-                       register snap.common.register
-                       config   snap.config
-                       buffer   snap.common.buffer
-                       window   snap.common.window
-                       input    snap.view.input
-                       results  snap.view.results
-                       view     snap.view.view
-                       request  snap.producer.request
-                       create   snap.producer.create}
+(module snap {require {tbl               snap.common.tbl
+                       register          snap.common.register
+                       config            snap.config
+                       buffer            snap.common.buffer
+                       window            snap.common.window
+                       input             snap.view.input
+                       results           snap.view.results
+                       view              snap.view.view
+                       request           snap.producer.request
+                       create-producer   snap.producer.create}
               require-macros [snap.macros]})
 
 ;; Exposes register as a main API
@@ -305,7 +305,7 @@
       (local request (request.create {: body : cancel}))
        ; TODO optimization, this should pass all the producers, not just one
        ; that way we can avoid creating multiple idle checkers
-      (create {: producer : request})))
+      (create-producer {: producer : request})))
 
   ;; Only write what results are needed
   (safedebounced write-results [results force-views]
@@ -436,7 +436,7 @@
       (asserttable value "Main producer yielded a non-yieldable value")
       ;; Accumulate the results
       (when (> (length value) 0)
-        (tbl.accumulate results value)
+        (tbl.acc results value)
         ;; This is an optimization to begin writing unscored results
         ;; as early as we can
         (when (not (has_meta (tbl.first results) :score))
@@ -447,7 +447,7 @@
           ;; Schedule write
           (write-results last-results))))
     ;; And off we go!
-    (create config))
+    (create-producer config))
 
   ;; Handles entering
   (fn on-enter [type]

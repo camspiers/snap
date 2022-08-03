@@ -12,6 +12,8 @@ local function _1_(request)
         return vim.api.nvim_buf_set_option(request.bufnr, "syntax", "help")
       end
       return vim.api.nvim_buf_call(request.bufnr, _3_)
+    else
+      return nil
     end
   end
   return snap.sync(_2_)

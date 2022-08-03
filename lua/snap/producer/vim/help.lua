@@ -5,21 +5,27 @@ local read_file = snap.get("preview.read-file")
 local function _1_()
   local tags_set = {}
   local tag_files
-  local function _2_(...)
-    return vim.fn.globpath(vim.o.runtimepath, "doc/tags", 1, 1, ...)
+  local function _3_()
+    local _2_ = vim.o.runtimepath
+    local function _4_(...)
+      return vim.fn.globpath(_2_, "doc/tags", 1, 1, ...)
+    end
+    return _4_
   end
-  tag_files = snap.sync(_2_)
+  tag_files = snap.sync(_3_())
   for _, tag_file in ipairs(tag_files) do
     local tags = {}
     local contents = read_file(tag_file)
     for _0, line in ipairs(contents) do
       if not line:match("^!_TAG_") then
-        local _local_0_ = vim.split(line, string.char(9), true)
-        local name = _local_0_[1]
+        local _local_5_ = vim.split(line, string.char(9), true)
+        local name = _local_5_[1]
         if not tags_set[name] then
           tags_set[name] = true
           table.insert(tags, name)
+        else
         end
+      else
       end
     end
     coroutine.yield(tags)

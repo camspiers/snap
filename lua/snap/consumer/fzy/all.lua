@@ -8,26 +8,27 @@ local function _1_(producer)
     else
       local processed = {}
       for _, _2_ in ipairs(fzy.filter(filter0, results)) do
-        local _each_0_ = _2_
-        local index = _each_0_[1]
-        local positions = _each_0_[2]
-        local score = _each_0_[3]
+        local _each_3_ = _2_
+        local index = _each_3_[1]
+        local positions = _each_3_[2]
+        local score = _each_3_[3]
         table.insert(processed, snap.with_metas(results[index], {positions = positions, score = score}))
       end
       return processed
     end
   end
-  local function _2_(request)
+  local function _5_(request)
     for results in snap.consume(producer, request) do
-      local _3_ = type(results)
-      if (_3_ == "table") then
+      local _6_ = type(results)
+      if (_6_ == "table") then
         coroutine.yield(filter(request.filter, results))
-      elseif (_3_ == "nil") then
+      elseif (_6_ == "nil") then
         coroutine.yield(nil)
+      else
       end
     end
     return nil
   end
-  return _2_
+  return _5_
 end
 return _1_

@@ -22,9 +22,11 @@ local function _1_(types, cwd)
         relative_path = snap.sync(_3_)
         if types[t] then
           table.insert(results, relative_path)
+        else
         end
         if (t == "directory") then
           table.insert(dirs, path)
+        else
         end
       else
         break

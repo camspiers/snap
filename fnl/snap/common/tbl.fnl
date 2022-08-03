@@ -1,6 +1,6 @@
 (module snap.common.tbl)
 
-(defn accumulate [tbl vals]
+(defn acc [tbl vals]
   "Accumulates non nil values"
   (when (not= vals nil)
     (each [_ value (ipairs vals)]

@@ -6,7 +6,7 @@ local function get_oldfiles()
   return vim.tbl_filter(_1_, vim.v.oldfiles)
 end
 local snap = require("snap")
-local function _1_()
+local function _2_()
   return snap.sync(get_oldfiles)
 end
-return _1_
+return _2_

@@ -9,6 +9,8 @@ local function _1_(request)
       vim.api.nvim_win_set_buf(request.winnr, request.selection.bufnr)
       local total_lines = #vim.api.nvim_buf_get_lines(request.selection.bufnr, 0, -1, false)
       return vim.api.nvim_win_set_cursor(request.winnr, {math.min(request.selection.lnum, total_lines), 0})
+    else
+      return nil
     end
   end
   return snap.sync(_2_)

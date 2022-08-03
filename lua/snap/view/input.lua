@@ -1,197 +1,164 @@
 local _2afile_2a = "fnl/snap/view/input.fnl"
-local _0_
+local _2amodule_name_2a = "snap.view.input"
+local _2amodule_2a
 do
-  local name_0_ = "snap.view.input"
-  local module_0_
-  do
-    local x_0_ = package.loaded[name_0_]
-    if ("table" == type(x_0_)) then
-      module_0_ = x_0_
+  package.loaded[_2amodule_name_2a] = {}
+  _2amodule_2a = package.loaded[_2amodule_name_2a]
+end
+local _2amodule_locals_2a
+do
+  _2amodule_2a["aniseed/locals"] = {}
+  _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
+end
+local buffer, register, size, tbl, window = require("snap.common.buffer"), require("snap.common.register"), require("snap.view.size"), require("snap.common.tbl"), require("snap.common.window")
+do end (_2amodule_locals_2a)["buffer"] = buffer
+_2amodule_locals_2a["register"] = register
+_2amodule_locals_2a["size"] = size
+_2amodule_locals_2a["tbl"] = tbl
+_2amodule_locals_2a["window"] = window
+local function layout(config)
+  local _let_1_ = config.layout()
+  local width = _let_1_["width"]
+  local height = _let_1_["height"]
+  local row = _let_1_["row"]
+  local col = _let_1_["col"]
+  local _2_
+  if config["has-views"]() then
+    _2_ = (math.floor((width * size["view-width"])) - size.padding - size.padding)
+  else
+    _2_ = width
+  end
+  local _4_
+  if config.reverse then
+    _4_ = row
+  else
+    _4_ = ((row + height) - size.padding)
+  end
+  return {width = _2_, height = 1, row = _4_, col = col, focusable = true}
+end
+local mappings = {next = {"<C-q>"}, enter = {"<CR>"}, ["enter-split"] = {"<C-x>"}, ["enter-vsplit"] = {"<C-v>"}, ["enter-tab"] = {"<C-t>"}, exit = {"<Esc>", "<C-c>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}, ["select-all"] = {"<C-a>"}, ["prev-item"] = {"<C-p>", "<Up>", "<C-k>"}, ["next-item"] = {"<C-n>", "<Down>", "<C-j>"}, ["prev-page"] = {"<C-b>", "<PageUp>"}, ["next-page"] = {"<C-f>", "<PageDown"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}}
+local function create(config)
+  local bufnr = buffer.create()
+  local layout_config = layout(config)
+  local winnr = window.create(bufnr, layout_config)
+  vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
+  vim.fn.prompt_setprompt(bufnr, config.prompt)
+  buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
+  vim.api.nvim_command("startinsert")
+  vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
+  local mappings0
+  if config.mappings then
+    mappings0 = tbl.merge(mappings, config.mappings)
+  else
+    mappings0 = mappings
+  end
+  local function get_filter()
+    local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
+    if contents then
+      return contents:sub((#config.prompt + 1))
     else
-      module_0_ = {}
+      return ""
     end
   end
-  module_0_["aniseed/module"] = name_0_
-  module_0_["aniseed/locals"] = ((module_0_)["aniseed/locals"] or {})
-  do end (module_0_)["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
-  do end (package.loaded)[name_0_] = module_0_
-  _0_ = module_0_
-end
-local autoload
-local function _1_(...)
-  return (require("aniseed.autoload")).autoload(...)
-end
-autoload = _1_
-local function _2_(...)
-  local ok_3f_0_, val_0_ = nil, nil
-  local function _2_()
-    return {require("snap.common.buffer"), require("snap.common.register"), require("snap.view.size"), require("snap.common.tbl"), require("snap.common.window")}
-  end
-  ok_3f_0_, val_0_ = pcall(_2_)
-  if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {require = {buffer = "snap.common.buffer", register = "snap.common.register", size = "snap.view.size", tbl = "snap.common.tbl", window = "snap.common.window"}}
-    return val_0_
-  else
-    return print(val_0_)
-  end
-end
-local _local_0_ = _2_(...)
-local buffer = _local_0_[1]
-local register = _local_0_[2]
-local size = _local_0_[3]
-local tbl = _local_0_[4]
-local window = _local_0_[5]
-local _2amodule_2a = _0_
-local _2amodule_name_2a = "snap.view.input"
-do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
-local function layout(config)
-  local _let_0_ = config.layout()
-  local col = _let_0_["col"]
-  local height = _let_0_["height"]
-  local row = _let_0_["row"]
-  local width = _let_0_["width"]
-  local _3_
-  if config.reverse then
-    _3_ = row
-  else
-    _3_ = ((row + height) - size.padding)
-  end
-  local _5_
-  if config["has-views"]() then
-    _5_ = (math.floor((width * size["view-width"])) - size.padding - size.padding)
-  else
-    _5_ = width
-  end
-  return {col = col, focusable = true, height = 1, row = _3_, width = _5_}
-end
-local mappings = {["enter-split"] = {"<C-x>"}, ["enter-tab"] = {"<C-t>"}, ["enter-vsplit"] = {"<C-v>"}, ["next-item"] = {"<C-n>", "<Down>", "<C-j>"}, ["next-page"] = {"<C-f>", "<PageDown"}, ["prev-item"] = {"<C-p>", "<Up>", "<C-k>"}, ["prev-page"] = {"<C-b>", "<PageUp>"}, ["select-all"] = {"<C-a>"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}, enter = {"<CR>"}, exit = {"<Esc>", "<C-c>"}, next = {"<C-q>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}}
-local create
-do
-  local v_0_
-  do
-    local v_0_0
-    local function create0(config)
-      local bufnr = buffer.create()
-      local layout_config = layout(config)
-      local winnr = window.create(bufnr, layout_config)
-      vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
-      vim.fn.prompt_setprompt(bufnr, config.prompt)
-      buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
-      vim.api.nvim_command("startinsert")
-      vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
-      local mappings0
-      if config.mappings then
-        mappings0 = tbl.merge(mappings, config.mappings)
-      else
-        mappings0 = mappings
-      end
-      local function get_filter()
-        local contents = tbl.first(vim.api.nvim_buf_get_lines(bufnr, 0, 1, false))
-        if contents then
-          return contents:sub((#config.prompt + 1))
-        else
-          return ""
-        end
-      end
-      local exited = false
-      local function on_exit()
-        if not exited then
-          vim.api.nvim_command("augroup SnapInputLeave")
-          vim.api.nvim_command("autocmd!")
-          vim.api.nvim_command("augroup END")
-          exited = true
-          return config["on-exit"]()
-        end
-      end
-      local function on_enter(type)
-        config["on-enter"](type)
-        return on_exit()
-      end
-      local function on_next()
-        config["on-next"]()
-        return on_exit()
-      end
-      local function on_tab()
-        config["on-select-toggle"]()
-        return config["on-next-item"]()
-      end
-      local function on_shifttab()
-        config["on-select-toggle"]()
-        return config["on-prev-item"]()
-      end
-      local function on_ctrla()
-        return config["on-select-all-toggle"]()
-      end
-      local function on_lines()
-        return config["on-update"](get_filter())
-      end
-      local function on_detach()
-        return register.clean(bufnr)
-      end
-      register["buf-map"](bufnr, {"n", "i"}, mappings0.next, on_next)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0.enter, on_enter)
-      local function _4_(...)
-        return on_enter("split", ...)
-      end
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-split"], _4_)
-      local function _5_(...)
-        return on_enter("vsplit", ...)
-      end
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-vsplit"], _5_)
-      local function _6_(...)
-        return on_enter("tab", ...)
-      end
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-tab"], _6_)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0.exit, on_exit)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0.select, on_tab)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0.unselect, on_shifttab)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["select-all"], on_ctrla)
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-item"], config["on-prev-item"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["next-item"], config["on-next-item"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-page"], config["on-prev-page"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
-      register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
+  local exited = false
+  local function on_exit()
+    if not exited then
       vim.api.nvim_command("augroup SnapInputLeave")
       vim.api.nvim_command("autocmd!")
-      vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
       vim.api.nvim_command("augroup END")
-      vim.api.nvim_buf_attach(bufnr, false, {on_detach = on_detach, on_lines = on_lines})
-      local function delete()
-        if vim.api.nvim_win_is_valid(winnr) then
-          window.close(winnr)
-        end
-        if vim.api.nvim_buf_is_valid(bufnr) then
-          return buffer.delete(bufnr, {force = true})
-        end
-      end
-      local function update(view)
-        if vim.api.nvim_win_is_valid(winnr) then
-          local layout_config0 = layout(config)
-          window.update(winnr, layout_config0)
-          vim.api.nvim_win_set_option(winnr, "cursorline", true)
-          do end (view)["height"] = layout_config0.height
-          view["width"] = layout_config0.width
-          return nil
-        end
-      end
-      local view = {bufnr = bufnr, delete = delete, height = layout_config.height, update = update, width = layout_config.width, winnr = winnr}
-      vim.api.nvim_command("augroup SnapInputViewResize")
-      vim.api.nvim_command("autocmd!")
-      local function _7_()
-        return view:update()
-      end
-      vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _7_)))
-      vim.api.nvim_command("augroup END")
-      return view
+      exited = true
+      return config["on-exit"]()
+    else
+      return nil
     end
-    v_0_0 = create0
-    _0_["create"] = v_0_0
-    v_0_ = v_0_0
   end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["create"] = v_0_
-  create = v_0_
+  local function on_enter(type)
+    config["on-enter"](type)
+    return on_exit()
+  end
+  local function on_next()
+    config["on-next"]()
+    return on_exit()
+  end
+  local function on_tab()
+    config["on-select-toggle"]()
+    return config["on-next-item"]()
+  end
+  local function on_shifttab()
+    config["on-select-toggle"]()
+    return config["on-prev-item"]()
+  end
+  local function on_ctrla()
+    return config["on-select-all-toggle"]()
+  end
+  local function on_lines()
+    return config["on-update"](get_filter())
+  end
+  local function on_detach()
+    return register.clean(bufnr)
+  end
+  register["buf-map"](bufnr, {"n", "i"}, mappings0.next, on_next)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0.enter, on_enter)
+  local function _9_(...)
+    return on_enter("split", ...)
+  end
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-split"], _9_)
+  local function _10_(...)
+    return on_enter("vsplit", ...)
+  end
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-vsplit"], _10_)
+  local function _11_(...)
+    return on_enter("tab", ...)
+  end
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-tab"], _11_)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0.exit, on_exit)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0.select, on_tab)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0.unselect, on_shifttab)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["select-all"], on_ctrla)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-item"], config["on-prev-item"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["next-item"], config["on-next-item"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["prev-page"], config["on-prev-page"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["next-page"], config["on-next-page"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
+  vim.api.nvim_command("augroup SnapInputLeave")
+  vim.api.nvim_command("autocmd!")
+  vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
+  vim.api.nvim_command("augroup END")
+  vim.api.nvim_buf_attach(bufnr, false, {on_lines = on_lines, on_detach = on_detach})
+  local function delete()
+    if vim.api.nvim_win_is_valid(winnr) then
+      window.close(winnr)
+    else
+    end
+    if vim.api.nvim_buf_is_valid(bufnr) then
+      return buffer.delete(bufnr, {force = true})
+    else
+      return nil
+    end
+  end
+  local function update(view)
+    if vim.api.nvim_win_is_valid(winnr) then
+      local layout_config0 = layout(config)
+      window.update(winnr, layout_config0)
+      vim.api.nvim_win_set_option(winnr, "cursorline", true)
+      do end (view)["height"] = layout_config0.height
+      view["width"] = layout_config0.width
+      return nil
+    else
+      return nil
+    end
+  end
+  local view = {update = update, delete = delete, bufnr = bufnr, winnr = winnr, width = layout_config.width, height = layout_config.height}
+  vim.api.nvim_command("augroup SnapInputViewResize")
+  vim.api.nvim_command("autocmd!")
+  local function _15_()
+    return view:update()
+  end
+  vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _15_)))
+  vim.api.nvim_command("augroup END")
+  return view
 end
-return nil
+_2amodule_2a["create"] = create
+return _2amodule_2a

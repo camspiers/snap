@@ -1,5 +1,3 @@
-(module snap.loading)
-
 (fn center-with-text-width [text text-width width]
   "Centers by using a text width"
   (let [space (string.rep " " (/ (- width text-width) 2))]

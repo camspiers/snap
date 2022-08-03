@@ -9,7 +9,7 @@ local function get_buffers()
   return vim.tbl_map(_1_, vim.tbl_filter(_2_, vim.api.nvim_list_bufs()))
 end
 local snap = require("snap")
-local function _1_()
+local function _3_()
   return snap.sync(get_buffers)
 end
-return _1_
+return _3_

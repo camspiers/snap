@@ -9,11 +9,13 @@ local function _1_(...)
       for results in snap.consume(producer, request) do
         if ((type(results) == "table") and (#results > 0)) then
           had_values = true
+        else
         end
         coroutine.yield(results)
       end
       if had_values then
         coroutine.yield(nil)
+      else
       end
     end
     return nil

@@ -1,61 +1,20 @@
 local _2afile_2a = "fnl/snap/select/cwd.fnl"
-local _0_
-do
-  local name_0_ = "snap.select.cwd"
-  local module_0_
-  do
-    local x_0_ = package.loaded[name_0_]
-    if ("table" == type(x_0_)) then
-      module_0_ = x_0_
-    else
-      module_0_ = {}
-    end
-  end
-  module_0_["aniseed/module"] = name_0_
-  module_0_["aniseed/locals"] = ((module_0_)["aniseed/locals"] or {})
-  do end (module_0_)["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
-  do end (package.loaded)[name_0_] = module_0_
-  _0_ = module_0_
-end
-local autoload
-local function _1_(...)
-  return (require("aniseed.autoload")).autoload(...)
-end
-autoload = _1_
-local function _2_(...)
-  local ok_3f_0_, val_0_ = nil, nil
-  local function _2_()
-    return {}
-  end
-  ok_3f_0_, val_0_ = pcall(_2_)
-  if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {}
-    return val_0_
-  else
-    return print(val_0_)
-  end
-end
-local _local_0_ = _2_(...)
-local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.select.cwd"
-do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
-local select
+local _2amodule_2a
 do
-  local v_0_
-  do
-    local v_0_0
-    local function select0(selection, winnr)
-      local function _3_(...)
-        return vim.api.nvim_set_current_dir(selection, ...)
-      end
-      return vim.schedule(_3_)
-    end
-    v_0_0 = select0
-    _0_["select"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["select"] = v_0_
-  select = v_0_
+  package.loaded[_2amodule_name_2a] = {}
+  _2amodule_2a = package.loaded[_2amodule_name_2a]
 end
-return nil
+local _2amodule_locals_2a
+do
+  _2amodule_2a["aniseed/locals"] = {}
+  _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
+end
+local function select(selection, winnr)
+  local function _1_(...)
+    return vim.api.nvim_set_current_dir(selection, ...)
+  end
+  return vim.schedule(_1_)
+end
+_2amodule_2a["select"] = select
+return _2amodule_2a

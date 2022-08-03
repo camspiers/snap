@@ -12,17 +12,18 @@ local function _1_(producer)
       return vim.tbl_filter(_2_, results)
     end
   end
-  local function _2_(request)
+  local function _4_(request)
     for results in snap.consume(producer, request) do
-      local _3_ = type(results)
-      if (_3_ == "table") then
+      local _5_ = type(results)
+      if (_5_ == "table") then
         coroutine.yield(filter(request.filter, results))
-      elseif (_3_ == "nil") then
+      elseif (_5_ == "nil") then
         coroutine.yield(nil)
+      else
       end
     end
     return nil
   end
-  return _2_
+  return _4_
 end
 return _1_

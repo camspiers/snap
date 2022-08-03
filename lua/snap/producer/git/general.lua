@@ -1,9 +1,9 @@
 local _2afile_2a = "fnl/snap/producer/git/general.fnl"
 local io = require("snap.common.io")
-local function _2_(request, _1_)
-  local _arg_0_ = _1_
-  local args = _arg_0_["args"]
-  local cwd = _arg_0_["cwd"]
+local function _3_(request, _1_)
+  local _arg_2_ = _1_
+  local args = _arg_2_["args"]
+  local cwd = _arg_2_["cwd"]
   for data, err, cancel in io.spawn("git", args, cwd) do
     if request.canceled() then
       cancel()
@@ -18,4 +18,4 @@ local function _2_(request, _1_)
   end
   return nil
 end
-return _2_
+return _3_

@@ -6,9 +6,11 @@ local function _1_(limit, producer)
     for results in snap.consume(producer, request) do
       if (type(results) == "table") then
         count = (count + #results)
+      else
       end
       if (count > limit) then
         request.cancel()
+      else
       end
       coroutine.yield(results)
     end

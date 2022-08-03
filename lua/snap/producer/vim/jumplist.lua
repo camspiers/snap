@@ -10,7 +10,7 @@ local function get_jumplist()
   end
   return vim.tbl_map(_1_, vim.tbl_filter(_2_, tbl.first(vim.fn.getjumplist())))
 end
-local function _1_()
+local function _3_()
   return snap.sync(get_jumplist)
 end
-return _1_
+return _3_

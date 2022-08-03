@@ -1,44 +1,15 @@
 local _2afile_2a = "fnl/snap/layout/init.fnl"
-local _0_
-do
-  local name_0_ = "snap.layout"
-  local module_0_
-  do
-    local x_0_ = package.loaded[name_0_]
-    if ("table" == type(x_0_)) then
-      module_0_ = x_0_
-    else
-      module_0_ = {}
-    end
-  end
-  module_0_["aniseed/module"] = name_0_
-  module_0_["aniseed/locals"] = ((module_0_)["aniseed/locals"] or {})
-  do end (module_0_)["aniseed/local-fns"] = ((module_0_)["aniseed/local-fns"] or {})
-  do end (package.loaded)[name_0_] = module_0_
-  _0_ = module_0_
-end
-local autoload
-local function _1_(...)
-  return (require("aniseed.autoload")).autoload(...)
-end
-autoload = _1_
-local function _2_(...)
-  local ok_3f_0_, val_0_ = nil, nil
-  local function _2_()
-    return {}
-  end
-  ok_3f_0_, val_0_ = pcall(_2_)
-  if ok_3f_0_ then
-    _0_["aniseed/local-fns"] = {}
-    return val_0_
-  else
-    return print(val_0_)
-  end
-end
-local _local_0_ = _2_(...)
-local _2amodule_2a = _0_
 local _2amodule_name_2a = "snap.layout"
-do local _ = ({nil, _0_, nil, {{}, nil, nil, nil}})[2] end
+local _2amodule_2a
+do
+  package.loaded[_2amodule_name_2a] = {}
+  _2amodule_2a = package.loaded[_2amodule_name_2a]
+end
+local _2amodule_locals_2a
+do
+  _2amodule_2a["aniseed/locals"] = {}
+  _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
+end
 local function lines()
   return vim.api.nvim_get_option("lines")
 end
@@ -52,116 +23,44 @@ local function from_bottom(size, offset)
   return (lines() - size - offset)
 end
 local function size(_25width, _25height)
-  return {height = math.floor((lines() * _25height)), width = math.floor((columns() * _25width))}
+  return {width = math.floor((columns() * _25width)), height = math.floor((lines() * _25height))}
 end
-local _25centered
-do
-  local v_0_
-  do
-    local v_0_0
-    local function _25centered0(_25width, _25height)
-      local _let_0_ = size(_25width, _25height)
-      local height = _let_0_["height"]
-      local width = _let_0_["width"]
-      return {col = middle(columns(), width), height = height, row = middle(lines(), height), width = width}
-    end
-    v_0_0 = _25centered0
-    _0_["%centered"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["%centered"] = v_0_
-  _25centered = v_0_
+local function _25centered(_25width, _25height)
+  local _let_1_ = size(_25width, _25height)
+  local width = _let_1_["width"]
+  local height = _let_1_["height"]
+  return {width = width, height = height, row = middle(lines(), height), col = middle(columns(), width)}
 end
-local _25bottom
-do
-  local v_0_
-  do
-    local v_0_0
-    local function _25bottom0(_25width, _25height)
-      local _let_0_ = size(_25width, _25height)
-      local height = _let_0_["height"]
-      local width = _let_0_["width"]
-      return {col = middle(columns(), width), height = height, row = from_bottom(height, 8), width = width}
-    end
-    v_0_0 = _25bottom0
-    _0_["%bottom"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["%bottom"] = v_0_
-  _25bottom = v_0_
+_2amodule_2a["%centered"] = _25centered
+local function _25bottom(_25width, _25height)
+  local _let_2_ = size(_25width, _25height)
+  local width = _let_2_["width"]
+  local height = _let_2_["height"]
+  return {width = width, height = height, row = from_bottom(height, 8), col = middle(columns(), width)}
 end
-local _25top
-do
-  local v_0_
-  do
-    local v_0_0
-    local function _25top0(_25width, _25height)
-      local _let_0_ = size(_25width, _25height)
-      local height = _let_0_["height"]
-      local width = _let_0_["width"]
-      return {col = middle(columns(), width), height = height, row = 5, width = width}
-    end
-    v_0_0 = _25top0
-    _0_["%top"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["%top"] = v_0_
-  _25top = v_0_
+_2amodule_2a["%bottom"] = _25bottom
+local function _25top(_25width, _25height)
+  local _let_3_ = size(_25width, _25height)
+  local width = _let_3_["width"]
+  local height = _let_3_["height"]
+  return {width = width, height = height, row = 5, col = middle(columns(), width)}
 end
-local centered
-do
-  local v_0_
-  do
-    local v_0_0
-    local function centered0()
-      return _25centered(0.9, 0.7)
-    end
-    v_0_0 = centered0
-    _0_["centered"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["centered"] = v_0_
-  centered = v_0_
+_2amodule_2a["%top"] = _25top
+local function centered()
+  return _25centered(0.9, 0.7)
 end
-local bottom
-do
-  local v_0_
-  do
-    local v_0_0
-    local function bottom0()
-      local lines0 = vim.api.nvim_get_option("lines")
-      local height = math.floor((lines0 * 0.5))
-      local width = vim.api.nvim_get_option("columns")
-      local col = 0
-      local row = (lines0 - height - 4)
-      return {col = col, height = height, row = row, width = width}
-    end
-    v_0_0 = bottom0
-    _0_["bottom"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["bottom"] = v_0_
-  bottom = v_0_
+_2amodule_2a["centered"] = centered
+local function bottom()
+  local lines0 = vim.api.nvim_get_option("lines")
+  local height = math.floor((lines0 * 0.5))
+  local width = vim.api.nvim_get_option("columns")
+  local col = 0
+  local row = (lines0 - height - 4)
+  return {width = width, height = height, col = col, row = row}
 end
-local top
-do
-  local v_0_
-  do
-    local v_0_0
-    local function top0()
-      return _25top(0.9, 0.7)
-    end
-    v_0_0 = top0
-    _0_["top"] = v_0_0
-    v_0_ = v_0_0
-  end
-  local t_0_ = (_0_)["aniseed/locals"]
-  t_0_["top"] = v_0_
-  top = v_0_
+_2amodule_2a["bottom"] = bottom
+local function top()
+  return _25top(0.9, 0.7)
 end
-return nil
+_2amodule_2a["top"] = top
+return _2amodule_2a

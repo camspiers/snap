@@ -38,6 +38,6 @@
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; Add syntax highlighting
-        (syntax (vim.fn.fnamemodify (tostring request.selection) ":t") request.bufnr))))
+        (syntax path (vim.fn.fnamemodify (tostring request.selection) ":t") request.bufnr))))
     ;; Free memory
     (set preview nil)))

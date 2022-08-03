@@ -41,6 +41,6 @@
           ;; TODO Col highlighting isn't working
           (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)]))
         ;; Add synxtax highlighting
-        (syntax (vim.fn.fnamemodify selection.filename ":t") request.bufnr))))
+        (syntax path (vim.fn.fnamemodify selection.filename ":t") request.bufnr))))
     
     (set preview nil)))

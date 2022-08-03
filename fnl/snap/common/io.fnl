@@ -38,6 +38,18 @@
           (values stdout stderr kill))
         nil))))
 
+(defn exists [path]
+  "Check if file exists"
+  (local fd (vim.loop.fs_open path "r" 438))
+  (vim.loop.fs_close fd)
+  (~= fd nil))
+
+(defn size [path]
+  (local fd (vim.loop.fs_open path "r" 438))
+  (local stat (vim.loop.fs_fstat fd))
+  (vim.loop.fs_close fd)
+  stat.size)
+
 (local chunk-size 10000)
 
 (defn read [path]

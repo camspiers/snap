@@ -9,7 +9,7 @@
           (if
             (> (length results) 0)
             (do
-              (tbl.accumulate cache results)
+              (tbl.acc cache results)
               (coroutine.yield results))
             (snap.continue)))
         cache))))

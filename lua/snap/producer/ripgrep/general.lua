@@ -1,11 +1,11 @@
 local _2afile_2a = "fnl/snap/producer/ripgrep/general.fnl"
 local snap = require("snap")
 local io = require("snap.common.io")
-local function _2_(request, _1_)
-  local _arg_0_ = _1_
-  local absolute = _arg_0_["absolute"]
-  local args = _arg_0_["args"]
-  local cwd = _arg_0_["cwd"]
+local function _3_(request, _1_)
+  local _arg_2_ = _1_
+  local args = _arg_2_["args"]
+  local cwd = _arg_2_["cwd"]
+  local absolute = _arg_2_["absolute"]
   for data, err, cancel in io.spawn("rg", args, cwd) do
     if request.canceled() then
       cancel()
@@ -17,14 +17,15 @@ local function _2_(request, _1_)
     else
       local results = vim.split(data:sub(1, -2), "\n", true)
       if absolute then
-        local function _3_(_241)
+        local function _4_(_241)
           return string.format("%s/%s", cwd, _241)
         end
-        results = vim.tbl_map(_3_, results)
+        results = vim.tbl_map(_4_, results)
+      else
       end
       coroutine.yield(results)
     end
   end
   return nil
 end
-return _2_
+return _3_

@@ -5,6 +5,7 @@ local function chunk(size, tbl)
   local function _1_()
     if (index > tbl_size) then
       return nil
+    else
     end
     local chunk0 = {}
     while ((index <= tbl_size) and (#chunk0 < size)) do
@@ -16,8 +17,8 @@ local function chunk(size, tbl)
   return _1_
 end
 local snap = require("snap")
-local function _1_(chunk_size, producer)
-  local function _2_(request)
+local function _3_(chunk_size, producer)
+  local function _4_(request)
     for results in snap.consume(producer, request) do
       if ((type(results) == "table") and (#results > 0)) then
         for part in chunk(chunk_size, results) do
@@ -29,6 +30,6 @@ local function _1_(chunk_size, producer)
     end
     return nil
   end
-  return _2_
+  return _4_
 end
-return _1_
+return _3_

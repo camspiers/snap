@@ -10,7 +10,7 @@ local function _1_(producer)
     local results = {}
     local results_string = nil
     for data in snap.consume(cached_producer, request) do
-      tbl.accumulate(results, data)
+      tbl.acc(results, data)
       snap.continue()
     end
     if (request.filter == "") then
@@ -28,10 +28,12 @@ local function _1_(producer)
             end
             plain_results = vim.tbl_map(_3_, results)
             results_string = table.concat(plain_results, "\n")
+          else
           end
           stdout:write(results_string)
           stdout:shutdown()
           needsdata = false
+        else
         end
         if request.canceled() then
           cancel()
@@ -46,10 +48,10 @@ local function _1_(producer)
             results_indexed[tostring(result)] = result
           end
           local filtered_results = vim.split(data:sub(1, -2), "\n", true)
-          local function _4_(_241)
+          local function _6_(_241)
             return results_indexed[_241]
           end
-          coroutine.yield(vim.tbl_map(_4_, filtered_results))
+          coroutine.yield(vim.tbl_map(_6_, filtered_results))
         end
       end
       return nil
