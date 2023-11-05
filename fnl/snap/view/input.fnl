@@ -38,6 +38,7 @@
         layout-config (layout config)
         winnr (window.create bufnr layout-config)]
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
+    (vim.api.nvim_win_set_option winnr :wrap true)
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (buffer.add-highlight bufnr :SnapPrompt 0 0 (string.len config.prompt))
     (vim.api.nvim_command :startinsert)
@@ -80,7 +81,8 @@
       (config.on-select-all-toggle))
 
     (fn on_lines []
-      (config.on-update (get-filter)))
+      (config.on-update (get-filter))
+      nil)
 
     (fn on_detach []
       (register.clean bufnr))

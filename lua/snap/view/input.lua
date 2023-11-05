@@ -42,6 +42,7 @@ local function create(config)
   local layout_config = layout(config)
   local winnr = window.create(bufnr, layout_config)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
+  vim.api.nvim_win_set_option(winnr, "wrap", true)
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
   vim.api.nvim_command("startinsert")
@@ -92,7 +93,8 @@ local function create(config)
     return config["on-select-all-toggle"]()
   end
   local function on_lines()
-    return config["on-update"](get_filter())
+    config["on-update"](get_filter())
+    return nil
   end
   local function on_detach()
     return register.clean(bufnr)

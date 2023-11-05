@@ -1,7 +1,7 @@
 local _2afile_2a = "fnl/snap/producer/create.fnl"
 local snap = require("snap")
 local function create_slow_api()
-  local slow_api = {pending = false, value = nil}
+  local slow_api = {value = nil, pending = false}
   slow_api.schedule = function(fnc)
     slow_api["pending"] = true
     local function _1_()

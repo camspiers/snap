@@ -3,9 +3,11 @@ local snap = require("snap")
 local read_file = snap.get("preview.read-file")
 local loading = snap.get("loading")
 local syntax = snap.get("preview.syntax")
+local tbl = snap.get("common.tbl")
 local function _1_(request)
   local load_counter = 0
   local last_time = vim.loop.now()
+  local max_length = 500
   local function render_loader()
     if ((vim.loop.now() - last_time) > 500) then
       local function _2_()
@@ -37,7 +39,11 @@ local function _1_(request)
       vim.api.nvim_win_set_option(request.winnr, "cursorline", false)
       vim.api.nvim_win_set_option(request.winnr, "cursorcolumn", false)
       vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
-      return syntax(path, vim.fn.fnamemodify(tostring(request.selection), ":t"), request.bufnr)
+      if (tbl["max-length"](preview) < max_length) then
+        return syntax(vim.fn.fnamemodify(tostring(request.selection), ":t"), request.bufnr)
+      else
+        return nil
+      end
     else
       return nil
     end

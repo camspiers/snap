@@ -10,6 +10,19 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
+local function max_length(tbl)
+  local max = 0
+  for _, line in ipairs(tbl) do
+    local len = #line
+    if (len > max) then
+      max = len
+    else
+      max = max
+    end
+  end
+  return max
+end
+_2amodule_2a["max-length"] = max_length
 local function acc(tbl, vals)
   if (vals ~= nil) then
     for _, value in ipairs(vals) do

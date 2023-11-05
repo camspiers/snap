@@ -2,11 +2,13 @@
       loading (snap.get :loading)
       read-file (snap.get :preview.read-file)
       parse (snap.get :common.vimgrep.parse)
-      syntax (snap.get :preview.syntax)]
+      syntax (snap.get :preview.syntax)
+      tbl (snap.get :common.tbl)]
   (fn [request]
     ;; Display loading
     (var load-counter 0)
     (var last-time 0)
+    (local max-length 500)
 
     ;; Progressively renders loader
     (fn render-loader []
@@ -41,6 +43,8 @@
           ;; TODO Col highlighting isn't working
           (vim.api.nvim_win_set_cursor request.winnr [selection.lnum (- selection.col 1)]))
         ;; Add synxtax highlighting
-        (syntax path (vim.fn.fnamemodify selection.filename ":t") request.bufnr))))
+        (when
+          (< (tbl.max-length preview) max-length)
+          (syntax (vim.fn.fnamemodify selection.filename ":t") request.bufnr)))))
     
     (set preview nil)))
