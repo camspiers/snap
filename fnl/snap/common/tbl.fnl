@@ -1,5 +1,11 @@
 (module snap.common.tbl)
 
+(defn max-length [tbl]
+  "Returns max length of table values"
+  (accumulate [max 0 _ line (ipairs tbl)]
+    (let [len (length line)]
+      (if (> len max) len max))))
+
 (defn acc [tbl vals]
   "Accumulates non nil values"
   (when (not= vals nil)

@@ -1,11 +1,13 @@
 (let [snap (require :snap)
       read-file (snap.get :preview.read-file)
       loading (snap.get :loading)
-      syntax (snap.get :preview.syntax)]
+      syntax (snap.get :preview.syntax)
+      tbl (snap.get :common.tbl)]
   (fn [request]
     ;; Display loading
     (var load-counter 0)
     (var last-time (vim.loop.now))
+    (local max-length 500)
 
     ;; Progressively renders loader
     (fn render-loader []
@@ -38,6 +40,8 @@
         ;; Set the preview
         (vim.api.nvim_buf_set_lines request.bufnr 0 -1 false preview)
         ;; Add syntax highlighting
-        (syntax path (vim.fn.fnamemodify (tostring request.selection) ":t") request.bufnr))))
+        (when
+          (< (tbl.max-length preview) max-length)
+          (syntax (vim.fn.fnamemodify (tostring request.selection) ":t") request.bufnr)))))
     ;; Free memory
     (set preview nil)))

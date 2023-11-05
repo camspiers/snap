@@ -4,9 +4,11 @@ local loading = snap.get("loading")
 local read_file = snap.get("preview.read-file")
 local parse = snap.get("common.vimgrep.parse")
 local syntax = snap.get("preview.syntax")
+local tbl = snap.get("common.tbl")
 local function _1_(request)
   local load_counter = 0
   local last_time = 0
+  local max_length = 500
   local function render_loader()
     if ((vim.loop.now() - last_time) > 500) then
       local function _2_()
@@ -43,7 +45,11 @@ local function _1_(request)
         vim.api.nvim_win_set_cursor(request.winnr, {selection.lnum, (selection.col - 1)})
       else
       end
-      return syntax(path, vim.fn.fnamemodify(selection.filename, ":t"), request.bufnr)
+      if (tbl["max-length"](preview) < max_length) then
+        return syntax(vim.fn.fnamemodify(selection.filename, ":t"), request.bufnr)
+      else
+        return nil
+      end
     else
       return nil
     end
