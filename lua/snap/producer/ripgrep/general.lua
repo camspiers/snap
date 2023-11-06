@@ -15,12 +15,33 @@ local function _3_(request, _1_)
     elseif (data == "") then
       snap.continue()
     else
-      local results = vim.split(data:sub(1, -2), "\n", true)
+      local results
+      do
+        local tbl_17_auto = {}
+        local i_18_auto = #tbl_17_auto
+        for _, str in ipairs(vim.split(data, "\n", true)) do
+          local val_19_auto
+          do
+            local trimmed = vim.trim(str)
+            if (trimmed ~= "") then
+              val_19_auto = trimmed
+            else
+              val_19_auto = nil
+            end
+          end
+          if (nil ~= val_19_auto) then
+            i_18_auto = (i_18_auto + 1)
+            do end (tbl_17_auto)[i_18_auto] = val_19_auto
+          else
+          end
+        end
+        results = tbl_17_auto
+      end
       if absolute then
-        local function _4_(_241)
+        local function _6_(_241)
           return string.format("%s/%s", cwd, _241)
         end
-        results = vim.tbl_map(_4_, results)
+        results = vim.tbl_map(_6_, results)
       else
       end
       coroutine.yield(results)

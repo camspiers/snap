@@ -10,7 +10,11 @@
         (= data "")
         (snap.continue)
         (do
-          (var results (vim.split (data:sub 1 -2) "\n" true))
+          (var results
+            (icollect [_ str (ipairs (vim.split data "\n" true))]
+              (let [trimmed (vim.trim str)]
+                (if (not= trimmed "") trimmed))))
+
           (when absolute
             (set results (vim.tbl_map #(string.format "%s/%s" cwd $1) results)))
           (coroutine.yield results))))))
