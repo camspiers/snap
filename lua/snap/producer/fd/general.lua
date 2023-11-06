@@ -1,5 +1,6 @@
 local _2afile_2a = "fnl/snap/producer/fd/general.fnl"
 local io = require("snap.common.io")
+local string = require("snap.common.string")
 local function _3_(request, _1_)
   local _arg_2_ = _1_
   local args = _arg_2_["args"]
@@ -13,7 +14,7 @@ local function _3_(request, _1_)
     elseif (data == "") then
       coroutine.yield({})
     else
-      coroutine.yield(vim.split(data:sub(1, -2), "\n", true))
+      coroutine.yield(string.split(data))
     end
   end
   return nil

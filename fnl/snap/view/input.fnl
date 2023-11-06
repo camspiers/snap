@@ -37,12 +37,12 @@
   (let [bufnr (buffer.create)
         layout-config (layout config)
         winnr (window.create bufnr layout-config)]
+    (vim.api.nvim_win_set_option winnr :winhl "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder")
     (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
-    (vim.api.nvim_win_set_option winnr :wrap true)
-    (vim.fn.prompt_setprompt bufnr config.prompt)
+    (vim.api.nvim_buf_set_option bufnr :bufhidden :wipe)
     (buffer.add-highlight bufnr :SnapPrompt 0 0 (string.len config.prompt))
+    (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
-    (vim.api.nvim_win_set_option winnr :winhl "Normal:SnapNormal,FloatBorder:SnapBorder")
 
     (local mappings (if config.mappings (tbl.merge mappings config.mappings) mappings))
 
@@ -55,9 +55,6 @@
 
     (fn on-exit []
       (when (not exited)
-        (vim.api.nvim_command "augroup SnapInputLeave")
-        (vim.api.nvim_command "autocmd!")
-        (vim.api.nvim_command "augroup END")
         (set exited true)
         (config.on-exit)))
 
@@ -114,14 +111,9 @@
     (register.buf-map bufnr [:n :i] mappings.view-page-up config.on-viewpageup)
     (register.buf-map bufnr [:n :i] mappings.view-toggle-hide config.on-view-toggle-hide)
 
-    (vim.api.nvim_command "augroup SnapInputLeave")
-    (vim.api.nvim_command "autocmd!")
-    (vim.api.nvim_command
-      (string.format
-        "autocmd! BufLeave <buffer=%s> %s"
-        bufnr
-        (register.get-autocmd-call (tostring bufnr) on-exit)))
-    (vim.api.nvim_command "augroup END")
+    (vim.api.nvim_create_autocmd
+      [:WinLeave :BufLeave :BufDelete]
+      { :buffer bufnr :once true :callback on-exit })
 
     (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
 
@@ -141,11 +133,8 @@
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 
-    (vim.api.nvim_command "augroup SnapInputViewResize")
-    (vim.api.nvim_command "autocmd!")
-    (vim.api.nvim_command
-      (string.format "autocmd VimResized * %s"
-        (register.get-autocmd-call :VimResized (fn [] (view:update)))))
-    (vim.api.nvim_command "augroup END")
+    (vim.api.nvim_create_autocmd
+      [:VimResized]
+      { :buffer bufnr :callback (fn [] (view:update)) })
 
     view))

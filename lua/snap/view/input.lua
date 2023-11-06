@@ -41,12 +41,12 @@ local function create(config)
   local bufnr = buffer.create()
   local layout_config = layout(config)
   local winnr = window.create(bufnr, layout_config)
+  vim.api.nvim_win_set_option(winnr, "winhl", "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder")
   vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
-  vim.api.nvim_win_set_option(winnr, "wrap", true)
-  vim.fn.prompt_setprompt(bufnr, config.prompt)
+  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
   buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
+  vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
-  vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
   local mappings0
   if config.mappings then
     mappings0 = tbl.merge(mappings, config.mappings)
@@ -64,9 +64,6 @@ local function create(config)
   local exited = false
   local function on_exit()
     if not exited then
-      vim.api.nvim_command("augroup SnapInputLeave")
-      vim.api.nvim_command("autocmd!")
-      vim.api.nvim_command("augroup END")
       exited = true
       return config["on-exit"]()
     else
@@ -124,10 +121,7 @@ local function create(config)
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
-  vim.api.nvim_command("augroup SnapInputLeave")
-  vim.api.nvim_command("autocmd!")
-  vim.api.nvim_command(string.format("autocmd! BufLeave <buffer=%s> %s", bufnr, register["get-autocmd-call"](tostring(bufnr), on_exit)))
-  vim.api.nvim_command("augroup END")
+  vim.api.nvim_create_autocmd({"WinLeave", "BufLeave", "BufDelete"}, {buffer = bufnr, once = true, callback = on_exit})
   vim.api.nvim_buf_attach(bufnr, false, {on_lines = on_lines, on_detach = on_detach})
   local function delete()
     if vim.api.nvim_win_is_valid(winnr) then
@@ -153,13 +147,10 @@ local function create(config)
     end
   end
   local view = {update = update, delete = delete, bufnr = bufnr, winnr = winnr, width = layout_config.width, height = layout_config.height}
-  vim.api.nvim_command("augroup SnapInputViewResize")
-  vim.api.nvim_command("autocmd!")
   local function _15_()
     return view:update()
   end
-  vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _15_)))
-  vim.api.nvim_command("augroup END")
+  vim.api.nvim_create_autocmd({"VimResized"}, {buffer = bufnr, callback = _15_})
   return view
 end
 _2amodule_2a["create"] = create

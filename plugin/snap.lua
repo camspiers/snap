@@ -16,7 +16,7 @@ local highlights = {
 	SnapNormal = { default = true, link = "Normal" },
 	SnapBorder = { default = true, link = "SnapNormal" },
 
-	SnapPosition = { default = true, link = "IncSearch" },
+	SnapPosition = { default = true, link = "Identifier" },
 	SnapPrompt = { default = true, link = "Identifier" },
 }
 

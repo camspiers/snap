@@ -4,6 +4,7 @@ local io = snap.get("common.io")
 local cache = snap.get("consumer.cache")
 local positions = snap.get("consumer.positions")
 local tbl = snap.get("common.tbl")
+local string = snap.get("common.string")
 local function _1_(producer)
   local cached_producer = cache(producer)
   local function _2_(request)
@@ -47,7 +48,7 @@ local function _1_(producer)
           for _, result in ipairs(results) do
             results_indexed[tostring(result)] = result
           end
-          local filtered_results = vim.split(data:sub(1, -2), "\n", true)
+          local filtered_results = string.split(data)
           local function _6_(_241)
             return results_indexed[_241]
           end

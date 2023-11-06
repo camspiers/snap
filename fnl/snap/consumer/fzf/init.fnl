@@ -2,7 +2,8 @@
       io (snap.get :common.io)
       cache (snap.get :consumer.cache)
       positions (snap.get :consumer.positions)
-      tbl (snap.get :common.tbl)]
+      tbl (snap.get :common.tbl)
+      string (snap.get :common.string)]
   (fn [producer]
     (local cached-producer (cache producer))
     (positions (fn [request]
@@ -37,6 +38,6 @@
                 (local results-indexed {})
                 (each [_ result (ipairs results)]
                   (tset results-indexed (tostring result) result))
-                (local filtered-results (vim.split (data:sub 1 -2) "\n" true))
+                (local filtered-results (string.split data))
                 (coroutine.yield (vim.tbl_map #(. results-indexed $1) filtered-results)))))
           nil))))))

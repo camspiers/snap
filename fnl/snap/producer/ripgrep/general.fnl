@@ -1,5 +1,6 @@
 (let [snap (require :snap)
-      io (require :snap.common.io)]
+      io (snap.get :common.io)
+      string (snap.get :common.string)]
   (fn [request {: args : cwd : absolute}]
     (each [data err cancel (io.spawn :rg args cwd)]
       (if
@@ -10,10 +11,7 @@
         (= data "")
         (snap.continue)
         (do
-          (var results
-            (icollect [_ str (ipairs (vim.split data "\n" true))]
-              (let [trimmed (vim.trim str)]
-                (if (not= trimmed "") trimmed))))
+          (var results (string.split data))
 
           (when absolute
             (set results (vim.tbl_map #(string.format "%s/%s" cwd $1) results)))
