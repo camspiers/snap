@@ -8,8 +8,15 @@ The following shows finding files and grepping in the large `gcc` codebase.
 
 https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-9730-deefd39fb36e.mov
 
-
 ## Installation
+
+### With lazy.nvim
+
+```lua
+require("lazy").setup({
+  "camspiers/snap",
+})
+```
 
 ### With Packer
 

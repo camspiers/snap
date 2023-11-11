@@ -51,7 +51,7 @@
   (local modes (match (type opts)
     :table (or opts.modes :n)
     :nil :n))
-  (register.map modes key run)
+  (register.map modes key run (if (= command nil) nil {:desc (.. "Snap " command)}))
   (when command (register.command command run)))
 
 (defn maps [config]
