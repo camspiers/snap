@@ -15,6 +15,7 @@ do end (_2amodule_locals_2a)["buffer"] = buffer
 _2amodule_locals_2a["register"] = register
 _2amodule_locals_2a["size"] = size
 _2amodule_locals_2a["window"] = window
+local group = vim.api.nvim_create_augroup("SnapResults", {clear = true})
 local function layout(config)
   local _let_1_ = config.layout()
   local width = _let_1_["width"]
@@ -39,19 +40,19 @@ local function create(config)
   local bufnr = buffer.create()
   local layout_config = layout(config)
   local winnr = window.create(bufnr, layout_config)
-  vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
-  vim.api.nvim_buf_set_option(bufnr, "textwidth", 0)
-  vim.api.nvim_buf_set_option(bufnr, "wrapmargin", 0)
-  vim.api.nvim_win_set_option(winnr, "wrap", false)
-  vim.api.nvim_win_set_option(winnr, "cursorline", true)
-  vim.api.nvim_win_set_option(winnr, "winhl", "CursorLine:SnapSelect,Normal:SnapNormal,FloatBorder:SnapBorder")
+  vim.api.nvim_set_option_value("buftype", "prompt", {buf = bufnr})
+  vim.api.nvim_set_option_value("textwidth", 0, {buf = bufnr})
+  vim.api.nvim_set_option_value("wrapmargin", 0, {buf = bufnr})
+  vim.api.nvim_set_option_value("wrap", false, {win = winnr})
+  vim.api.nvim_set_option_value("cursorline", true, {win = winnr})
+  vim.api.nvim_set_option_value("winhl", "CursorLine:SnapSelect,Normal:SnapNormal,FloatBorder:SnapBorder", {win = winnr})
   local function delete()
     if vim.api.nvim_win_is_valid(winnr) then
       window.close(winnr)
     else
     end
     if vim.api.nvim_buf_is_valid(bufnr) then
-      return buffer.delete(bufnr, {force = true})
+      return buffer.delete(bufnr)
     else
       return nil
     end
@@ -60,7 +61,7 @@ local function create(config)
     if vim.api.nvim_win_is_valid(winnr) then
       local layout_config0 = layout(config)
       window.update(winnr, layout_config0)
-      vim.api.nvim_win_set_option(winnr, "cursorline", true)
+      vim.api.nvim_set_option_value("cursorline", true, {win = winnr})
       do end (view)["height"] = layout_config0.height
       view["width"] = layout_config0.width
       return nil
@@ -69,13 +70,10 @@ local function create(config)
     end
   end
   local view = {update = update, delete = delete, bufnr = bufnr, winnr = winnr, width = layout_config.width, height = layout_config.height}
-  vim.api.nvim_command("augroup SnapResultsViewResize")
-  vim.api.nvim_command("autocmd!")
   local function _9_()
     return view:update()
   end
-  vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _9_)))
-  vim.api.nvim_command("augroup END")
+  vim.api.nvim_create_autocmd("VimResized", {group = group, callback = _9_})
   return view
 end
 _2amodule_2a["create"] = create

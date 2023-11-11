@@ -16,6 +16,7 @@ _2amodule_locals_2a["register"] = register
 _2amodule_locals_2a["size"] = size
 _2amodule_locals_2a["tbl"] = tbl
 _2amodule_locals_2a["window"] = window
+local group = vim.api.nvim_create_augroup("SnapView", {clear = true})
 local function layout(config)
   local _let_1_ = config.layout()
   local width = _let_1_["width"]
@@ -36,17 +37,17 @@ local function create(config)
   local bufnr = buffer.create()
   local layout_config = layout(config)
   local winnr = window.create(bufnr, layout_config)
-  vim.api.nvim_win_set_option(winnr, "cursorline", false)
-  vim.api.nvim_win_set_option(winnr, "cursorcolumn", false)
-  vim.api.nvim_win_set_option(winnr, "wrap", false)
-  vim.api.nvim_win_set_option(winnr, "winhl", "Normal:SnapNormal,FloatBorder:SnapBorder")
+  vim.api.nvim_set_option_value("cursorline", false, {win = winnr})
+  vim.api.nvim_set_option_value("cursorcolumn", false, {win = winnr})
+  vim.api.nvim_set_option_value("wrap", false, {win = winnr})
+  vim.api.nvim_set_option_value("winhl", "Normal:SnapNormal,FloatBorder:SnapBorder", {win = winnr})
   local function delete()
     if vim.api.nvim_win_is_valid(winnr) then
       window.close(winnr)
     else
     end
     if vim.api.nvim_buf_is_valid(bufnr) then
-      return buffer.delete(bufnr, {force = true})
+      return buffer.delete(bufnr)
     else
       return nil
     end
@@ -64,13 +65,10 @@ local function create(config)
     end
   end
   local view = {update = update, delete = delete, bufnr = bufnr, winnr = winnr, width = layout_config.width, height = layout_config.height}
-  vim.api.nvim_command("augroup SnapViewResize")
-  vim.api.nvim_command("autocmd!")
   local function _5_()
     return view:update()
   end
-  vim.api.nvim_command(string.format("autocmd VimResized * %s", register["get-autocmd-call"]("VimResized", _5_)))
-  vim.api.nvim_command("augroup END")
+  vim.api.nvim_create_autocmd("VimResized", {group = group, callback = _5_})
   return view
 end
 _2amodule_2a["create"] = create

@@ -34,16 +34,17 @@ local function layout(config)
   else
     _4_ = ((row + height) - size.padding)
   end
-  return {width = _2_, height = 1, row = _4_, col = col, focusable = true}
+  return {width = _2_, height = 1, row = _4_, col = col, focusable = true, enter = true}
 end
 local mappings = {next = {"<C-q>"}, enter = {"<CR>"}, ["enter-split"] = {"<C-x>"}, ["enter-vsplit"] = {"<C-v>"}, ["enter-tab"] = {"<C-t>"}, exit = {"<Esc>", "<C-c>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}, ["select-all"] = {"<C-a>"}, ["prev-item"] = {"<C-p>", "<Up>", "<C-k>"}, ["next-item"] = {"<C-n>", "<Down>", "<C-j>"}, ["prev-page"] = {"<C-b>", "<PageUp>"}, ["next-page"] = {"<C-f>", "<PageDown"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}}
+local group = vim.api.nvim_create_augroup("SnapInput", {clear = true})
 local function create(config)
   local bufnr = buffer.create()
   local layout_config = layout(config)
   local winnr = window.create(bufnr, layout_config)
-  vim.api.nvim_win_set_option(winnr, "winhl", "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder")
-  vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
-  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
+  vim.api.nvim_set_option_value("winhl", "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder", {win = winnr})
+  vim.api.nvim_set_option_value("buftype", "prompt", {buf = bufnr})
+  vim.api.nvim_set_option_value("bufhidden", "wipe", {buf = bufnr})
   buffer["add-highlight"](bufnr, "SnapPrompt", 0, 0, string.len(config.prompt))
   vim.fn.prompt_setprompt(bufnr, config.prompt)
   vim.api.nvim_command("startinsert")
@@ -94,7 +95,7 @@ local function create(config)
     return nil
   end
   local function on_detach()
-    return register.clean(bufnr)
+    return nil
   end
   register["buf-map"](bufnr, {"n", "i"}, mappings0.next, on_next)
   register["buf-map"](bufnr, {"n", "i"}, mappings0.enter, on_enter)
@@ -121,7 +122,7 @@ local function create(config)
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-down"], config["on-viewpagedown"])
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-page-up"], config["on-viewpageup"])
   register["buf-map"](bufnr, {"n", "i"}, mappings0["view-toggle-hide"], config["on-view-toggle-hide"])
-  vim.api.nvim_create_autocmd({"WinLeave", "BufLeave", "BufDelete"}, {buffer = bufnr, once = true, callback = on_exit})
+  vim.api.nvim_create_autocmd({"WinLeave", "BufLeave", "BufDelete"}, {group = group, buffer = bufnr, once = true, callback = on_exit})
   vim.api.nvim_buf_attach(bufnr, false, {on_lines = on_lines, on_detach = on_detach})
   local function delete()
     if vim.api.nvim_win_is_valid(winnr) then
@@ -129,7 +130,7 @@ local function create(config)
     else
     end
     if vim.api.nvim_buf_is_valid(bufnr) then
-      return buffer.delete(bufnr, {force = true})
+      return buffer.delete(bufnr)
     else
       return nil
     end
@@ -138,7 +139,7 @@ local function create(config)
     if vim.api.nvim_win_is_valid(winnr) then
       local layout_config0 = layout(config)
       window.update(winnr, layout_config0)
-      vim.api.nvim_win_set_option(winnr, "cursorline", true)
+      vim.api.nvim_set_option_value("cursorline", true, {win = winnr})
       do end (view)["height"] = layout_config0.height
       view["width"] = layout_config0.width
       return nil
@@ -150,7 +151,7 @@ local function create(config)
   local function _15_()
     return view:update()
   end
-  vim.api.nvim_create_autocmd({"VimResized"}, {buffer = bufnr, callback = _15_})
+  vim.api.nvim_create_autocmd("VimResized", {group = group, callback = _15_})
   return view
 end
 _2amodule_2a["create"] = create

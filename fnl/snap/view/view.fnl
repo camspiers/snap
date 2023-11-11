@@ -4,6 +4,8 @@
                                  tbl snap.common.tbl
                                  register snap.common.register}})
 
+(local group (vim.api.nvim_create_augroup :SnapView {:clear true}))
+
 (fn layout [config]
   "Creates a view layout"
   (let [{: width : height : row : col} (config.layout)
@@ -26,16 +28,16 @@
   (let [bufnr (buffer.create)
         layout-config (layout config)
         winnr (window.create bufnr layout-config)]
-    (vim.api.nvim_win_set_option winnr :cursorline false)
-    (vim.api.nvim_win_set_option winnr :cursorcolumn false)
-    (vim.api.nvim_win_set_option winnr :wrap false)
-    (vim.api.nvim_win_set_option winnr :winhl "Normal:SnapNormal,FloatBorder:SnapBorder")
+    (vim.api.nvim_set_option_value :cursorline false {:win winnr})
+    (vim.api.nvim_set_option_value :cursorcolumn false {:win winnr})
+    (vim.api.nvim_set_option_value :wrap false {:win winnr})
+    (vim.api.nvim_set_option_value :winhl "Normal:SnapNormal,FloatBorder:SnapBorder" {:win winnr})
 
     (fn delete []
       (when (vim.api.nvim_win_is_valid winnr)
         (window.close winnr))
       (when (vim.api.nvim_buf_is_valid bufnr)
-        (buffer.delete bufnr {:force true})))
+        (buffer.delete bufnr)))
 
     (fn update [view]
       (when (vim.api.nvim_win_is_valid winnr)
@@ -47,12 +49,9 @@
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 
-    (vim.api.nvim_command "augroup SnapViewResize")
-    (vim.api.nvim_command "autocmd!")
-    (vim.api.nvim_command
-      (string.format "autocmd VimResized * %s"
-        (register.get-autocmd-call :VimResized (fn [] (view:update)))))
-    (vim.api.nvim_command "augroup END")
+    (vim.api.nvim_create_autocmd
+      :VimResized
+      { : group :callback (fn [] (view:update)) })
 
     view))
 

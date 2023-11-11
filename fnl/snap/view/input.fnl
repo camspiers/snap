@@ -11,7 +11,8 @@
      :height 1
      :row (if config.reverse row (- (+ row height) size.padding))
      : col
-     :focusable true}))
+     :focusable true
+     :enter true}))
 
 (local mappings {
   :next [:<C-q>]
@@ -32,14 +33,16 @@
   :view-toggle-hide [:<C-h>]
 })
 
+(local group (vim.api.nvim_create_augroup :SnapInput {:clear true}))
+
 (defn create [config]
   "Creates the input view"
   (let [bufnr (buffer.create)
         layout-config (layout config)
         winnr (window.create bufnr layout-config)]
-    (vim.api.nvim_win_set_option winnr :winhl "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder")
-    (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
-    (vim.api.nvim_buf_set_option bufnr :bufhidden :wipe)
+    (vim.api.nvim_set_option_value :winhl "Search:None,Normal:SnapNormal,FloatBorder:SnapBorder" {:win winnr})
+    (vim.api.nvim_set_option_value :buftype :prompt {:buf bufnr})
+    (vim.api.nvim_set_option_value :bufhidden :wipe {:buf bufnr})
     (buffer.add-highlight bufnr :SnapPrompt 0 0 (string.len config.prompt))
     (vim.fn.prompt_setprompt bufnr config.prompt)
     (vim.api.nvim_command :startinsert)
@@ -81,8 +84,7 @@
       (config.on-update (get-filter))
       nil)
 
-    (fn on_detach []
-      (register.clean bufnr))
+    (fn on_detach [] nil)
 
     ;; Enter and exit
     ;; e.g. we want to support opening in splits etc
@@ -113,7 +115,7 @@
 
     (vim.api.nvim_create_autocmd
       [:WinLeave :BufLeave :BufDelete]
-      { :buffer bufnr :once true :callback on-exit })
+      { : group :buffer bufnr :once true :callback on-exit })
 
     (vim.api.nvim_buf_attach bufnr false {: on_lines : on_detach})
 
@@ -121,20 +123,20 @@
       (when (vim.api.nvim_win_is_valid winnr)
         (window.close winnr))
       (when (vim.api.nvim_buf_is_valid bufnr)
-        (buffer.delete bufnr {:force true})))
+        (buffer.delete bufnr)))
 
     (fn update [view]
       (when (vim.api.nvim_win_is_valid winnr)
         (let [layout-config (layout config)]
           (window.update winnr layout-config)
-          (vim.api.nvim_win_set_option winnr :cursorline true)
+          (vim.api.nvim_set_option_value :cursorline true {:win winnr})
           (tset view :height layout-config.height)
           (tset view :width layout-config.width))))
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 
     (vim.api.nvim_create_autocmd
-      [:VimResized]
-      { :buffer bufnr :callback (fn [] (view:update)) })
+      :VimResized
+      { : group :callback (fn [] (view:update)) })
 
     view))

@@ -361,7 +361,7 @@
         (each [_ {: view} (ipairs views)]
           (local bufnr (buffer.create))
           (vim.api.nvim_win_set_buf view.winnr bufnr)
-          (buffer.delete view.bufnr {:force true})
+          (buffer.delete view.bufnr)
           (tset view :bufnr bufnr))
         (when (not= selection nil)
           (update-views selection)))))
@@ -555,7 +555,6 @@
         (set views []))
       (do
         (create-views)
-        (vim.api.nvim_set_current_win input-view.winnr)
         (write-results last-results true))))
 
   ;; Initializes the input view

@@ -393,7 +393,7 @@ local function run(config1)
             local view0 = _each_50_["view"]
             local bufnr = buffer.create()
             vim.api.nvim_win_set_buf(view0.winnr, bufnr)
-            buffer.delete(view0.bufnr, {force = true})
+            buffer.delete(view0.bufnr)
             do end (view0)["bufnr"] = bufnr
           end
           if (selection ~= nil) then
@@ -689,7 +689,6 @@ local function run(config1)
       return nil
     else
       create_views()
-      vim.api.nvim_set_current_win(input_view.winnr)
       return write_results(last_results, true)
     end
   end

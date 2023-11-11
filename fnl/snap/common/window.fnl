@@ -1,8 +1,8 @@
 (module snap.common.window)
 
-(defn create [bufnr {: width : height : row : col : focusable}]
+(defn create [bufnr {: width : height : row : col : focusable : enter}]
   "Creates a window with specified options"
-  (vim.api.nvim_open_win bufnr 0 {: width
+  (vim.api.nvim_open_win bufnr (if (= enter nil) false enter) {: width
                           : height
                           : row
                           : col

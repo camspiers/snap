@@ -10,13 +10,13 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local namespace = vim.api.nvim_create_namespace("snap.highlights")
+local namespace = vim.api.nvim_create_namespace("Snap")
 local function set_lines(bufnr, start, _end, lines)
   return vim.api.nvim_buf_set_lines(bufnr, start, _end, false, lines)
 end
 _2amodule_2a["set-lines"] = set_lines
 local function add_highlight(bufnr, hl, row, col_start, col_end)
-  return vim.api.nvim_buf_add_highlight(bufnr, -1, hl, row, col_start, col_end)
+  return vim.api.nvim_buf_add_highlight(bufnr, namespace, hl, row, col_start, col_end)
 end
 _2amodule_2a["add-highlight"] = add_highlight
 local function add_selected_highlight(bufnr, row)

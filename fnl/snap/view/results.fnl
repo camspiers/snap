@@ -3,6 +3,8 @@
                                     window snap.common.window
                                     register snap.common.register}})
 
+(local group (vim.api.nvim_create_augroup :SnapResults {:clear true}))
+
 (fn layout [config]
   "Creates the results layout"
   (let [{: width : height : row : col} (config.layout)]
@@ -18,35 +20,32 @@
         layout-config (layout config)
         winnr (window.create bufnr layout-config)]
 
-    (vim.api.nvim_buf_set_option bufnr :buftype :prompt)
-    (vim.api.nvim_buf_set_option bufnr :textwidth 0)
-    (vim.api.nvim_buf_set_option bufnr :wrapmargin 0)
-    (vim.api.nvim_win_set_option winnr :wrap false)
-    (vim.api.nvim_win_set_option winnr :cursorline true)
-    (vim.api.nvim_win_set_option winnr :winhl "CursorLine:SnapSelect,Normal:SnapNormal,FloatBorder:SnapBorder")
+    (vim.api.nvim_set_option_value :buftype :prompt {:buf bufnr})
+    (vim.api.nvim_set_option_value :textwidth 0 {:buf bufnr})
+    (vim.api.nvim_set_option_value :wrapmargin 0 {:buf bufnr})
+    (vim.api.nvim_set_option_value :wrap false {:win winnr})
+    (vim.api.nvim_set_option_value :cursorline true {:win winnr})
+    (vim.api.nvim_set_option_value :winhl "CursorLine:SnapSelect,Normal:SnapNormal,FloatBorder:SnapBorder" {:win winnr})
 
     (fn delete []
       (when (vim.api.nvim_win_is_valid winnr)
         (window.close winnr))
       (when (vim.api.nvim_buf_is_valid bufnr)
-        (buffer.delete bufnr {:force true})))
+        (buffer.delete bufnr)))
 
     (fn update [view]
       (when (vim.api.nvim_win_is_valid winnr)
         (let [layout-config (layout config)]
           (window.update winnr layout-config)
-          (vim.api.nvim_win_set_option winnr :cursorline true)
+          (vim.api.nvim_set_option_value :cursorline true {:win winnr})
           (tset view :height layout-config.height)
           (tset view :width layout-config.width))))
 
     (local view {: update : delete : bufnr : winnr :width layout-config.width :height layout-config.height})
 
-    (vim.api.nvim_command "augroup SnapResultsViewResize")
-    (vim.api.nvim_command "autocmd!")
-    (vim.api.nvim_command
-      (string.format "autocmd VimResized * %s"
-        (register.get-autocmd-call :VimResized (fn [] (view:update)))))
-    (vim.api.nvim_command "augroup END")
+    (vim.api.nvim_create_autocmd
+      :VimResized
+      { : group :callback (fn [] (view:update)) })
 
     view))
 
