@@ -1,1 +1,2 @@
 *.fnl linguist-language=clojure
+lua/**/*.lua linguist-generated

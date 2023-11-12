@@ -9,35 +9,26 @@ local function _1_(producer)
   local cached_producer = cache(producer)
   local function _2_(request)
     local results = {}
-    local results_string = nil
     for data in snap.consume(cached_producer, request) do
       tbl.acc(results, data)
       snap.continue()
     end
+    local results_string
+    local function _3_(_241)
+      return tostring(_241)
+    end
+    results_string = table.concat(vim.tbl_map(_3_, results), "\n")
     if (request.filter == "") then
       return coroutine.yield(results)
     else
-      local needsdata = true
       local cwd = snap.sync(vim.fn.getcwd)
       local stdout = vim.loop.new_pipe(false)
-      for data, err, cancel in io.spawn("fzf", {"-f", request.filter}, cwd, stdout) do
-        if needsdata then
-          if (results_string == nil) then
-            local plain_results
-            local function _3_(_241)
-              return tostring(_241)
-            end
-            plain_results = vim.tbl_map(_3_, results)
-            results_string = table.concat(plain_results, "\n")
-          else
-          end
-          stdout:write(results_string)
-          stdout:shutdown()
-          needsdata = false
-        else
-        end
+      local fzf = io.spawn("fzf", {"-f", request.filter}, cwd, stdout)
+      stdout:write(results_string)
+      stdout:shutdown()
+      for data, err, kill in fzf do
         if request.canceled() then
-          cancel()
+          kill()
           coroutine.yield(nil)
         elseif (err ~= "") then
           coroutine.yield(nil)
@@ -49,10 +40,10 @@ local function _1_(producer)
             results_indexed[tostring(result)] = result
           end
           local filtered_results = string.split(data)
-          local function _6_(_241)
+          local function _4_(_241)
             return results_indexed[_241]
           end
-          coroutine.yield(vim.tbl_map(_6_, filtered_results))
+          coroutine.yield(vim.tbl_map(_4_, filtered_results))
         end
       end
       return nil

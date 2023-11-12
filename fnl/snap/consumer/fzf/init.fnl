@@ -8,28 +8,27 @@
     (local cached-producer (cache producer))
     (positions (fn [request]
       (local results [])
-      (var results-string nil)
       (each [data (snap.consume cached-producer request)]
         (tbl.acc results data)
         (snap.continue))
+      (local results-string (table.concat (vim.tbl_map #(tostring $1) results) "\n"))
       (if
         (= request.filter "")
         (coroutine.yield results)
         (do
-          (var needsdata true)
           (local cwd (snap.sync vim.fn.getcwd))
           (local stdout (vim.loop.new_pipe false))
-          (each [data err cancel (io.spawn :fzf [:-f request.filter] cwd stdout)]
-            (when needsdata
-              (when (= results-string nil)
-                (local plain-results (vim.tbl_map #(tostring $1) results))
-                (set results-string (table.concat plain-results "\n")))
-              (stdout:write results-string)
-              (stdout:shutdown)
-              (set needsdata false))
+          (local fzf (io.spawn :fzf [:-f request.filter] cwd stdout))
+
+          (stdout:write results-string)
+          (stdout:shutdown)
+
+          (each [data err kill fzf]
             (if
               (request.canceled)
-              (do (cancel) (coroutine.yield nil))
+              (do
+                (kill)
+                (coroutine.yield nil))
               (not= err "")
               (coroutine.yield nil)
               (= data "")
