@@ -15,6 +15,28 @@ https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-973
 ```lua
 require("lazy").setup({
   "camspiers/snap",
+  config = function ()
+    -- Basic example config
+    local snap = require"snap"
+    snap.maps{
+      { "<Leader><Leader>", snap.config.file { producer = "ripgrep.file" } },
+    }
+  end
+})
+```
+
+or with `fzy` from `camspiers/rocks`:
+
+```lua
+require("lazy").setup({
+  {
+    "camspiers/rocks",
+    opts = { rocks = { "fzy" } },
+  },
+  {
+    "camspiers/snap",
+    dependencies = { "camspiers/rocks" },
+  }
 })
 ```
 
@@ -29,14 +51,6 @@ or with `fzy`:
 ```lua
 use { 'camspiers/snap', rocks = {'fzy'}}
 ```
-
-### With vim-plug
-
-```
-Plug 'camspiers/snap'
-```
-
-With vim-plug you will need to use `luarocks` manually if you want to install `fzy`, probably best to just use `fzf` if you are using vim-plug.
 
 #### Semi-Optional Dependencies
 
@@ -607,7 +621,6 @@ From the above we have seen the following distinct concepts of `snap`:
 - Using the `request.filter` value
 - Using the `request.canceled()` signal to kill processes
 
-
 ## API
 
 ### Meta Result
@@ -730,7 +743,7 @@ type Producer = (request: Request) => yield<Yieldable>;
 The full type of producer is actually:
 
 ```typescript
-type ProducerWithDefault = {default: Producer} | Producer;
+type ProducerWithDefault = { default: Producer } | Producer;
 ```
 
 Because we support passing a table if it has a `default` field that is a producer. This enables producer modules to export a default producer, while also making orther related producers available, e.g. ones with additional configuration.
@@ -788,7 +801,7 @@ type ViewProducer = (request: ViewRequest) => yield<function | nil>;
 Turns a result into a meta result.
 
 ```typescript
-(result: string | MetaResult) => MetaResult
+(result: string | MetaResult) => MetaResult;
 ```
 
 ### `snap.with_meta`
@@ -796,7 +809,7 @@ Turns a result into a meta result.
 Adds a meta field to a result.
 
 ```typescript
-(result: string | MetaResult, field: string, value: any) => MetaResult
+(result: string | MetaResult, field: string, value: any) => MetaResult;
 ```
 
 ### `snap.has_meta`
@@ -804,7 +817,7 @@ Adds a meta field to a result.
 Checks if a result has a meta field.
 
 ```typescript
-(result: string | MetaResult, field: string) => boolean
+(result: string | MetaResult, field: string) => boolean;
 ```
 
 ### `snap.resume`
@@ -818,7 +831,7 @@ TODO
 Yield a slow-mode function and get it's result.
 
 ```typescript
-(fnc: () => T) => T
+(fnc: () => T) => T;
 ```
 
 ### `snap.consume`
@@ -826,13 +839,15 @@ Yield a slow-mode function and get it's result.
 Consumes a producer providing an iterator of its yielded results
 
 ```typescript
-(producer: Producer, request: Request) => iterator<Yieldable>
+(producer: Producer, request: Request) => iterator<Yieldable>;
 ```
 
 ### Layouts
 
 #### `snap.layouts.centered`
+
 #### `snap.layouts.bottom`
+
 #### `snap.layouts.top`
 
 ### Producers
@@ -957,7 +972,7 @@ NOTE: Provides both `select` and `multiselect`.
 
 #### `snap.select.cwd`
 
-Changes directory in response to selection. 
+Changes directory in response to selection.
 
 #### `snap.select.insert`
 
@@ -1003,4 +1018,3 @@ make compile
 - [ ] More producers for vim concepts
 - [ ] Lua filter consumer
 - [ ] Tests
-
