@@ -6,7 +6,7 @@ A fast finder system for neovim >0.9.
 
 The following shows finding files and grepping in the large `gcc` codebase.
 
-https://user-images.githubusercontent.com/51294/120878813-f958f600-c612-11eb-9730-deefd39fb36e.mov
+[Screencast from 2023-11-15 20-59-29.webm](https://github.com/camspiers/snap/assets/51294/80b844a2-5e92-47de-ae7e-2a78a5553b4f)
 
 ## Installation
 
