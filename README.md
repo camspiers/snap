@@ -25,17 +25,17 @@ require("lazy").setup({
 })
 ```
 
-or with `fzy` from `camspiers/rocks`:
+or with `fzy` from `camspiers/luarocks`:
 
 ```lua
 require("lazy").setup({
   {
-    "camspiers/rocks",
+    "camspiers/luarocks",
     opts = { rocks = { "fzy" } },
   },
   {
     "camspiers/snap",
-    dependencies = { "camspiers/rocks" },
+    dependencies = { "camspiers/luarocks" },
   }
 })
 ```
