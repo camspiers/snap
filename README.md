@@ -351,6 +351,28 @@ snap.run {
 }
 ```
 
+### Find Buffer Marks
+
+```lua
+snap.run {
+  prompt = "Marks>",
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.marks'),
+  select = snap.get'select.vim.mark'.select,
+  views = {snap.get'preview.vim.mark'}
+}
+```
+
+### Find Global Marks
+
+```lua
+snap.run {
+  prompt = "Global Marks>",
+  producer = snap.get'consumer.fzy'(snap.get'producer.vim.globalmarks'),
+  select = snap.get'select.vim.mark'.select,
+  views = {snap.get'preview.vim.mark'}
+}
+```
+
 ### Grep with FZF as optional next step
 
 The following will run the vimgrep producer and upon `<C-q>` will run `fzf` on the filtered results.
