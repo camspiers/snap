@@ -51,7 +51,14 @@
   (local modes (match (type opts)
     :table (or opts.modes :n)
     :nil :n))
-  (register.map modes key run (if (= command nil) nil {:desc (.. "Snap " command)}))
+  (local desc
+    (if
+      (not= (?. opts :desc) nil)
+      opts.desc
+      (not= command nil)
+      (.. "Snap " command)
+      nil))
+  (register.map modes key run {: desc})
   (when command (register.command command run)))
 
 (defn maps [config]

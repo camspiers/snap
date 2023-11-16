@@ -58,14 +58,24 @@ local function map(key, run, opts)
       modes = nil
     end
   end
-  local function _6_()
-    if (command == nil) then
-      return nil
+  local desc
+  local _7_
+  do
+    local t_6_ = opts
+    if (nil ~= t_6_) then
+      t_6_ = (t_6_).desc
     else
-      return {desc = ("Snap " .. command)}
     end
+    _7_ = t_6_
   end
-  register0.map(modes, key, run, _6_())
+  if (_7_ ~= nil) then
+    desc = opts.desc
+  elseif (command ~= nil) then
+    desc = ("Snap " .. command)
+  else
+    desc = nil
+  end
+  register0.map(modes, key, run, {desc = desc})
   if command then
     return register0.command(command, run)
   else
@@ -74,22 +84,22 @@ local function map(key, run, opts)
 end
 _2amodule_2a["map"] = map
 local function maps(config1)
-  for _0, _8_ in ipairs(config1) do
-    local _each_9_ = _8_
-    local key = _each_9_[1]
-    local run = _each_9_[2]
-    local opts = _each_9_[3]
+  for _0, _11_ in ipairs(config1) do
+    local _each_12_ = _11_
+    local key = _each_12_[1]
+    local run = _each_12_[2]
+    local opts = _each_12_[3]
     map(key, run, opts)
   end
   return nil
 end
 _2amodule_2a["maps"] = maps
 local function get_producer(producer)
-  local _10_ = type(producer)
-  if (_10_ == "table") then
+  local _13_ = type(producer)
+  if (_13_ == "table") then
     return producer.default
   elseif true then
-    local _0 = _10_
+    local _0 = _13_
     return producer
   else
     return nil
@@ -132,7 +142,7 @@ local function consume(producer, request0)
   assert((type(producer0) == "function"), "producer passed to snap.consume must be a function")
   assert((type(request0) == "table"), "request passed to snap.consume must be a table")
   local reader = coroutine.create(producer0)
-  local function _14_()
+  local function _17_()
     if (coroutine.status(reader) == "dead") then
       reader = nil
       return nil
@@ -140,26 +150,26 @@ local function consume(producer, request0)
       return resume(reader, request0)
     end
   end
-  return _14_
+  return _17_
 end
 _2amodule_2a["consume"] = consume
 local meta_tbl
-local function _16_(_241)
+local function _19_(_241)
   return _241.result
 end
-meta_tbl = {__tostring = _16_}
+meta_tbl = {__tostring = _19_}
 _2amodule_2a["meta_tbl"] = meta_tbl
 local function meta_result(result)
-  local _17_ = type(result)
-  if (_17_ == "string") then
+  local _20_ = type(result)
+  if (_20_ == "string") then
     local meta_result0 = {result = result}
     setmetatable(meta_result0, meta_tbl)
     return meta_result0
-  elseif (_17_ == "table") then
+  elseif (_20_ == "table") then
     assert((getmetatable(result) == meta_tbl), "result has wrong metatable")
     return result
   elseif true then
-    local _0 = _17_
+    local _0 = _20_
     return assert(false, "result passed to snap.meta_result must be a string or meta result")
   else
     return nil
@@ -245,10 +255,10 @@ local function run(config1)
     if (hide_views ~= nil) then
       return hide_views
     elseif (config1.hide_views ~= nil) then
-      local _28_ = type(config1.hide_views)
-      if (_28_ == "function") then
+      local _31_ = type(config1.hide_views)
+      if (_31_ == "function") then
         return config1.hide_views()
-      elseif (_28_ == "boolean") then
+      elseif (_31_ == "boolean") then
         return config1.hide_views
       else
         return nil
@@ -269,9 +279,9 @@ local function run(config1)
     selected = nil
     config1["producer"] = nil
     config1["views"] = nil
-    for _0, _31_ in ipairs(views) do
-      local _each_32_ = _31_
-      local view0 = _each_32_["view"]
+    for _0, _34_ in ipairs(views) do
+      local _each_35_ = _34_
+      local view0 = _each_35_["view"]
       view0:delete()
     end
     results_view:delete()
@@ -307,15 +317,15 @@ local function run(config1)
   local update_views
   do
     local body_2_auto
-    local function _35_(selection)
-      for _0, _36_ in ipairs(views) do
-        local _each_37_ = _36_
-        local _each_38_ = _each_37_["view"]
-        local bufnr = _each_38_["bufnr"]
-        local winnr = _each_38_["winnr"]
-        local width = _each_38_["width"]
-        local height = _each_38_["height"]
-        local producer = _each_37_["producer"]
+    local function _38_(selection)
+      for _0, _39_ in ipairs(views) do
+        local _each_40_ = _39_
+        local _each_41_ = _each_40_["view"]
+        local bufnr = _each_41_["bufnr"]
+        local winnr = _each_41_["winnr"]
+        local width = _each_41_["width"]
+        local height = _each_41_["height"]
+        local producer = _each_40_["producer"]
         local function cancel(request0)
           return (exit or (tostring(request0.selection) ~= tostring(get_selection())))
         end
@@ -325,28 +335,28 @@ local function run(config1)
       end
       return nil
     end
-    body_2_auto = _35_
+    body_2_auto = _38_
     local args_3_auto = nil
-    local function _39_(...)
+    local function _42_(...)
       if (args_3_auto == nil) then
         args_3_auto = {...}
-        local function _40_()
+        local function _43_()
           local actual_args_4_auto = args_3_auto
           args_3_auto = nil
           return body_2_auto(unpack(actual_args_4_auto))
         end
-        return vim.schedule(_40_)
+        return vim.schedule(_43_)
       else
         args_3_auto = {...}
         return nil
       end
     end
-    update_views = _39_
+    update_views = _42_
   end
   local write_results
   do
     local body_2_auto
-    local function _42_(results0, force_views)
+    local function _45_(results0, force_views)
       if not exit then
         do
           local result_size = #results0
@@ -369,20 +379,20 @@ local function run(config1)
             for row in pairs(partial_results) do
               local result = (results0)[row]
               if has_meta(result, "positions") then
-                local function _45_()
-                  local _44_ = type(result.positions)
-                  if (_44_ == "table") then
+                local function _48_()
+                  local _47_ = type(result.positions)
+                  if (_47_ == "table") then
                     return result.positions
-                  elseif (_44_ == "function") then
+                  elseif (_47_ == "function") then
                     return result:positions()
                   elseif true then
-                    local _0 = _44_
+                    local _0 = _47_
                     return assert(false, "result positions must be a table or function")
                   else
                     return nil
                   end
                 end
-                buffer["add-positions-highlight"](results_view.bufnr, row, _45_())
+                buffer["add-positions-highlight"](results_view.bufnr, row, _48_())
               else
               end
               if selected[tostring(result)] then
@@ -395,9 +405,9 @@ local function run(config1)
         local selection = get_selection()
         if (has_views() and (force_views or (tostring(last_requested_selection) ~= tostring(selection)))) then
           last_requested_selection = selection
-          for _0, _50_ in ipairs(views) do
-            local _each_51_ = _50_
-            local view0 = _each_51_["view"]
+          for _0, _53_ in ipairs(views) do
+            local _each_54_ = _53_
+            local view0 = _each_54_["view"]
             local bufnr = buffer.create()
             vim.api.nvim_win_set_buf(view0.winnr, bufnr)
             buffer.delete(view0.bufnr)
@@ -415,23 +425,23 @@ local function run(config1)
         return nil
       end
     end
-    body_2_auto = _42_
+    body_2_auto = _45_
     local args_3_auto = nil
-    local function _55_(...)
+    local function _58_(...)
       if (args_3_auto == nil) then
         args_3_auto = {...}
-        local function _56_()
+        local function _59_()
           local actual_args_4_auto = args_3_auto
           args_3_auto = nil
           return body_2_auto(unpack(actual_args_4_auto))
         end
-        return vim.schedule(_56_)
+        return vim.schedule(_59_)
       else
         args_3_auto = {...}
         return nil
       end
     end
-    write_results = _55_
+    write_results = _58_
   end
   local function on_update(filter)
     last_requested_filter = filter
@@ -449,7 +459,7 @@ local function run(config1)
     local write_loading
     do
       local body_2_auto
-      local function _58_()
+      local function _61_()
         if not request0.canceled() then
           local loading_screen = loading(results_view.width, results_view.height, loading_count)
           return buffer["set-lines"](results_view.bufnr, 0, -1, loading_screen)
@@ -457,33 +467,33 @@ local function run(config1)
           return nil
         end
       end
-      body_2_auto = _58_
+      body_2_auto = _61_
       local args_3_auto = nil
-      local function _60_(...)
+      local function _63_(...)
         if (args_3_auto == nil) then
           args_3_auto = {...}
-          local function _61_()
+          local function _64_()
             local actual_args_4_auto = args_3_auto
             args_3_auto = nil
             return body_2_auto(unpack(actual_args_4_auto))
           end
-          return vim.schedule(_61_)
+          return vim.schedule(_64_)
         else
           args_3_auto = {...}
           return nil
         end
       end
-      write_loading = _60_
+      write_loading = _63_
     end
     config2["on-end"] = function()
       if (#results0 == 0) then
         last_results = results0
         write_results(last_results)
       elseif has_meta(tbl.first(results0), "score") then
-        local function _63_(_241, _242)
+        local function _66_(_241, _242)
           return (_241.score > _242.score)
         end
-        tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _63_)
+        tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _66_)
         last_results = results0
         write_results(last_results)
       else
@@ -579,39 +589,39 @@ local function run(config1)
     return write_results(last_results)
   end
   local function on_prev_item()
-    local function _76_(_241)
-      return (_241 - 1)
-    end
-    return on_key_direction(_76_)
-  end
-  local function on_next_item()
-    local function _77_(_241)
-      return (_241 + 1)
-    end
-    return on_key_direction(_77_)
-  end
-  local function on_prev_page()
-    local function _78_(_241)
-      return (_241 - results_view.height)
-    end
-    return on_key_direction(_78_)
-  end
-  local function on_next_page()
     local function _79_(_241)
-      return (_241 + results_view.height)
+      return (_241 - 1)
     end
     return on_key_direction(_79_)
   end
+  local function on_next_item()
+    local function _80_(_241)
+      return (_241 + 1)
+    end
+    return on_key_direction(_80_)
+  end
+  local function on_prev_page()
+    local function _81_(_241)
+      return (_241 - results_view.height)
+    end
+    return on_key_direction(_81_)
+  end
+  local function on_next_page()
+    local function _82_(_241)
+      return (_241 + results_view.height)
+    end
+    return on_key_direction(_82_)
+  end
   local function set_next_view_row(next_index)
     if has_views() then
-      local _local_80_ = tbl.first(views)
-      local _local_81_ = _local_80_["view"]
-      local winnr = _local_81_["winnr"]
-      local bufnr = _local_81_["bufnr"]
-      local height = _local_81_["height"]
+      local _local_83_ = tbl.first(views)
+      local _local_84_ = _local_83_["view"]
+      local winnr = _local_84_["winnr"]
+      local bufnr = _local_84_["bufnr"]
+      local height = _local_84_["height"]
       local line_count = vim.api.nvim_buf_line_count(bufnr)
-      local _let_82_ = vim.api.nvim_win_get_cursor(winnr)
-      local row = _let_82_[1]
+      local _let_85_ = vim.api.nvim_win_get_cursor(winnr)
+      local row = _let_85_[1]
       local index = math.max(1, math.min(line_count, next_index(row, height)))
       return vim.api.nvim_win_set_cursor(winnr, {index, 0})
     else
@@ -620,20 +630,20 @@ local function run(config1)
   end
   local function on_viewpageup()
     if has_views() then
-      local function _84_(_241, _242)
+      local function _87_(_241, _242)
         return (_241 - _242)
       end
-      return set_next_view_row(_84_)
+      return set_next_view_row(_87_)
     else
       return nil
     end
   end
   local function on_viewpagedown()
     if has_views() then
-      local function _86_(_241, _242)
+      local function _89_(_241, _242)
         return (_241 + _242)
       end
-      return set_next_view_row(_86_)
+      return set_next_view_row(_89_)
     else
       return nil
     end
@@ -646,34 +656,34 @@ local function run(config1)
         next_config[key] = value
       end
       local next = (config1.next or table.remove(config1.steps))
-      local function _88_()
+      local function _91_()
         do
-          local _89_ = type(next)
-          if (_89_ == "function") then
-            local function _90_()
+          local _92_ = type(next)
+          if (_92_ == "function") then
+            local function _93_()
               return results0
             end
-            next_config["producer"] = next(_90_)
-          elseif (_89_ == "table") then
+            next_config["producer"] = next(_93_)
+          elseif (_92_ == "table") then
             for key, value in pairs(next.config) do
               next_config[key] = value
             end
-            local _91_
+            local _94_
             if next.format then
-              _91_ = next.consumer(next.format(results0))
+              _94_ = next.consumer(next.format(results0))
             else
-              local function _92_()
+              local function _95_()
                 return results0
               end
-              _91_ = next.consumer(_92_)
+              _94_ = next.consumer(_95_)
             end
-            next_config["producer"] = _91_
+            next_config["producer"] = _94_
           else
           end
         end
         return run(next_config)
       end
-      return vim.schedule_wrap(_88_)()
+      return vim.schedule_wrap(_91_)()
     else
       return nil
     end
@@ -687,9 +697,9 @@ local function run(config1)
     results_view:update()
     input_view:update()
     if hide_views then
-      for _0, _97_ in ipairs(views) do
-        local _each_98_ = _97_
-        local view0 = _each_98_["view"]
+      for _0, _100_ in ipairs(views) do
+        local _each_101_ = _100_
+        local view0 = _each_101_["view"]
         view0:delete()
       end
       views = {}
@@ -709,10 +719,10 @@ end
 _2amodule_2a["run"] = run
 local function create(config1, defaults)
   assert((type(config1) == "function"), "Config must be a function")
-  local function _101_()
+  local function _104_()
     return run(tbl.merge((defaults or {}), config1()))
   end
-  return _101_
+  return _104_
 end
 _2amodule_2a["create"] = create
 return _2amodule_2a

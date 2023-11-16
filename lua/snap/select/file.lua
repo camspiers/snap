@@ -10,43 +10,26 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local function select(selection, winnr, type)
-  local path = vim.fn.fnamemodify(tostring(selection), ":p")
-  local buffer = vim.fn.bufnr(path, true)
-  vim.api.nvim_buf_set_option(buffer, "buflisted", true)
-  local _1_ = type
-  if (_1_ == nil) then
-    if (winnr ~= false) then
-      return vim.api.nvim_win_set_buf(winnr, buffer)
-    else
-      return nil
-    end
-  elseif (_1_ == "vsplit") then
-    vim.api.nvim_command("vsplit")
-    return vim.api.nvim_win_set_buf(0, buffer)
-  elseif (_1_ == "split") then
-    vim.api.nvim_command("split")
-    return vim.api.nvim_win_set_buf(0, buffer)
-  elseif (_1_ == "tab") then
-    vim.api.nvim_command("tabnew")
-    return vim.api.nvim_win_set_buf(0, buffer)
-  else
-    return nil
-  end
-end
-_2amodule_2a["select"] = select
+local select_file = require("snap.select.common.file")
+do end (_2amodule_locals_2a)["select-file"] = select_file
 local function multiselect(selections, winnr)
   for index, selection in ipairs(selections) do
-    local function _4_()
+    local function _1_()
       if (#selections == index) then
         return winnr
       else
         return false
       end
     end
-    select(selection, _4_())
+    select(selection, _1_())
   end
   return nil
 end
 _2amodule_2a["multiselect"] = multiselect
+local select
+local function _2_(selection)
+  return {path = tostring(selection)}
+end
+select = select_file(_2_)
+do end (_2amodule_2a)["select"] = select
 return _2amodule_2a
