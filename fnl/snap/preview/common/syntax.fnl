@@ -1,9 +1,9 @@
 (let [snap-io (require :snap.common.io)]
-  (fn [path bufnr]
+  (fn [file-name bufnr]
     (local has-treesitter (pcall require :nvim-treesitter))
     (local (_ highlight) (pcall require :nvim-treesitter.highlight))
     (local (_ parsers) (pcall require :nvim-treesitter.parsers))
-    (local fake-path (.. (vim.fn.tempname) "/" path))
+    (local fake-path (.. (vim.fn.tempname) "/" file-name))
     (vim.api.nvim_buf_set_name bufnr fake-path)
     (vim.api.nvim_buf_call bufnr (fn []
       ;; Use the fake path to enable ftdetection

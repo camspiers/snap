@@ -1,4 +1,4 @@
-local _2afile_2a = "fnl/snap/preview/read-file.fnl"
+local _2afile_2a = "fnl/snap/preview/common/read-file.fnl"
 local snap = require("snap")
 local snap_io = snap.get("common.io")
 local function get_encoding(path)

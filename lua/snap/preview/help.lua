@@ -2,7 +2,7 @@ local _2afile_2a = "fnl/snap/preview/help.fnl"
 local snap = require("snap")
 local read_file = snap.get("preview.read-file")
 local loading = snap.get("loading")
-local syntax = snap.get("preview.syntax")
+local syntax = snap.get("preview.common.syntax")
 local function _1_(request)
   local function _2_()
     if not request.canceled() then

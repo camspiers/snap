@@ -7,7 +7,7 @@
         (= filter "")
         results
         (let [processed []]
-          (each [_ [index positions score] (ipairs (fzy.filter filter results))]
+          (each [_ [index positions score] (ipairs (fzy.filter filter (vim.tbl_map #(tostring $1) results)))]
             (table.insert processed (snap.with_metas (. results index) {: positions : score})))
           processed)))
 

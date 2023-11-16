@@ -1,7 +1,7 @@
 (let [snap (require :snap)
       read-file (snap.get :preview.read-file)
       loading (snap.get :loading)
-      syntax (snap.get :preview.syntax)]
+      syntax (snap.get :preview.common.syntax)]
   (fn [request]
     ;; Write the preview to the buffer.
     (snap.sync (fn []
