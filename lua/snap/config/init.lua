@@ -193,7 +193,14 @@ local function _15_(self_1_auto, ...)
       return file_producer_by_kind(config, ...)
     end
     by_kind = _28_
-    local consumer_kind = (config.consumer or "fzf")
+    local consumer_kind
+    if (config.consumer ~= nil) then
+      consumer_kind = config.consumer
+    elseif pcall(require, "fzy") then
+      consumer_kind = "fzy"
+    else
+      consumer_kind = "fzf"
+    end
     local producer
     if config.try then
       producer = snap.get("consumer.try")(unpack(vim.tbl_map(by_kind, config.try)))
@@ -204,21 +211,21 @@ local function _15_(self_1_auto, ...)
     end
     local consumer
     do
-      local _30_ = consumer_kind
-      if (_30_ == "fzf") then
+      local _31_ = consumer_kind
+      if (_31_ == "fzf") then
         consumer = snap.get("consumer.fzf")
-      elseif (_30_ == "fzy") then
+      elseif (_31_ == "fzy") then
         consumer = snap.get("consumer.fzy")
       else
-        local function _31_()
-          local c = _30_
+        local function _32_()
+          local c = _31_
           return (type(c) == "function")
         end
-        if ((nil ~= _30_) and _31_()) then
-          local c = _30_
+        if ((nil ~= _31_) and _32_()) then
+          local c = _31_
           consumer = c
         elseif true then
-          local _0 = _30_
+          local _0 = _31_
           consumer = assert(false, "file.consumer is invalid")
         else
           consumer = nil
@@ -227,14 +234,14 @@ local function _15_(self_1_auto, ...)
     end
     local add_prompt_suffix
     do
-      local _33_ = config.suffix
-      local function _34_(...)
-        return format_prompt(_33_, ...)
+      local _34_ = config.suffix
+      local function _35_(...)
+        return format_prompt(_34_, ...)
       end
-      add_prompt_suffix = _34_
+      add_prompt_suffix = _35_
     end
     local prompt
-    local function _35_()
+    local function _36_()
       if config.prompt then
         return config.prompt
       elseif config.producer then
@@ -247,14 +254,14 @@ local function _15_(self_1_auto, ...)
         return nil
       end
     end
-    prompt = add_prompt_suffix(_35_())
+    prompt = add_prompt_suffix(_36_())
     local select_file = snap.get("select.file")
-    local function _36_()
+    local function _37_()
       local hide_views0
-      local function _37_(...)
+      local function _38_(...)
         return hide_views(config, ...)
       end
-      hide_views0 = _37_
+      hide_views0 = _38_
       local reverse = (config.reverse or false)
       local layout = (config.layout or nil)
       local mappings = (config.mappings or nil)
@@ -265,26 +272,26 @@ local function _15_(self_1_auto, ...)
       local views = {snap.get("preview.file")}
       return snap.run({prompt = prompt, mappings = mappings, layout = layout, reverse = reverse, producer = producer0, select = select, multiselect = multiselect, views = views, hide_views = hide_views0, initial_filter = initial_filter})
     end
-    return _36_
+    return _37_
   end
   return _16_(...)
 end
 file = setmetatable({with = with}, {__call = _15_})
 do end (_2amodule_2a)["file"] = file
 local function vimgrep_prompt_by_kind(kind)
-  local _38_ = kind
-  if (_38_ == "ripgrep.vimgrep") then
+  local _39_ = kind
+  if (_39_ == "ripgrep.vimgrep") then
     return "Rg Vimgrep"
   elseif true then
-    local _0 = _38_
+    local _0 = _39_
     return "Custom Vimgrep"
   else
     return nil
   end
 end
 local vimgrep
-local function _40_(self_1_auto, ...)
-  local function _41_(config)
+local function _41_(self_1_auto, ...)
+  local function _42_(config)
     assert((type(config) == "table"))
     if config.prompt then
       assert((type(config.prompt) == "string"), "vimgrep.prompt must be a string")
@@ -325,19 +332,19 @@ local function _40_(self_1_auto, ...)
     local producer_kind = (config.producer or "ripgrep.vimgrep")
     local producer
     do
-      local _51_ = producer_kind
-      if (_51_ == "ripgrep.vimgrep") then
+      local _52_ = producer_kind
+      if (_52_ == "ripgrep.vimgrep") then
         producer = snap.get("producer.ripgrep.vimgrep")
       else
-        local function _52_()
-          local p = _51_
+        local function _53_()
+          local p = _52_
           return (type(p) == "function")
         end
-        if ((nil ~= _51_) and _52_()) then
-          local p = _51_
+        if ((nil ~= _52_) and _53_()) then
+          local p = _52_
           producer = p
         elseif true then
-          local _0 = _51_
+          local _0 = _52_
           producer = assert(false, "vimgrep.producer is invalid")
         else
           producer = nil
@@ -355,27 +362,27 @@ local function _40_(self_1_auto, ...)
     end
     local consumer
     if config.limit then
-      local _56_ = config.limit
-      local function _57_(...)
-        return snap.get("consumer.limit")(_56_, ...)
-      end
-      consumer = _57_
-    else
-      local function _58_(producer0)
-        return producer0
+      local _57_ = config.limit
+      local function _58_(...)
+        return snap.get("consumer.limit")(_57_, ...)
       end
       consumer = _58_
+    else
+      local function _59_(producer0)
+        return producer0
+      end
+      consumer = _59_
     end
     local format_prompt0
     do
-      local _60_ = config.suffix
-      local function _61_(...)
-        return format_prompt(_60_, ...)
+      local _61_ = config.suffix
+      local function _62_(...)
+        return format_prompt(_61_, ...)
       end
-      format_prompt0 = _61_
+      format_prompt0 = _62_
     end
     local prompt
-    local function _62_()
+    local function _63_()
       if config.prompt then
         return config.prompt
       elseif producer_kind then
@@ -384,14 +391,14 @@ local function _40_(self_1_auto, ...)
         return nil
       end
     end
-    prompt = format_prompt0(_62_())
+    prompt = format_prompt0(_63_())
     local vimgrep_select = snap.get("select.vimgrep")
-    local function _63_()
+    local function _64_()
       local hide_views0
-      local function _64_(...)
+      local function _65_(...)
         return hide_views(config, ...)
       end
-      hide_views0 = _64_
+      hide_views0 = _65_
       local reverse = (config.reverse or false)
       local layout = (config.layout or nil)
       local mappings = (config.mappings or nil)
@@ -402,10 +409,10 @@ local function _40_(self_1_auto, ...)
       local views = {snap.get("preview.vimgrep")}
       return snap.run({prompt = prompt, layout = layout, reverse = reverse, mappings = mappings, producer = producer0, select = select, multiselect = multiselect, views = views, hide_views = hide_views0, initial_filter = initial_filter})
     end
-    return _63_
+    return _64_
   end
-  return _41_(...)
+  return _42_(...)
 end
-vimgrep = setmetatable({with = with}, {__call = _40_})
+vimgrep = setmetatable({with = with}, {__call = _41_})
 do end (_2amodule_2a)["vimgrep"] = vimgrep
 return _2amodule_2a

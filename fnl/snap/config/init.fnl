@@ -190,9 +190,15 @@
 
   ;; Helper function with config applied
   (local by-kind (partial file-producer-by-kind config))
-  
-  ;; Consumer kind
-  (local consumer-kind (or config.consumer :fzf))
+ 
+  ;; Consumer kind, default to fzy if config.consumer is not set and fzy exists
+  (local consumer-kind
+    (if
+      (not= config.consumer nil)
+      config.consumer
+      (pcall require :fzy)
+      :fzy
+      :fzf))
 
   ;; Get the initial producer module based on kind
   (local producer (if
