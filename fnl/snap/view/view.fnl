@@ -21,7 +21,8 @@
      : height
      :row (+ row (tbl.sum (tbl.take sizes index)) border padding)
      :col (+ col col-offset (* size.border 2) size.padding)
-     :focusable false}))
+     :focusable false
+     :title :Preview}))
 
 (defn create [config]
   "Creates a view"

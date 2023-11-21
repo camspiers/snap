@@ -1,12 +1,14 @@
 (module snap.common.window)
 
-(defn create [bufnr {: width : height : row : col : focusable : enter}]
+(defn create [bufnr {: width : height : row : col : focusable : enter : title}]
   "Creates a window with specified options"
   (vim.api.nvim_open_win bufnr (if (= enter nil) false enter) {: width
                           : height
                           : row
                           : col
                           : focusable
+                          :title_pos (if (not= title nil) :center nil)
+                          :title (if (not= title nil) (string.format " %s " title) nil)
                           :noautocmd true
                           :relative :editor
                           :anchor :NW

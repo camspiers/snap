@@ -34,7 +34,7 @@ local function layout(config)
   else
     _4_ = row
   end
-  return {width = _2_, height = (height - size.border - size.border - size.padding), row = _4_, col = col, focusable = false}
+  return {width = _2_, height = (height - size.border - size.border - size.padding), title = "Results", row = _4_, col = col, focusable = false}
 end
 local function create(config)
   local bufnr = buffer.create()

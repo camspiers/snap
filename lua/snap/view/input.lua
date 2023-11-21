@@ -34,7 +34,7 @@ local function layout(config)
   else
     _4_ = ((row + height) - size.padding)
   end
-  return {width = _2_, height = 1, row = _4_, col = col, focusable = true, enter = true}
+  return {width = _2_, height = 1, row = _4_, col = col, focusable = true, title = "Find", enter = true}
 end
 local mappings = {next = {"<C-q>"}, enter = {"<CR>"}, ["enter-split"] = {"<C-x>"}, ["enter-vsplit"] = {"<C-v>"}, ["enter-tab"] = {"<C-t>"}, exit = {"<Esc>", "<C-c>"}, select = {"<Tab>"}, unselect = {"<S-Tab>"}, ["select-all"] = {"<C-a>"}, ["prev-item"] = {"<C-p>", "<Up>", "<C-k>"}, ["next-item"] = {"<C-n>", "<Down>", "<C-j>"}, ["prev-page"] = {"<C-b>", "<PageUp>"}, ["next-page"] = {"<C-f>", "<PageDown"}, ["view-page-down"] = {"<C-d>"}, ["view-page-up"] = {"<C-u>"}, ["view-toggle-hide"] = {"<C-h>"}}
 local group = vim.api.nvim_create_augroup("SnapInput", {clear = true})

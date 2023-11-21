@@ -12,6 +12,7 @@
      :row (if config.reverse row (- (+ row height) size.padding))
      : col
      :focusable true
+     :title :Find
      :enter true}))
 
 (local mappings {
