@@ -6,7 +6,7 @@ local function get_jumplist()
     return snap.with_metas(string.format("%s:%s:%s", (item.filename or vim.api.nvim_buf_get_name(item.bufnr)), item.lnum, item.col), item)
   end
   local function _2_(_241)
-    return vim.api.nvim_buf_is_valid(_241.bufnr)
+    return (vim.api.nvim_buf_is_valid(_241.bufnr) and (vim.api.nvim_buf_get_name(_241.bufnr) ~= ""))
   end
   return vim.tbl_map(_1_, vim.tbl_filter(_2_, tbl.first(vim.fn.getjumplist())))
 end
