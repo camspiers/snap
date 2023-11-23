@@ -89,6 +89,21 @@
   (assertfunction? on-cancel "on-cancel provided to snap.continue must be a function")
   (coroutine.yield continue_value on-cancel))
 
+;; Executor gets passed resolve and reject functions
+(defn async [executor]
+  (assertfunction executor "executor provided to snap.async must be a function")
+  (var value nil)
+  (var error nil)
+
+  (fn resolve [val] (set value val))
+  (fn reject [err] (set error err))
+
+  (executor resolve reject)
+
+  (while (and (= value nil) (= error nil)) (continue))
+
+  (values value error))
+
 (defn resume [thread request value]
   "Transfers sync values allowing the yielding of functions with non fast-api access"
   (assertthread thread "thread passed to snap.resume must be a thread")
@@ -197,6 +212,7 @@
   (assertfunction? config.loading "snap.run 'loading' must be a function")
   (assertboolean? config.reverse "snap.run 'reverse' must be a boolean")
   (assertstring? config.initial_filter "snap.run 'initial_filter' must be a string")
+  (assertfunction? config.autoselect "snap.run 'autoselect' must be a function")
 
   ;; Store the last results
   (var last-results [])
@@ -213,6 +229,9 @@
 
   ;; Default to the bottom layout
   (local layout (or config.layout (. (get :layout) :centered)))
+
+  ;; If autoselect is set then automatically select an result when there is only one
+  (local autoselect config.autoselect)
 
   ;; Default to loading creator
   (local loading (or config.loading (get :loading)))
@@ -406,6 +425,12 @@
         (do
           (set last-results results)
           (write-results last-results))
+        (and
+          (not= autoselect nil)
+          (= (length results) 1))
+        (do
+          (safecall on-exit)
+          (safecall autoselect (. results 1)))
         ;; When we have scores attached then sort
         (has_meta (tbl.first results) :score)
         ;; Sort the table as far as we need to display results
