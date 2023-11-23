@@ -440,7 +440,7 @@
             1
             (length results)
             (+ results-view.height cursor-row)
-            #(> $1.score $2.score))
+            #(and $1.score $2.score (> $1.score $2.score)))
           ;; Store the last written results
           (set last-results results)
           ;; Schedule the write

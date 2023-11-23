@@ -126,6 +126,7 @@ local function continue(on_cancel)
 end
 _2amodule_2a["continue"] = continue
 local function async(executor)
+  assert((type(executor) == "function"), "executor provided to snap.async must be a function")
   local value = nil
   local error = nil
   local function resolve(val)
@@ -517,7 +518,7 @@ local function run(config1)
         vim.schedule_wrap(autoselect)((results0)[1])
       elseif has_meta(tbl.first(results0), "score") then
         local function _67_(_241, _242)
-          return (_241.score > _242.score)
+          return (_241.score and _242.score and (_241.score > _242.score))
         end
         tbl["partial-quicksort"](results0, 1, #results0, (results_view.height + cursor_row), _67_)
         last_results = results0
