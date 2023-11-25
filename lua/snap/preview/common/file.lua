@@ -1,4 +1,4 @@
-local _2afile_2a = "fnl/snap/preview/common/create-file-preview.fnl"
+local _2afile_2a = "fnl/snap/preview/common/file.fnl"
 local snap = require("snap")
 local loading = snap.get("loading")
 local read_file = snap.get("preview.common.read-file")

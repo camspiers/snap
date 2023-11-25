@@ -1,8 +1,10 @@
-(let [snap (require :snap)
-      parse (snap.get :common.vimgrep.parse)]
-  ((snap.get :preview.common.create-file-preview)
-    (fn [selection]
-      (local parsed-selection (parse (tostring selection)))
-      {:path (snap.sync (partial vim.fn.fnamemodify parsed-selection.filename ":p"))
-       :line parsed-selection.lnum
-       :column parsed-selection.col})))
+(local snap (require :snap))
+(local file (require :snap.preview.common.file))
+(local parse (require :snap.common.vimgrep.parse))
+
+(file
+  (fn [selection]
+    (local {: filename :lnum line :col column} (parse (tostring selection)))
+    {:path (snap.sync (partial vim.fn.fnamemodify filename ":p"))
+     : line
+     : column}))

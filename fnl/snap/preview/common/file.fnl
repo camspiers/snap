@@ -48,5 +48,5 @@
           (when
             (< (tbl.max-length preview) max-length)
             (syntax file-name request.bufnr)))))
-      
+
       (set preview nil))))

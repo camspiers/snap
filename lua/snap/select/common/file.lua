@@ -3,11 +3,11 @@ local function _1_(get_data)
   local function _2_(selection, winnr, type)
     local winnr0 = winnr
     local _let_3_ = get_data(selection)
-    local path = _let_3_["path"]
-    local lnum = _let_3_["lnum"]
-    local col = _let_3_["col"]
-    local path0 = vim.fn.fnamemodify(path, ":p")
-    local buffer = vim.fn.bufnr(path0, true)
+    local filename = _let_3_["filename"]
+    local line = _let_3_["line"]
+    local column = _let_3_["column"]
+    local path = vim.fn.fnamemodify(filename, ":p")
+    local buffer = vim.fn.bufnr(path, true)
     vim.api.nvim_buf_set_option(buffer, "buflisted", true)
     do
       local _4_ = type
@@ -31,15 +31,15 @@ local function _1_(get_data)
       else
       end
     end
-    if (lnum ~= nil) then
+    if (line ~= nil) then
       local function _7_()
-        if (col == nil) then
+        if (column == nil) then
           return 0
         else
-          return col
+          return column
         end
       end
-      return vim.api.nvim_win_set_cursor(winnr0, {lnum, _7_()})
+      return vim.api.nvim_win_set_cursor(winnr0, {line, _7_()})
     else
       return nil
     end

@@ -1,5 +1,6 @@
 local _2afile_2a = "fnl/snap/producer/lsp/init.fnl"
 local snap = require("snap")
+local tbl = require("snap.common.tbl")
 local function report_error(error)
   return vim.notify(("There was an error when calling LSP: " .. error.message), vim.log.levels.ERROR)
 end
@@ -60,7 +61,7 @@ transformers.locations = function(_12_)
   local offset_encoding = _arg_13_["offset_encoding"]
   local results = _arg_13_["results"]
   local function _14_(_241)
-    return snap.with_metas(_241.filename, vim.tbl_extend("force", _241, {offset_encoding = offset_encoding}))
+    return snap.with_metas(_241.filename, tbl.merge(_241, {offset_encoding = offset_encoding}))
   end
   return vim.tbl_map(_14_, vim.lsp.util.locations_to_items(results, offset_encoding))
 end
@@ -78,23 +79,29 @@ local function locations(action, _18_)
   local winnr = _arg_19_["winnr"]
   return lsp_producer(get_bufnr(winnr), action, get_params(winnr), transformers.locations)
 end
-local function references(_20_)
-  local _arg_21_ = _20_
-  local winnr = _arg_21_["winnr"]
-  return lsp_producer(get_bufnr(winnr), "textDocument/references", vim.tbl_deep_extend("force", get_params(winnr), {context = {includeDeclaration = true}}), transformers.locations)
+local definitions
+local function _20_(_241)
+  return locations("textDocument/definition", _241)
 end
-local function symbols(_22_)
-  local _arg_23_ = _22_
-  local winnr = _arg_23_["winnr"]
+definitions = _20_
+local implementations
+local function _21_(_241)
+  return locations("textDocument/implementation", _241)
+end
+implementations = _21_
+local type_definitions
+local function _22_(_241)
+  return locations("textDocument/typeDefinition", _241)
+end
+type_definitions = _22_
+local function references(_23_)
+  local _arg_24_ = _23_
+  local winnr = _arg_24_["winnr"]
+  return lsp_producer(get_bufnr(winnr), "textDocument/references", tbl.merge(get_params(winnr), {context = {includeDeclaration = true}}), transformers.locations)
+end
+local function symbols(_25_)
+  local _arg_26_ = _25_
+  local winnr = _arg_26_["winnr"]
   return lsp_producer(get_bufnr(winnr), "textDocument/documentSymbol", get_params(winnr), transformers.symbols)
 end
-local function _24_(...)
-  return locations("textDocument/definition", ...)
-end
-local function _25_(...)
-  return locations("textDocument/implementation", ...)
-end
-local function _26_(...)
-  return locations("textDocument/typeDefinition", ...)
-end
-return {definitions = _24_, implementations = _25_, type_definitions = _26_, references = references, symbols = symbols}
+return {definitions = definitions, implementations = implementations, type_definitions = type_definitions, references = references, symbols = symbols}

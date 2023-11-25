@@ -1,21 +1,9 @@
 local _2afile_2a = "fnl/snap/select/vim/currentbuffer.fnl"
-local _2amodule_name_2a = "snap.select.vim.currentbuffer"
-local _2amodule_2a
-do
-  package.loaded[_2amodule_name_2a] = {}
-  _2amodule_2a = package.loaded[_2amodule_name_2a]
+local file = require("snap.select.common.file")
+local function _3_(_1_)
+  local _arg_2_ = _1_
+  local filename = _arg_2_["filename"]
+  local line = _arg_2_["row"]
+  return {filename = filename, line = line}
 end
-local _2amodule_locals_2a
-do
-  _2amodule_2a["aniseed/locals"] = {}
-  _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
-end
-local select_file = require("snap.select.common.file")
-do end (_2amodule_locals_2a)["select-file"] = select_file
-local select
-local function _1_(selection)
-  return {path = selection.filename, lnum = selection.row}
-end
-select = select_file(_1_)
-do end (_2amodule_2a)["select"] = select
-return _2amodule_2a
+return {select = file(_3_)}

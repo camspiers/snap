@@ -1,3 +1,3 @@
-(module snap.select.vim.currentbuffer {require {select-file snap.select.common.file}})
+(local file (require :snap.select.common.file))
 
-(def select (select-file (fn [selection] {:path selection.filename :lnum selection.row})))
+{:select (file (fn [{: filename :row line}] {: filename : line}))}

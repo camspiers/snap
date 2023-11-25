@@ -1,7 +1,10 @@
-(module snap.select.file {require {select-file snap.select.common.file}})
+(local file (require :snap.select.common.file))
 
-(defn multiselect [selections winnr]
+(local select (file (fn [selection] {:filename (tostring selection)})))
+
+(fn multiselect [selections winnr]
   (each [index selection (ipairs selections)]
     (select selection (if (= (length selections) index) winnr false))))
 
-(def select (select-file (fn [selection] {:path (tostring selection)})))
+{: multiselect
+ : select}

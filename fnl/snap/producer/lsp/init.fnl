@@ -1,4 +1,5 @@
 (local snap (require :snap))
+(local tbl (require :snap.common.tbl))
 
 (fn report-error [error]
   (vim.notify (.. "There was an error when calling LSP: " error.message) vim.log.levels.ERROR))
@@ -29,7 +30,7 @@
 
 (fn transformers.locations [{: offset_encoding : results}]
   (vim.tbl_map
-    #(snap.with_metas $1.filename (vim.tbl_extend :force $1 {: offset_encoding}))
+    #(snap.with_metas $1.filename (tbl.merge $1 {: offset_encoding}))
     (vim.lsp.util.locations_to_items results offset_encoding)))
 
 (fn transformers.symbols [{: bufnr : results}]
@@ -44,14 +45,15 @@
     (get-params winnr)
     transformers.locations))
 
+(local definitions #(locations "textDocument/definition" $1))
+(local implementations #(locations "textDocument/implementation" $1))
+(local type_definitions #(locations "textDocument/typeDefinition" $1))
+
 (fn references [{: winnr}]
   (lsp-producer
     (get-bufnr winnr)
     "textDocument/references"
-    (vim.tbl_deep_extend
-       :force
-       (get-params winnr)
-       {:context {:includeDeclaration true}})
+    (tbl.merge (get-params winnr) {:context {:includeDeclaration true}})
     transformers.locations))
 
 (fn symbols [{: winnr}]
@@ -61,8 +63,8 @@
     (get-params winnr)
     transformers.symbols))
 
-{:definitions (partial locations "textDocument/definition")
- :implementations (partial locations "textDocument/implementation")
- :type_definitions (partial locations "textDocument/typeDefinition")
+{: definitions
+ : implementations
+ : type_definitions
  : references
  : symbols}

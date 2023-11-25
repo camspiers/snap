@@ -1,5 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/file.fnl"
 local snap = require("snap")
+local file = require("snap.preview.common.file")
 local function _1_(selection)
   local function _3_()
     local _2_ = tostring(selection)
@@ -10,4 +11,4 @@ local function _1_(selection)
   end
   return {path = snap.sync(_3_()), line = nil, column = nil}
 end
-return snap.get("preview.common.create-file-preview")(_1_)
+return file(_1_)
