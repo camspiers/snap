@@ -17,6 +17,12 @@
   (when error (snap.sync #(report-error error)))
   (snap.sync (partial tranformer (or response {}))))
 
+(fn get-bufnr [winnr]
+  (snap.sync #(vim.api.nvim_win_get_buf winnr)))
+
+(fn get-params [winnr]
+  (snap.sync #(vim.lsp.util.make_position_params winnr)))
+
 ;; Transformers take a response and return results
 ;; they are executed inside snap.sync
 (local transformers {})
@@ -33,27 +39,26 @@
 
 (fn locations [action {: winnr}]
   (lsp-producer
-    (snap.sync #(vim.api.nvim_win_get_buf winnr))
+    (get-bufnr winnr)
     action
-    (snap.sync #(vim.lsp.util.make_position_params winnr))
+    (get-params winnr)
     transformers.locations))
 
-(fn references [request]
+(fn references [{: winnr}]
   (lsp-producer
-    (snap.sync #(vim.api.nvim_win_get_buf request.winnr))
+    (get-bufnr winnr)
     "textDocument/references"
-    (snap.sync
-      #(vim.tbl_deep_extend
-         :force
-         (vim.lsp.util.make_position_params request.winnr)
-         {:context {:includeDeclaration true}}))
+    (vim.tbl_deep_extend
+       :force
+       (get-params winnr)
+       {:context {:includeDeclaration true}})
     transformers.locations))
 
-(fn symbols [request]
+(fn symbols [{: winnr}]
   (lsp-producer
-    (snap.sync #(vim.api.nvim_win_get_buf request.winnr))
+    (get-bufnr winnr)
     "textDocument/documentSymbol"
-    (snap.sync #(vim.lsp.util.make_position_params request.winnr))
+    (get-params winnr)
     transformers.symbols))
 
 {:definitions (partial locations "textDocument/definition")

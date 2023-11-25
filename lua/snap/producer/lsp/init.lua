@@ -42,53 +42,51 @@ local function lsp_producer(bufnr, action, params, tranformer)
   end
   return snap.sync(_8_())
 end
-local transformers = {}
-transformers.locations = function(_10_)
-  local _arg_11_ = _10_
-  local offset_encoding = _arg_11_["offset_encoding"]
-  local results = _arg_11_["results"]
-  local function _12_(_241)
-    return snap.with_metas(_241.filename, vim.tbl_extend("force", _241, {offset_encoding = offset_encoding}))
-  end
-  return vim.tbl_map(_12_, vim.lsp.util.locations_to_items(results, offset_encoding))
-end
-transformers.symbols = function(_13_)
-  local _arg_14_ = _13_
-  local bufnr = _arg_14_["bufnr"]
-  local results = _arg_14_["results"]
-  local function _15_(_241)
-    return snap.with_metas(_241.text, _241)
-  end
-  return vim.tbl_map(_15_, vim.lsp.util.symbols_to_items(results, bufnr))
-end
-local function locations(action, _16_)
-  local _arg_17_ = _16_
-  local winnr = _arg_17_["winnr"]
-  local function _18_()
+local function get_bufnr(winnr)
+  local function _10_()
     return vim.api.nvim_win_get_buf(winnr)
   end
-  local function _19_()
+  return snap.sync(_10_)
+end
+local function get_params(winnr)
+  local function _11_()
     return vim.lsp.util.make_position_params(winnr)
   end
-  return lsp_producer(snap.sync(_18_), action, snap.sync(_19_), transformers.locations)
+  return snap.sync(_11_)
 end
-local function references(request)
-  local function _20_()
-    return vim.api.nvim_win_get_buf(request.winnr)
+local transformers = {}
+transformers.locations = function(_12_)
+  local _arg_13_ = _12_
+  local offset_encoding = _arg_13_["offset_encoding"]
+  local results = _arg_13_["results"]
+  local function _14_(_241)
+    return snap.with_metas(_241.filename, vim.tbl_extend("force", _241, {offset_encoding = offset_encoding}))
   end
-  local function _21_()
-    return vim.tbl_deep_extend("force", vim.lsp.util.make_position_params(request.winnr), {context = {includeDeclaration = true}})
-  end
-  return lsp_producer(snap.sync(_20_), "textDocument/references", snap.sync(_21_), transformers.locations)
+  return vim.tbl_map(_14_, vim.lsp.util.locations_to_items(results, offset_encoding))
 end
-local function symbols(request)
-  local function _22_()
-    return vim.api.nvim_win_get_buf(request.winnr)
+transformers.symbols = function(_15_)
+  local _arg_16_ = _15_
+  local bufnr = _arg_16_["bufnr"]
+  local results = _arg_16_["results"]
+  local function _17_(_241)
+    return snap.with_metas(_241.text, _241)
   end
-  local function _23_()
-    return vim.lsp.util.make_position_params(request.winnr)
-  end
-  return lsp_producer(snap.sync(_22_), "textDocument/documentSymbol", snap.sync(_23_), transformers.symbols)
+  return vim.tbl_map(_17_, vim.lsp.util.symbols_to_items(results, bufnr))
+end
+local function locations(action, _18_)
+  local _arg_19_ = _18_
+  local winnr = _arg_19_["winnr"]
+  return lsp_producer(get_bufnr(winnr), action, get_params(winnr), transformers.locations)
+end
+local function references(_20_)
+  local _arg_21_ = _20_
+  local winnr = _arg_21_["winnr"]
+  return lsp_producer(get_bufnr(winnr), "textDocument/references", vim.tbl_deep_extend("force", get_params(winnr), {context = {includeDeclaration = true}}), transformers.locations)
+end
+local function symbols(_22_)
+  local _arg_23_ = _22_
+  local winnr = _arg_23_["winnr"]
+  return lsp_producer(get_bufnr(winnr), "textDocument/documentSymbol", get_params(winnr), transformers.symbols)
 end
 local function _24_(...)
   return locations("textDocument/definition", ...)
