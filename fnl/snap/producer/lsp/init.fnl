@@ -8,19 +8,14 @@
     (fn [error result context]
       (if error
         (on-error error)
-        (on-value
-          {: bufnr
-           :offset_encoding (. (vim.lsp.get_client_by_id context.client_id) :offset_encoding)
-           :results (if (vim.tbl_islist result) result [result])})))))
+        (let [client (vim.lsp.get_client_by_id context.client_id)
+              results (if (vim.tbl_islist result) result [result])]
+          (on-value {: bufnr : results :offset_encoding client.offset_encoding}))))))
 
 (fn lsp-producer [bufnr action params tranformer]
-  (let [(response error) (snap.async (partial lsp-buf-request bufnr action params))]
-    (if
-      (or error (= response nil) (= (length response.results) 0))
-      (do
-        (when error (snap.sync #(report-error error)))
-        {})
-      (snap.sync (partial tranformer response)))))
+  (local (response error) (snap.async (partial lsp-buf-request bufnr action params)))
+  (when error (snap.sync #(report-error error)))
+  (snap.sync (partial tranformer (or response {}))))
 
 ;; Transformers are executed inside snap.sync
 (local transformers {})

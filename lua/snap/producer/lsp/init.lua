@@ -8,38 +8,39 @@ local function lsp_buf_request(bufnr, action, params, on_value, on_error)
     if error then
       return on_error(error)
     else
-      local _2_
+      local client = vim.lsp.get_client_by_id(context.client_id)
+      local results
       if vim.tbl_islist(result) then
-        _2_ = result
+        results = result
       else
-        _2_ = {result}
+        results = {result}
       end
-      return on_value({bufnr = bufnr, offset_encoding = vim.lsp.get_client_by_id(context.client_id).offset_encoding, results = _2_})
+      return on_value({bufnr = bufnr, results = results, offset_encoding = client.offset_encoding})
     end
   end
   return vim.lsp.buf_request(bufnr, action, params, _1_)
 end
 local function lsp_producer(bufnr, action, params, tranformer)
   local response, error = nil, nil
-  local function _5_(...)
+  local function _4_(...)
     return lsp_buf_request(bufnr, action, params, ...)
   end
-  response, error = snap.async(_5_)
-  if (error or (response == nil) or (#response.results == 0)) then
-    if error then
-      local function _6_()
-        return report_error(error)
-      end
-      snap.sync(_6_)
-    else
+  response, error = snap.async(_4_)
+  if error then
+    local function _5_()
+      return report_error(error)
     end
-    return {}
+    snap.sync(_5_)
   else
-    local function _8_(...)
-      return tranformer(response, ...)
-    end
-    return snap.sync(_8_)
   end
+  local function _8_()
+    local _7_ = (response or {})
+    local function _9_(...)
+      return tranformer(_7_, ...)
+    end
+    return _9_
+  end
+  return snap.sync(_8_())
 end
 local transformers = {}
 transformers.locations = function(_10_)
