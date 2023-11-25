@@ -98,7 +98,7 @@
   (fn resolve [val] (set value val))
   (fn reject [err] (set error err))
 
-  (executor resolve reject)
+  (sync #(executor resolve reject))
 
   (while (and (= value nil) (= error nil)) (continue))
 
