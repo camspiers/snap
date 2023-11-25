@@ -13,11 +13,12 @@
           (on-value {: bufnr : results :offset_encoding client.offset_encoding}))))))
 
 (fn lsp-producer [bufnr action params tranformer]
-  (local (response error) (snap.async (partial lsp-buf-request bufnr action params)))
+  (local (response error) (snap.async #(lsp-buf-request bufnr action params)))
   (when error (snap.sync #(report-error error)))
   (snap.sync (partial tranformer (or response {}))))
 
-;; Transformers are executed inside snap.sync
+;; Transformers take a response and return results
+;; they are executed inside snap.sync
 (local transformers {})
 
 (fn transformers.locations [{: offset_encoding : results}]
