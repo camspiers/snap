@@ -22,8 +22,8 @@ local function lsp_buf_request(bufnr, action, params, on_value, on_error)
 end
 local function lsp_producer(bufnr, action, params, tranformer)
   local response, error = nil, nil
-  local function _4_()
-    return lsp_buf_request(bufnr, action, params)
+  local function _4_(...)
+    return lsp_buf_request(bufnr, action, params, ...)
   end
   response, error = snap.async(_4_)
   if error then
