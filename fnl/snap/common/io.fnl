@@ -1,5 +1,13 @@
 (module snap.common.io {require {snap snap}})
 
+(defn system [cmd args cwd on-value on-error]
+  (fn on-exit [result]
+    (if
+      (= result.code 0)
+      (on-value result.stdout)
+      (on-error result.stderr)))
+  (vim.system [cmd (unpack args)] {: cwd} on-exit))
+
 (defn spawn [cmd args cwd stdin]
   "Spawns a command and returns a command iterator"
   (var stdoutbuffer "")

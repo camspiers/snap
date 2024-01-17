@@ -84,3 +84,10 @@
       (partial-quicksort tbl p (- q 1) m comp)
       (when (< p (- m 1))
         (partial-quicksort tbl (+ q 1) r m comp)))))
+
+(defn max-length [tbl]
+  "Finds the max length of value values"
+  (accumulate [max 0
+               _ val (ipairs tbl)]
+    (let [len (length (tostring val))]
+      (if (> len max) len max))))

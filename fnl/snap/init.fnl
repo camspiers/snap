@@ -213,6 +213,7 @@
   (assertboolean? config.reverse "snap.run 'reverse' must be a boolean")
   (assertstring? config.initial_filter "snap.run 'initial_filter' must be a string")
   (assertfunction? config.autoselect "snap.run 'autoselect' must be a function")
+  (asserttable? config.mappings "snap.run 'mappings' must be a table")
 
   ;; Store the last results
   (var last-results [])

@@ -13,18 +13,25 @@ end
 local function lines()
   return vim.api.nvim_get_option("lines")
 end
+_2amodule_2a["lines"] = lines
 local function columns()
   return vim.api.nvim_get_option("columns")
 end
-local function middle(total, size)
-  return math.floor(((total - size) / 2))
+_2amodule_2a["columns"] = columns
+local function percent(size, percent0)
+  return math.floor((size * percent0))
 end
-local function from_bottom(size, offset)
-  return (lines() - size - offset)
-end
+_2amodule_2a["percent"] = percent
 local function size(_25width, _25height)
   return {width = math.floor((columns() * _25width)), height = math.floor((lines() * _25height))}
 end
+local function from_bottom(size0, offset)
+  return (lines() - size0 - offset)
+end
+local function middle(total, size0)
+  return math.floor(((total - size0) / 2))
+end
+_2amodule_2a["middle"] = middle
 local function _25centered(_25width, _25height)
   local _let_1_ = size(_25width, _25height)
   local width = _let_1_["width"]

@@ -5,23 +5,26 @@
 ;; must be left available for it to fit
 
 ;; Helper to get lines
-(fn lines []
+(defn lines []
   (vim.api.nvim_get_option :lines))
 
 ;; Helper to get columns
-(fn columns []
+(defn columns []
   (vim.api.nvim_get_option :columns))
 
-;; The middle for the height or width requested (from top or left)
-(fn middle [total size]
-  (math.floor (/ (- total size) 2)))
-
-(fn from-bottom [size offset]
-  (- (lines) size offset))
+(defn percent [size percent]
+  (math.floor (* size percent)))
 
 (fn size [%width %height]
   {:width (math.floor (* (columns) %width))
    :height (math.floor (* (lines) %height))})
+
+(fn from-bottom [size offset]
+  (- (lines) size offset))
+
+;; The middle for the height or width requested (from top or left)
+(defn middle [total size]
+  (math.floor (/ (- total size) 2)))
 
 (defn %centered [%width %height]
   "Defines a centered layout based on percent"

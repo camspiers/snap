@@ -16,6 +16,10 @@
       (fn [request]
         (let [cmd (or cwd (snap.sync vim.fn.getcwd))]
           (general request {:args (tbl.concat args [request.filter]) : cwd : absolute})))))
+  (fn vimgrep.open_files [request]
+    (local open_files (snap.sync #(vim.tbl_map #(vim.api.nvim_buf_get_name $1) (vim.api.nvim_list_bufs))))
+    (let [cwd (snap.sync vim.fn.getcwd)]
+      (general request {:args (tbl.concat args (tbl.concat open_files [request.filter])) : cwd})))
   (fn vimgrep.args [new-args cwd]
     (let [args (tbl.concat args new-args)
           absolute (not= cwd nil)]

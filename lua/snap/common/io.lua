@@ -12,13 +12,24 @@ do
 end
 local snap = require("snap")
 do end (_2amodule_locals_2a)["snap"] = snap
+local function system(cmd, args, cwd, on_value, on_error)
+  local function on_exit(result)
+    if (result.code == 0) then
+      return on_value(result.stdout)
+    else
+      return on_error(result.stderr)
+    end
+  end
+  return vim.system({cmd, unpack(args)}, {cwd = cwd}, on_exit)
+end
+_2amodule_2a["system"] = system
 local function spawn(cmd, args, cwd, stdin)
   local stdoutbuffer = ""
   local stderrbuffer = ""
   local stdout = vim.loop.new_pipe(false)
   local stderr = vim.loop.new_pipe(false)
   local handle
-  local function _1_(code, signal)
+  local function _2_(code, signal)
     stdout:read_stop()
     stderr:read_stop()
     stdout:close()
@@ -30,8 +41,8 @@ local function spawn(cmd, args, cwd, stdin)
     end
     return handle:close()
   end
-  handle = vim.loop.spawn(cmd, {args = args, stdio = {stdin, stdout, stderr}, cwd = cwd}, _1_)
-  local function _3_(err, data)
+  handle = vim.loop.spawn(cmd, {args = args, stdio = {stdin, stdout, stderr}, cwd = cwd}, _2_)
+  local function _4_(err, data)
     assert(not err)
     if data then
       stdoutbuffer = (stdoutbuffer .. data)
@@ -40,8 +51,8 @@ local function spawn(cmd, args, cwd, stdin)
       return nil
     end
   end
-  stdout:read_start(_3_)
-  local function _5_(err, data)
+  stdout:read_start(_4_)
+  local function _6_(err, data)
     assert(not err)
     if data then
       stderrbuffer = (stderrbuffer .. data)
@@ -50,11 +61,11 @@ local function spawn(cmd, args, cwd, stdin)
       return nil
     end
   end
-  stderr:read_start(_5_)
+  stderr:read_start(_6_)
   local function kill()
     return handle:kill(vim.loop.constants.SIGTERM)
   end
-  local function _7_()
+  local function _8_()
     if ((handle and handle:is_active()) or (stdoutbuffer ~= "")) then
       local stdout0 = stdoutbuffer
       local stderr0 = stderrbuffer
@@ -65,7 +76,7 @@ local function spawn(cmd, args, cwd, stdin)
       return nil
     end
   end
-  return _7_
+  return _8_
 end
 _2amodule_2a["spawn"] = spawn
 local function exists(path)

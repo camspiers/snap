@@ -130,4 +130,17 @@ local function partial_quicksort(tbl, p, r, m, comp)
   end
 end
 _2amodule_2a["partial-quicksort"] = partial_quicksort
+local function max_length0(tbl)
+  local max = 0
+  for _, val in ipairs(tbl) do
+    local len = #tostring(val)
+    if (len > max) then
+      max = len
+    else
+      max = max
+    end
+  end
+  return max
+end
+_2amodule_2a["max-length"] = max_length0
 return _2amodule_2a
