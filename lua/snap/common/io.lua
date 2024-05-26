@@ -81,7 +81,10 @@ end
 _2amodule_2a["spawn"] = spawn
 local function exists(path)
   local fd = vim.loop.fs_open(path, "r", 438)
-  vim.loop.fs_close(fd)
+  if (fd ~= nil) then
+    vim.loop.fs_close(fd)
+  else
+  end
   return (fd ~= nil)
 end
 _2amodule_2a["exists"] = exists
