@@ -214,6 +214,7 @@
   (assertstring? config.initial_filter "snap.run 'initial_filter' must be a string")
   (assertfunction? config.autoselect "snap.run 'autoselect' must be a function")
   (asserttable? config.mappings "snap.run 'mappings' must be a table")
+  (assertfunction? config.on_update "snap.run 'on_update' must be a function")
 
   ;; Store the last results
   (var last-results [])
@@ -395,6 +396,8 @@
 
   ;; On input update
   (fn on-update [filter]
+    ;; When on_update exists, inform the user
+    (when config.on_update (config.on_update filter))
     (set last-requested-filter filter)
     ;; Tracks if any results have rendered
     (var early-write false)
