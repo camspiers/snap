@@ -28,7 +28,7 @@
   :prev-item [:<C-p> :<Up> :<C-k>]
   :next-item [:<C-n> :<Down> :<C-j>]
   :prev-page [:<C-b> :<PageUp>]
-  :next-page [:<C-f> :<PageDown]
+  :next-page [:<C-f> :<PageDown>]
   :view-page-down [:<C-d>]
   :view-page-up [:<C-u>]
   :view-toggle-hide [:<C-h>]

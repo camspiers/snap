@@ -49,7 +49,7 @@
 (defn exists [path]
   "Check if file exists"
   (local fd (vim.loop.fs_open path "r" 438))
-  (vim.loop.fs_close fd)
+  (if (~= fd nil) (vim.loop.fs_close fd))
   (~= fd nil))
 
 (defn size [path]
