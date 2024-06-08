@@ -723,6 +723,10 @@ local function run(config1)
           else
           end
         end
+        if (type(next.config.initial_filter) == "function") then
+          next_config["initial_filter"] = next.config.initial_filter(last_requested_filter)
+        else
+        end
         return run(next_config)
       end
       return vim.schedule_wrap(_96_)()
@@ -739,9 +743,9 @@ local function run(config1)
     results_view:update()
     input_view:update()
     if hide_views then
-      for _0, _105_ in ipairs(views) do
-        local _each_106_ = _105_
-        local view0 = _each_106_["view"]
+      for _0, _106_ in ipairs(views) do
+        local _each_107_ = _106_
+        local view0 = _each_107_["view"]
         view0:delete()
       end
       views = {}
@@ -761,10 +765,10 @@ end
 _2amodule_2a["run"] = run
 local function create(config1, defaults)
   assert((type(config1) == "function"), "Config must be a function")
-  local function _109_()
+  local function _110_()
     return run(tbl.merge((defaults or {}), config1()))
   end
-  return _109_
+  return _110_
 end
 _2amodule_2a["create"] = create
 return _2amodule_2a
