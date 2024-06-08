@@ -87,7 +87,7 @@
   (vim.fn.setreg "\"" register)
   filter)
 
-(fn get-initial-filter [config]
+(defn get_initial_filter [config]
   "Gets the initial filter"
   (if
     (not= config.filter_with nil)
@@ -244,7 +244,7 @@
           producer (consumer producer)
           select select-file.select
           multiselect select-file.multiselect
-          initial_filter (get-initial-filter config)
+          initial_filter (get_initial_filter config)
           views [(snap.get :preview.file)]]
       (snap.run {: prompt
                  : mappings
@@ -354,7 +354,7 @@
           producer (consumer producer)
           select vimgrep-select.select
           multiselect vimgrep-select.multiselect
-          initial_filter (get-initial-filter config)
+          initial_filter (get_initial_filter config)
           views [(snap.get :preview.vimgrep)]]
       (snap.run {: prompt
                  : layout
