@@ -135,6 +135,7 @@ local function get_initial_filter(config)
     return nil
   end
 end
+_2amodule_2a["get_initial_filter"] = get_initial_filter
 local file
 local function _15_(self_1_auto, ...)
   local function _16_(config)

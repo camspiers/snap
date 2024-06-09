@@ -575,6 +575,13 @@
                 next.format
                 (next.consumer (next.format results))
                 (next.consumer (fn [] results))))))
+
+         ;; next step config's initial_filter can be a function
+         ;; if it is a function, it is called with previous step's filter
+         (when
+           (= (type next.config.initial_filter) :function)
+           (tset next-config :initial_filter (next.config.initial_filter last-requested-filter)))
+
          (run next-config)))))
 
   (fn on-view-toggle-hide []

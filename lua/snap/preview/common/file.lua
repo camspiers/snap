@@ -35,7 +35,7 @@ local function _1_(get_file_data)
         vim.api.nvim_win_set_option(request.winnr, "cursorline", true)
         vim.api.nvim_buf_set_lines(request.bufnr, 0, -1, false, preview)
         if ((file_data.line ~= nil) and (file_data.line <= preview_size)) then
-          vim.api.nvim_win_set_cursor(request.winnr, {file_data.line, (file_data.column - 1)})
+          vim.api.nvim_win_set_cursor(request.winnr, {file_data.line, file_data.column})
         else
         end
         if (tbl["max-length"](preview) < max_length) then
