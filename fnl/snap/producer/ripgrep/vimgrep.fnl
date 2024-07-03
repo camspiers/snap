@@ -2,7 +2,7 @@
       tbl (snap.get :common.tbl)
       general (snap.get :producer.ripgrep.general)]
   (local vimgrep {})
-  (local args [:--line-buffered :-M 100 :--vimgrep])
+  (local args [:--line-buffered :-M 100 :--vimgrep :-S])
   (local line-args [:--line-buffered :-M 100 :--no-heading :--column])
   (fn vimgrep.default [request]
     (let [cwd (snap.sync vim.fn.getcwd)]
