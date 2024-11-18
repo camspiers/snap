@@ -2,7 +2,7 @@ local _2afile_2a = "fnl/snap/preview/common/read-file.fnl"
 local snap = require("snap")
 local snap_io = snap.get("common.io")
 local function get_encoding(path)
-  local handle = io.popen(string.format("file -n -b --mime-encoding %s", path))
+  local handle = io.popen(string.format("file -n -b --mime-encoding '%s'", path))
   local encoding = string.gsub(handle:read("*a"), "^%s*(.-)%s*$", "%1")
   handle:close()
   return encoding
