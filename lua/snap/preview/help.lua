@@ -1,6 +1,6 @@
 local _2afile_2a = "fnl/snap/preview/help.fnl"
 local snap = require("snap")
-local read_file = snap.get("preview.read-file")
+local read_file = snap.get("preview.common.read-file")
 local loading = snap.get("loading")
 local syntax = snap.get("preview.common.syntax")
 local function _1_(request)

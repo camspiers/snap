@@ -1,7 +1,7 @@
 local _2afile_2a = "fnl/snap/producer/vim/help.fnl"
 local snap = require("snap")
 local tbl = snap.get("common.tbl")
-local read_file = snap.get("preview.read-file")
+local read_file = snap.get("preview.common.read-file")
 local function _1_()
   local tags_set = {}
   local tag_files
