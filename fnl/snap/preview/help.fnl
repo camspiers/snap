@@ -1,5 +1,5 @@
 (let [snap (require :snap)
-      read-file (snap.get :preview.read-file)
+      read-file (snap.get :preview.common.read-file)
       loading (snap.get :loading)
       syntax (snap.get :preview.common.syntax)]
   (fn [request]

@@ -34,7 +34,8 @@
           ;; yield to main thread and cancel if needed
           (snap.continue (partial free cancel)))
         (set preview [])
-        (each [line (databuffer:gmatch "([^\r\n]*)[\r\n]?")]
-          (table.insert preview line))
+        (each [line (databuffer:gmatch "([^\r\n]*)(\r?\n?)")]
+          (when (not (and (= line "") (= %2 "")))
+            (table.insert preview line)))
         (free)))
     preview))

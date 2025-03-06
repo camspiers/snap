@@ -1,6 +1,6 @@
 (let [snap (require :snap)
       tbl (snap.get :common.tbl)
-      read-file (snap.get :preview.read-file)]
+      read-file (snap.get :preview.common.read-file)]
   (fn []
     (local tags-set {})
     (local tag-files (snap.sync (partial vim.fn.globpath vim.o.runtimepath "doc/tags" 1 1)))

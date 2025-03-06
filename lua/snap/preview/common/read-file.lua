@@ -44,8 +44,11 @@ local function _1_(path, on_resume)
       snap.continue(_5_)
     end
     preview = {}
-    for line in databuffer:gmatch("([^\13\n]*)[\13\n]?") do
-      table.insert(preview, line)
+    for line in databuffer:gmatch("([^\13\n]*)(\13?\n?)") do
+      if not ((line == "") and (__fnl_global___252 == "")) then
+        table.insert(preview, line)
+      else
+      end
     end
     free()
   end
