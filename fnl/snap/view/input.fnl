@@ -82,7 +82,9 @@
       (config.on-select-all-toggle))
 
     (fn on_lines []
-      (config.on-update (get-filter))
+      (vim.schedule (fn []
+        (when (not exited)
+          (config.on-update (get-filter)))))
       nil)
 
     (fn on_detach [] nil)

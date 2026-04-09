@@ -616,9 +616,10 @@
      : on-update}))
 
   ;; Feed the initial filer to the input
-  (when (not= initial-filter "")
+  (if (not= initial-filter "")
     ;; We do it this way because prompts are broken in nvim
-    (vim.api.nvim_feedkeys initial-filter :n false))
+    (vim.api.nvim_feedkeys initial-filter :n false)
+    (vim.schedule (fn [] (on-update ""))))
 
   nil)
 

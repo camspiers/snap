@@ -91,7 +91,14 @@ local function create(config)
     return config["on-select-all-toggle"]()
   end
   local function on_lines()
-    config["on-update"](get_filter())
+    local function _9_()
+      if not exited then
+        return config["on-update"](get_filter())
+      else
+        return nil
+      end
+    end
+    vim.schedule(_9_)
     return nil
   end
   local function on_detach()
@@ -99,18 +106,18 @@ local function create(config)
   end
   register["buf-map"](bufnr, {"n", "i"}, mappings0.next, on_next)
   register["buf-map"](bufnr, {"n", "i"}, mappings0.enter, on_enter)
-  local function _9_(...)
+  local function _11_(...)
     return on_enter("split", ...)
   end
-  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-split"], _9_)
-  local function _10_(...)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-split"], _11_)
+  local function _12_(...)
     return on_enter("vsplit", ...)
   end
-  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-vsplit"], _10_)
-  local function _11_(...)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-vsplit"], _12_)
+  local function _13_(...)
     return on_enter("tab", ...)
   end
-  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-tab"], _11_)
+  register["buf-map"](bufnr, {"n", "i"}, mappings0["enter-tab"], _13_)
   register["buf-map"](bufnr, {"n", "i"}, mappings0.exit, on_exit)
   register["buf-map"](bufnr, {"n", "i"}, mappings0.select, on_tab)
   register["buf-map"](bufnr, {"n", "i"}, mappings0.unselect, on_shifttab)
@@ -148,10 +155,10 @@ local function create(config)
     end
   end
   local view = {update = update, delete = delete, bufnr = bufnr, winnr = winnr, width = layout_config.width, height = layout_config.height}
-  local function _15_()
+  local function _17_()
     return view:update()
   end
-  vim.api.nvim_create_autocmd("VimResized", {group = group, callback = _15_})
+  vim.api.nvim_create_autocmd("VimResized", {group = group, callback = _17_})
   return view
 end
 _2amodule_2a["create"] = create
